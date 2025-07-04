@@ -15,7 +15,8 @@
         "Unity.RecorderAnimationModule",
         "Unity.Recorder.RecorderLibrary",
         "Unity.Recorder.Timeline",
-        "Unity.Recorder.Editor"
+        "Unity.Recorder.Editor",
+        "Unity.EditorCoroutines.Editor"
     ],
     "includePlatforms": [
         "Editor"
