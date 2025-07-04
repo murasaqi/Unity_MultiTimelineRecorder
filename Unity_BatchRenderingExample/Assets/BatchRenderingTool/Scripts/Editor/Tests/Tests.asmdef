@@ -4,8 +4,6 @@
     "references": [
         "BatchRenderingTool.Runtime",
         "BatchRenderingTool.Editor",
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner",
         "Unity.Timeline",
         "Unity.Timeline.Editor",
         "Unity.RecorderCoreModule",

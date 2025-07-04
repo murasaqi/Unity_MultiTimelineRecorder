@@ -3,7 +3,6 @@
     "rootNamespace": "BatchRenderingTool.Runtime.Tests",
     "references": [
         "BatchRenderingTool.Runtime",
-        "UnityEngine.TestRunner",
         "Unity.Timeline",
         "Unity.RecorderCoreModule",
         "Unity.Recorder.RecorderLibrary"
