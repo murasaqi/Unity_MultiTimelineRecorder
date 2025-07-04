@@ -4,7 +4,7 @@ using UnityEngine.Timeline;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Timeline;
 
-namespace BatchRenderingTool.Editor
+namespace BatchRenderingTool
 {
     public class RecorderQuickTest : EditorWindow
     {

@@ -2,10 +2,12 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using UnityEditor.Recorder;
+using UnityEditor.Recorder.Timeline;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BatchRenderingTool.Editor
+namespace BatchRenderingTool
 {
     public class SingleTimelineRendererTestWindow : EditorWindow
     {
@@ -250,7 +252,7 @@ namespace BatchRenderingTool.Editor
                     LogMessage("[TEST] Created ControlTrack", true);
                     
                     // Create recorder track
-                    var recorderTrack = timeline.CreateTrack<RecorderTrack>(null, "Test Recorder Track");
+                    var recorderTrack = timeline.CreateTrack<UnityEditor.Recorder.Timeline.RecorderTrack>(null, "Test Recorder Track");
                     LogMessage("[TEST] Created RecorderTrack", true);
                     
                     // Clean up
@@ -342,8 +344,17 @@ namespace BatchRenderingTool.Editor
                 // Monitor console for errors during rendering
                 Application.logMessageReceived += OnLogMessageReceived;
                 
-                // Trigger rendering
-                renderer.SendMessage("StartRendering");
+                // Trigger rendering through reflection
+                var startRenderingMethod = renderer.GetType().GetMethod("StartRendering", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (startRenderingMethod != null)
+                {
+                    startRenderingMethod.Invoke(renderer, null);
+                }
+                else
+                {
+                    LogMessage("[TEST] Could not find StartRendering method", false);
+                    return;
+                }
                 
                 LogMessage("[TEST] Render started - check Console for detailed logs", true);
             }
