@@ -13,6 +13,15 @@ namespace BatchRenderingTool
     public static class RecorderSettingsHelper
     {
         /// <summary>
+        /// Supported image output formats
+        /// </summary>
+        public enum ImageFormat
+        {
+            PNG,
+            JPG,
+            EXR
+        }
+        /// <summary>
         /// Configure output path for any RecorderSettings
         /// </summary>
         public static void ConfigureOutputPath(RecorderSettings settings, string basePath, string timelineName, RecorderSettingsType type)
