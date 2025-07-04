@@ -74,6 +74,12 @@ namespace BatchRenderingTool
         private MovieRecorderPreset moviePreset = MovieRecorderPreset.HighQuality1080p;
         private bool useMoviePreset = false;
         
+        // AOV recorder settings
+        private AOVType selectedAOVTypes = AOVType.Depth | AOVType.Normal | AOVType.Albedo;
+        private AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;
+        private AOVPreset aovPreset = AOVPreset.Compositing;
+        private bool useAOVPreset = false;
+        
         // Rendering state
         private int currentRenderIndex = -1;
         private int totalRenderCount = 0;
@@ -255,7 +261,20 @@ namespace BatchRenderingTool
             
             if (!RecorderSettingsFactory.IsRecorderTypeSupported(recorderType))
             {
-                EditorGUILayout.HelpBox($"{recorderType} recorder is not yet implemented", MessageType.Warning);
+                string reason = "";
+                switch (recorderType)
+                {
+                    case RecorderSettingsType.AOV:
+                        reason = "AOV Recorder requires HDRP package to be installed";
+                        break;
+                    case RecorderSettingsType.Alembic:
+                        reason = "Alembic Recorder requires Unity Alembic package to be installed";
+                        break;
+                    default:
+                        reason = $"{recorderType} recorder is not available";
+                        break;
+                }
+                EditorGUILayout.HelpBox(reason, MessageType.Error);
             }
             
             EditorGUILayout.Space(5);
@@ -272,6 +291,10 @@ namespace BatchRenderingTool
                     
                 case RecorderSettingsType.Movie:
                     DrawMovieRecorderSettings();
+                    break;
+                    
+                case RecorderSettingsType.AOV:
+                    DrawAOVRecorderSettings();
                     break;
                     
                 default:
@@ -347,6 +370,96 @@ namespace BatchRenderingTool
                 #if !UNITY_EDITOR_OSX
                 EditorGUILayout.HelpBox("MOV format with ProRes is only available on macOS", MessageType.Warning);
                 #endif
+            }
+        }
+        
+        private void DrawAOVRecorderSettings()
+        {
+            EditorGUILayout.LabelField("AOV Settings", EditorStyles.miniBoldLabel);
+            
+            useAOVPreset = EditorGUILayout.Toggle("Use Preset:", useAOVPreset);
+            
+            if (useAOVPreset)
+            {
+                aovPreset = (AOVPreset)EditorGUILayout.EnumPopup("Preset:", aovPreset);
+                
+                // Apply preset
+                if (aovPreset != AOVPreset.Custom)
+                {
+                    var config = AOVRecorderSettingsConfig.Presets.GetCompositing();
+                    switch (aovPreset)
+                    {
+                        case AOVPreset.GeometryOnly:
+                            config = AOVRecorderSettingsConfig.Presets.GetGeometryOnly();
+                            break;
+                        case AOVPreset.LightingOnly:
+                            config = AOVRecorderSettingsConfig.Presets.GetLightingOnly();
+                            break;
+                        case AOVPreset.MaterialProperties:
+                            config = AOVRecorderSettingsConfig.Presets.GetMaterialProperties();
+                            break;
+                    }
+                    
+                    selectedAOVTypes = config.selectedAOVs;
+                    aovOutputFormat = config.outputFormat;
+                    width = config.width;
+                    height = config.height;
+                }
+            }
+            
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("AOV Types:", EditorStyles.miniBoldLabel);
+            
+            // Display AOV checkboxes in a compact grid
+            var aovTypes = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
+                .Where(t => t != AOVType.None).ToList();
+            int columnCount = 2;
+            int currentColumn = 0;
+            
+            if (aovTypes.Count > 0)
+            {
+                EditorGUILayout.BeginHorizontal();
+                foreach (var aovType in aovTypes)
+                {
+                    if (currentColumn >= columnCount)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.BeginHorizontal();
+                        currentColumn = 0;
+                    }
+                    
+                    bool isSelected = (selectedAOVTypes & aovType) != 0;
+                    bool newSelected = EditorGUILayout.ToggleLeft(aovType.ToString(), isSelected, GUILayout.Width(150));
+                    
+                    if (newSelected != isSelected)
+                    {
+                        if (newSelected)
+                            selectedAOVTypes |= aovType;
+                        else
+                            selectedAOVTypes &= ~aovType;
+                    }
+                    
+                    currentColumn++;
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            
+            EditorGUILayout.Space(5);
+            width = EditorGUILayout.IntField("Width:", width);
+            height = EditorGUILayout.IntField("Height:", height);
+            aovOutputFormat = (AOVOutputFormat)EditorGUILayout.EnumPopup("Format:", aovOutputFormat);
+            
+            // Show AOV count
+            int selectedCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
+                .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
+            
+            if (selectedCount == 0)
+            {
+                EditorGUILayout.HelpBox("Please select at least one AOV type", MessageType.Warning);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox($"{selectedCount} AOV types selected. Each will be rendered as a separate pass.", MessageType.Info);
             }
         }
         
@@ -930,6 +1043,12 @@ namespace BatchRenderingTool
                     recorderSettings = CreateMovieRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
                     break;
                     
+                case RecorderSettingsType.AOV:
+                    // For AOV, we need to handle multiple recorder settings (one per AOV type)
+                    // For now, we'll create a placeholder and handle the multi-AOV case later
+                    recorderSettings = CreateAOVRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
+                    break;
+                    
                 default:
                     Debug.LogError($"[MultiTimelineRenderer] Unsupported recorder type: {recorderType}");
                     return null;
@@ -1153,6 +1272,80 @@ namespace BatchRenderingTool
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
                 Debug.Log($"[MultiTimelineRenderer] Movie settings created: {width}x{height}@{fps}fps, Format: {movieOutputFormat}");
+            }
+            
+            return settings;
+        }
+        
+        private RecorderSettings CreateAOVRecorderSettingsForBatch(string name, int fps, int width, int height)
+        {
+            Debug.Log($"[MultiTimelineRenderer] Creating AOV recorder settings: {name}");
+            
+            // Check if HDRP is available
+            if (!RecorderSettingsFactory.IsRecorderTypeSupported(RecorderSettingsType.AOV))
+            {
+                Debug.LogError("[MultiTimelineRenderer] AOV Recorder requires HDRP package");
+                return null;
+            }
+            
+            // Create AOV configuration
+            var config = new AOVRecorderSettingsConfig
+            {
+                selectedAOVs = selectedAOVTypes,
+                outputFormat = aovOutputFormat,
+                width = width,
+                height = height,
+                frameRate = fps
+            };
+            
+            if (useAOVPreset && aovPreset != AOVPreset.Custom)
+            {
+                Debug.Log($"[MultiTimelineRenderer] Using AOV preset: {aovPreset}");
+                
+                // Get preset configuration
+                switch (aovPreset)
+                {
+                    case AOVPreset.Compositing:
+                        config = AOVRecorderSettingsConfig.Presets.GetCompositing();
+                        break;
+                    case AOVPreset.GeometryOnly:
+                        config = AOVRecorderSettingsConfig.Presets.GetGeometryOnly();
+                        break;
+                    case AOVPreset.LightingOnly:
+                        config = AOVRecorderSettingsConfig.Presets.GetLightingOnly();
+                        break;
+                    case AOVPreset.MaterialProperties:
+                        config = AOVRecorderSettingsConfig.Presets.GetMaterialProperties();
+                        break;
+                }
+                
+                // Override resolution and framerate with our settings
+                config.width = width;
+                config.height = height;
+                config.frameRate = fps;
+            }
+            
+            // Validate configuration
+            string errorMessage;
+            if (!config.Validate(out errorMessage))
+            {
+                Debug.LogError($"[MultiTimelineRenderer] Invalid AOV configuration: {errorMessage}");
+                return null;
+            }
+            
+            // For multi-timeline renderer, we'll use the single AOV creation for now
+            // TODO: In the future, this should handle multiple AOV passes
+            var settings = RecorderSettingsFactory.CreateAOVRecorderSettings($"{name}_Recorder");
+            
+            if (settings != null)
+            {
+                settings.Enabled = true;
+                settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+                
+                int aovCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
+                    .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
+                    
+                Debug.Log($"[MultiTimelineRenderer] AOV settings created: {width}x{height}@{fps}fps, Format: {aovOutputFormat}, {aovCount} AOV types selected");
             }
             
             return settings;
