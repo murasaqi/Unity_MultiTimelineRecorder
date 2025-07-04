@@ -145,17 +145,33 @@ namespace BatchRenderingTool
                 string[] directorNames = new string[availableDirectors.Count];
                 for (int i = 0; i < availableDirectors.Count; i++)
                 {
-                    directorNames[i] = availableDirectors[i].gameObject.name;
+                    if (availableDirectors[i] != null && availableDirectors[i].gameObject != null)
+                    {
+                        directorNames[i] = availableDirectors[i].gameObject.name;
+                    }
+                    else
+                    {
+                        directorNames[i] = "<Missing>";
+                    }
                 }
                 
                 selectedDirectorIndex = EditorGUILayout.Popup("Select Timeline:", selectedDirectorIndex, directorNames);
                 
-                var selectedDirector = availableDirectors[selectedDirectorIndex];
-                var timeline = selectedDirector.playableAsset as TimelineAsset;
-                if (timeline != null)
+                // Validate selected index and director
+                if (selectedDirectorIndex >= availableDirectors.Count)
                 {
-                    EditorGUILayout.LabelField($"Duration: {timeline.duration:F2} seconds");
-                    EditorGUILayout.LabelField($"Frame Count: {(int)(timeline.duration * frameRate)}");
+                    selectedDirectorIndex = 0;
+                }
+                
+                var selectedDirector = availableDirectors[selectedDirectorIndex];
+                if (selectedDirector != null && selectedDirector.gameObject != null)
+                {
+                    var timeline = selectedDirector.playableAsset as TimelineAsset;
+                    if (timeline != null)
+                    {
+                        EditorGUILayout.LabelField($"Duration: {timeline.duration:F2} seconds");
+                        EditorGUILayout.LabelField($"Frame Count: {(int)(timeline.duration * frameRate)}");
+                    }
                 }
             }
             else
@@ -342,34 +358,37 @@ namespace BatchRenderingTool
             
             // Display AOV checkboxes in a compact grid
             var aovTypes = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
-                .Where(t => t != AOVType.None);
+                .Where(t => t != AOVType.None).ToList();
             int columnCount = 2;
             int currentColumn = 0;
             
-            EditorGUILayout.BeginHorizontal();
-            foreach (var aovType in aovTypes)
+            if (aovTypes.Count > 0)
             {
-                if (currentColumn >= columnCount)
+                EditorGUILayout.BeginHorizontal();
+                foreach (var aovType in aovTypes)
                 {
-                    EditorGUILayout.EndHorizontal();
-                    EditorGUILayout.BeginHorizontal();
-                    currentColumn = 0;
+                    if (currentColumn >= columnCount)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.BeginHorizontal();
+                        currentColumn = 0;
+                    }
+                    
+                    bool isSelected = (selectedAOVTypes & aovType) != 0;
+                    bool newSelected = EditorGUILayout.ToggleLeft(aovType.ToString(), isSelected, GUILayout.Width(150));
+                    
+                    if (newSelected != isSelected)
+                    {
+                        if (newSelected)
+                            selectedAOVTypes |= aovType;
+                        else
+                            selectedAOVTypes &= ~aovType;
+                    }
+                    
+                    currentColumn++;
                 }
-                
-                bool isSelected = (selectedAOVTypes & aovType) != 0;
-                bool newSelected = EditorGUILayout.ToggleLeft(aovType.ToString(), isSelected, GUILayout.Width(150));
-                
-                if (newSelected != isSelected)
-                {
-                    if (newSelected)
-                        selectedAOVTypes |= aovType;
-                    else
-                        selectedAOVTypes &= ~aovType;
-                }
-                
-                currentColumn++;
+                EditorGUILayout.EndHorizontal();
             }
-            EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.Space(5);
             aovOutputFormat = (AOVOutputFormat)EditorGUILayout.EnumPopup("Output Format:", aovOutputFormat);
@@ -529,7 +548,8 @@ namespace BatchRenderingTool
             }
             EditorGUILayout.EndHorizontal();
             
-            if (availableDirectors.Count > 0 && selectedDirectorIndex < availableDirectors.Count)
+            if (availableDirectors.Count > 0 && selectedDirectorIndex < availableDirectors.Count && 
+                availableDirectors[selectedDirectorIndex] != null && availableDirectors[selectedDirectorIndex].gameObject != null)
             {
                 var directorName = availableDirectors[selectedDirectorIndex].gameObject.name;
                 var sanitized = SanitizeFileName(directorName);
@@ -638,13 +658,20 @@ namespace BatchRenderingTool
             
             foreach (var director in allDirectors)
             {
-                if (director.playableAsset != null && director.playableAsset is TimelineAsset)
+                if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
                 {
                     availableDirectors.Add(director);
                 }
             }
             
-            availableDirectors.Sort((a, b) => a.gameObject.name.CompareTo(b.gameObject.name));
+            // Remove any null entries that might have been destroyed
+            availableDirectors.RemoveAll(d => d == null || d.gameObject == null);
+            
+            availableDirectors.Sort((a, b) => {
+                if (a == null || a.gameObject == null) return 1;
+                if (b == null || b.gameObject == null) return -1;
+                return a.gameObject.name.CompareTo(b.gameObject.name);
+            });
             
             if (selectedDirectorIndex >= availableDirectors.Count)
             {
@@ -698,6 +725,14 @@ namespace BatchRenderingTool
             renderProgress = 0f;
             
             var selectedDirector = availableDirectors[selectedDirectorIndex];
+            if (selectedDirector == null || selectedDirector.gameObject == null)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Selected director is null or destroyed";
+                Debug.LogError("[SingleTimelineRenderer] Selected director is null or destroyed");
+                yield break;
+            }
+            
             var originalTimeline = selectedDirector.playableAsset as TimelineAsset;
             
             Debug.Log($"[SingleTimelineRenderer] Selected director: {selectedDirector?.gameObject.name}");
@@ -1289,7 +1324,7 @@ namespace BatchRenderingTool
             }
             
             var director = availableDirectors[selectedDirectorIndex];
-            if (director == null || director.playableAsset == null || !(director.playableAsset is TimelineAsset))
+            if (director == null || director.gameObject == null || director.playableAsset == null || !(director.playableAsset is TimelineAsset))
             {
                 errorMessage = "Selected director does not have a valid Timeline";
                 return false;
