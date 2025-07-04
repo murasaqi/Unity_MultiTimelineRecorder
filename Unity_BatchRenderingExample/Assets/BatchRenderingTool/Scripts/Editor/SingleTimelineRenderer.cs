@@ -39,10 +39,12 @@ namespace BatchRenderingTool
         
         // Common render settings
         private RecorderSettingsType recorderType = RecorderSettingsType.Image;
+        private RecorderSettingsType previousRecorderType = RecorderSettingsType.Image;
         private int frameRate = 24;
         private int width = 1920;
         private int height = 1080;
         private string outputPath = "Recordings";
+        private string previousOutputPath = "Recordings";
         private int takeNumber = 1;
         
         // Image recorder settings
@@ -189,7 +191,29 @@ namespace BatchRenderingTool
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
             // Recorder type selection
-            recorderType = (RecorderSettingsType)EditorGUILayout.EnumPopup("Recorder Type:", recorderType);
+            RecorderSettingsType newRecorderType = (RecorderSettingsType)EditorGUILayout.EnumPopup("Recorder Type:", recorderType);
+            
+            // Handle recorder type change
+            if (newRecorderType != recorderType)
+            {
+                previousRecorderType = recorderType;
+                recorderType = newRecorderType;
+                
+                // Auto-switch output path for Animation recorder
+                if (recorderType == RecorderSettingsType.Animation)
+                {
+                    if (outputPath != "Assets")
+                    {
+                        previousOutputPath = outputPath;
+                        outputPath = "Assets";
+                    }
+                }
+                else if (previousRecorderType == RecorderSettingsType.Animation && outputPath == "Assets")
+                {
+                    // Restore previous output path when switching away from Animation
+                    outputPath = previousOutputPath;
+                }
+            }
             
             // Check if recorder type is supported
             if (!RecorderSettingsFactory.IsRecorderTypeSupported(recorderType))
@@ -541,17 +565,36 @@ namespace BatchRenderingTool
             takeNumber = EditorGUILayout.IntField("Take Number:", takeNumber);
             takeNumber = Mathf.Max(1, takeNumber); // Ensure take number is at least 1
             
-            EditorGUILayout.BeginHorizontal();
-            outputPath = EditorGUILayout.TextField("Output Path:", outputPath);
-            if (GUILayout.Button("Browse", GUILayout.Width(60)))
+            // Output path field - disabled for Animation recorder
+            if (recorderType == RecorderSettingsType.Animation)
             {
-                string path = EditorUtility.OpenFolderPanel("Select Output Folder", outputPath, "");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    outputPath = Path.GetRelativePath(Application.dataPath + "/..", path);
-                }
+                EditorGUILayout.BeginHorizontal();
+                GUI.enabled = false;
+                EditorGUILayout.TextField("Output Path:", outputPath);
+                GUI.enabled = true;
+                
+                // Disabled Browse button
+                GUI.enabled = false;
+                GUILayout.Button("Browse", GUILayout.Width(60));
+                GUI.enabled = true;
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.HelpBox("Animation files are always saved to the Assets folder", MessageType.Info);
             }
-            EditorGUILayout.EndHorizontal();
+            else
+            {
+                EditorGUILayout.BeginHorizontal();
+                outputPath = EditorGUILayout.TextField("Output Path:", outputPath);
+                if (GUILayout.Button("Browse", GUILayout.Width(60)))
+                {
+                    string path = EditorUtility.OpenFolderPanel("Select Output Folder", outputPath, "");
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        outputPath = Path.GetRelativePath(Application.dataPath + "/..", path);
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
+            }
             
             if (availableDirectors.Count > 0 && selectedDirectorIndex < availableDirectors.Count && 
                 availableDirectors[selectedDirectorIndex] != null && availableDirectors[selectedDirectorIndex].gameObject != null)
