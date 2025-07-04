@@ -93,7 +93,7 @@ namespace BatchRenderingTool.Editor.Tests
         /// <summary>
         /// Timeline内にテスト用のトラックを追加
         /// </summary>
-        public static T AddTestTrack<T>(TimelineAsset timeline, string trackName) where T : TrackAsset
+        public static T AddTestTrack<T>(TimelineAsset timeline, string trackName) where T : TrackAsset, new()
         {
             Debug.Log($"TestHelpers - テスト用トラック追加: {trackName} (Type: {typeof(T).Name})");
             var track = timeline.CreateTrack<T>(null, trackName);

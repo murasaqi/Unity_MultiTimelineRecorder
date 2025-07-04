@@ -1225,6 +1225,97 @@ namespace BatchRenderingTool
             }
         }
         
+        // Public properties for testing
+        public string OutputFolder => outputPath;
+        public int OutputWidth => width;
+        public int OutputHeight => height;
+        public int FrameRate => frameRate;
+        public RecorderSettingsHelper.ImageFormat ImageFormat
+        {
+            get
+            {
+                switch (imageOutputFormat)
+                {
+                    case ImageRecorderSettings.ImageRecorderOutputFormat.PNG:
+                        return RecorderSettingsHelper.ImageFormat.PNG;
+                    case ImageRecorderSettings.ImageRecorderOutputFormat.JPEG:
+                        return RecorderSettingsHelper.ImageFormat.JPG;
+                    case ImageRecorderSettings.ImageRecorderOutputFormat.EXR:
+                        return RecorderSettingsHelper.ImageFormat.EXR;
+                    default:
+                        return RecorderSettingsHelper.ImageFormat.PNG;
+                }
+            }
+        }
+        
+        // Public methods for testing
+        public List<PlayableDirector> GetAllPlayableDirectors()
+        {
+            return new List<PlayableDirector>(availableDirectors);
+        }
+        
+        public void SetSelectedDirector(PlayableDirector director)
+        {
+            int index = availableDirectors.IndexOf(director);
+            if (index >= 0)
+            {
+                selectedDirectorIndex = index;
+            }
+            else
+            {
+                // Add director if not in list
+                availableDirectors.Add(director);
+                selectedDirectorIndex = availableDirectors.Count - 1;
+            }
+        }
+        
+        public PlayableDirector GetSelectedDirector()
+        {
+            if (selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count)
+            {
+                return availableDirectors[selectedDirectorIndex];
+            }
+            return null;
+        }
+        
+        public bool ValidateSettings(out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            
+            if (availableDirectors.Count == 0 || selectedDirectorIndex < 0 || selectedDirectorIndex >= availableDirectors.Count)
+            {
+                errorMessage = "No Timeline selected";
+                return false;
+            }
+            
+            var director = availableDirectors[selectedDirectorIndex];
+            if (director == null || director.playableAsset == null || !(director.playableAsset is TimelineAsset))
+            {
+                errorMessage = "Selected director does not have a valid Timeline";
+                return false;
+            }
+            
+            if (width <= 0 || height <= 0)
+            {
+                errorMessage = "Invalid output resolution";
+                return false;
+            }
+            
+            if (frameRate <= 0)
+            {
+                errorMessage = "Invalid frame rate";
+                return false;
+            }
+            
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                errorMessage = "Output path is empty";
+                return false;
+            }
+            
+            return true;
+        }
+        
         private RecorderSettings CreateImageRecorderSettings(string timelineName)
         {
             var settings = RecorderClipUtility.CreateProperImageRecorderSettings($"{timelineName}_Recorder");
