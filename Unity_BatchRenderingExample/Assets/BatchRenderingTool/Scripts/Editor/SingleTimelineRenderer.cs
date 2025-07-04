@@ -543,6 +543,9 @@ namespace BatchRenderingTool
         {
             EditorGUILayout.LabelField("Animation Settings", EditorStyles.miniBoldLabel);
             
+            // Animation files must be saved in Assets folder
+            EditorGUILayout.HelpBox("Animation files (.anim) must be saved within the Assets folder. The default output path has been set to 'Assets/Animations/'.", MessageType.Info);
+            
             useAnimationPreset = EditorGUILayout.Toggle("Use Preset:", useAnimationPreset);
             
             if (useAnimationPreset)
@@ -839,11 +842,11 @@ namespace BatchRenderingTool
         
         private void StartRendering()
         {
-            Debug.LogError("[SingleTimelineRenderer] === StartRendering called ===");
-            Debug.LogError($"[SingleTimelineRenderer] Current state: {currentState}");
-            Debug.LogError($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
-            Debug.LogError($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
-            Debug.LogError($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
+            Debug.Log("[SingleTimelineRenderer] === StartRendering called ===");
+            Debug.Log($"[SingleTimelineRenderer] Current state: {currentState}");
+            Debug.Log($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
+            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            Debug.Log($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
             
             if (renderCoroutine != null)
             {
@@ -956,7 +959,7 @@ namespace BatchRenderingTool
                     yield break;
                 }
                 
-                Debug.LogError($"[SingleTimelineRenderer] === Successfully created render timeline at: {tempAssetPath} ===");
+                Debug.Log($"[SingleTimelineRenderer] === Successfully created render timeline at: {tempAssetPath} ===");
             }
             catch (System.Exception e)
             {
@@ -997,11 +1000,11 @@ namespace BatchRenderingTool
             currentState = RenderState.WaitingForPlayMode;
             statusMessage = "Starting Unity Play Mode...";
             
-            Debug.LogError($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
+            Debug.Log($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
             
             if (!EditorApplication.isPlaying)
             {
-                Debug.LogError("[SingleTimelineRenderer] === Entering Play Mode... ===");
+                Debug.Log("[SingleTimelineRenderer] === Entering Play Mode... ===");
                 // Store necessary data for Play Mode
                 EditorPrefs.SetString("STR_DirectorName", directorName);
                 EditorPrefs.SetString("STR_TempAssetPath", tempAssetPath);
@@ -1025,7 +1028,7 @@ namespace BatchRenderingTool
         
         private TimelineAsset CreateRenderTimeline(PlayableDirector originalDirector, TimelineAsset originalTimeline)
         {
-            Debug.LogError($"[SingleTimelineRenderer] === CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name} ===");
+            Debug.Log($"[SingleTimelineRenderer] === CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name} ===");
             
             try
             {
@@ -1038,7 +1041,7 @@ namespace BatchRenderingTool
             }
             timeline.name = $"{originalDirector.gameObject.name}_RenderTimeline";
             timeline.editorSettings.frameRate = frameRate;
-            Debug.LogError($"[SingleTimelineRenderer] === Created TimelineAsset: {timeline.name}, frameRate: {frameRate} ===");
+            Debug.Log($"[SingleTimelineRenderer] === Created TimelineAsset: {timeline.name}, frameRate: {frameRate} ===");
             
             // Save as temporary asset
             string tempDir = "Assets/BatchRenderingTool/Temp";

@@ -59,7 +59,7 @@ namespace BatchRenderingTool
                     return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}";
                     
                 case RecorderSettingsType.Animation:
-                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}";
+                    return $"Assets/Animations/{Wildcards.Scene}_{Wildcards.Take}";
                     
                 case RecorderSettingsType.Alembic:
                     return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}";
