@@ -43,8 +43,7 @@ namespace BatchRenderingTool
         private int frameRate = 24;
         private int width = 1920;
         private int height = 1080;
-        private string outputPath = "Recordings";
-        private string previousOutputPath = "Recordings";
+        private string outputFile = "";
         private int takeNumber = 1;
         
         // Image recorder settings
@@ -103,6 +102,12 @@ namespace BatchRenderingTool
         {
             ScanTimelines();
             EditorApplication.update += OnEditorUpdate;
+            
+            // Initialize output file with default template if empty
+            if (string.IsNullOrEmpty(outputFile))
+            {
+                outputFile = WildcardProcessor.GetDefaultTemplate(recorderType);
+            }
         }
         
         private void OnDisable()
@@ -199,20 +204,8 @@ namespace BatchRenderingTool
                 previousRecorderType = recorderType;
                 recorderType = newRecorderType;
                 
-                // Auto-switch output path for Animation recorder
-                if (recorderType == RecorderSettingsType.Animation)
-                {
-                    if (outputPath != "Assets")
-                    {
-                        previousOutputPath = outputPath;
-                        outputPath = "Assets";
-                    }
-                }
-                else if (previousRecorderType == RecorderSettingsType.Animation && outputPath == "Assets")
-                {
-                    // Restore previous output path when switching away from Animation
-                    outputPath = previousOutputPath;
-                }
+                // Update output file template when recorder type changes
+                outputFile = WildcardProcessor.GetDefaultTemplate(recorderType);
             }
             
             // Check if recorder type is supported
@@ -561,69 +554,72 @@ namespace BatchRenderingTool
             EditorGUILayout.LabelField("Output Settings", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
-            // Take number field
-            takeNumber = EditorGUILayout.IntField("Take Number:", takeNumber);
-            takeNumber = Mathf.Max(1, takeNumber); // Ensure take number is at least 1
-            
-            // Output path field
+            // File Name field (Unity Recorder standard)
             EditorGUILayout.BeginHorizontal();
-            outputPath = EditorGUILayout.TextField("Output Path:", outputPath);
-            if (GUILayout.Button("Browse", GUILayout.Width(60)))
+            outputFile = EditorGUILayout.TextField("File Name:", outputFile);
+            if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                string path = EditorUtility.OpenFolderPanel("Select Output Folder", outputPath, "");
+                string basePath = WildcardProcessor.ExtractBasePath(outputFile);
+                string fileName = WildcardProcessor.ExtractFileName(outputFile);
+                
+                string path = EditorUtility.SaveFolderPanel("Select Output Folder", basePath, "");
                 if (!string.IsNullOrEmpty(path))
                 {
-                    outputPath = Path.GetRelativePath(Application.dataPath + "/..", path);
+                    string relativePath = Path.GetRelativePath(Application.dataPath + "/..", path);
+                    outputFile = string.IsNullOrEmpty(fileName) ? relativePath : $"{relativePath}/{fileName}";
                 }
             }
             EditorGUILayout.EndHorizontal();
             
-            // Show hint for Animation recorder
-            if (recorderType == RecorderSettingsType.Animation)
-            {
-                EditorGUILayout.HelpBox("Animation files are typically saved to the Assets folder for easy access in Unity", MessageType.Info);
-            }
+            // Take number field (separate for easy incrementing)
+            takeNumber = EditorGUILayout.IntField("Take:", takeNumber);
+            takeNumber = Mathf.Max(1, takeNumber);
             
-            if (availableDirectors.Count > 0 && selectedDirectorIndex < availableDirectors.Count && 
-                availableDirectors[selectedDirectorIndex] != null && availableDirectors[selectedDirectorIndex].gameObject != null)
+            // Wildcards help
+            EditorGUILayout.HelpBox(
+                "Wildcards: <Take>, <Scene>, <Frame>, <Time>, <Date>, <Resolution>\n" +
+                "Example: Recordings/<Scene>_<Take>/<Scene>_<Frame>",
+                MessageType.Info
+            );
+            
+            // Preview output path with wildcards resolved
+            if (!string.IsNullOrEmpty(outputFile))
             {
-                var directorName = availableDirectors[selectedDirectorIndex].gameObject.name;
-                var sanitized = SanitizeFileName(directorName);
-                var takeStr = $"_Take{takeNumber:D2}"; // Format as Take01, Take02, etc.
+                // Create wildcard context
+                var context = new WildcardContext(takeNumber, width, height);
                 
-                string outputPreview = "";
-                switch (recorderType)
+                // Validate template
+                string validationError;
+                if (!WildcardProcessor.ValidateTemplate(outputFile, out validationError))
                 {
-                    case RecorderSettingsType.Image:
-                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/{sanitized}{takeStr}_<Frame>.{imageOutputFormat.ToString().ToLower()}";
-                        break;
-                        
-                    case RecorderSettingsType.Movie:
-                        string extension = movieOutputFormat.ToString().ToLower();
-                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/{sanitized}{takeStr}.{extension}";
-                        break;
-                        
-                    case RecorderSettingsType.AOV:
-                        string aovExt = aovOutputFormat == AOVOutputFormat.PNG16 ? "png" : "exr";
+                    EditorGUILayout.HelpBox(validationError, MessageType.Error);
+                }
+                else
+                {
+                    // Process wildcards for preview
+                    string processedPath = WildcardProcessor.ProcessWildcards(outputFile, context);
+                    
+                    // Add file extension based on recorder type
+                    string extension = GetFileExtension();
+                    if (!string.IsNullOrEmpty(extension))
+                    {
+                        processedPath += $".{extension}";
+                    }
+                    
+                    // Special handling for image sequences and AOV
+                    if (recorderType == RecorderSettingsType.Image)
+                    {
+                        processedPath = processedPath.Replace("0001", "<Frame>");
+                    }
+                    else if (recorderType == RecorderSettingsType.AOV)
+                    {
                         int aovCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
                             .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
-                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/ ({aovCount} AOV sequences as .{aovExt})";
-                        break;
-                        
-                    case RecorderSettingsType.Alembic:
-                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/{sanitized}{takeStr}.abc";
-                        break;
-                        
-                    case RecorderSettingsType.Animation:
-                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/{sanitized}{takeStr}.anim";
-                        break;
-                        
-                    default:
-                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/...";
-                        break;
+                        processedPath += $" ({aovCount} AOV sequences)";
+                    }
+                    
+                    EditorGUILayout.HelpBox($"Output: {processedPath}", MessageType.Info);
                 }
-                
-                EditorGUILayout.HelpBox(outputPreview, MessageType.Info);
             }
             
             EditorGUILayout.EndVertical();
@@ -841,6 +837,8 @@ namespace BatchRenderingTool
                 EditorPrefs.SetFloat("STR_Duration", timelineDuration);
                 EditorPrefs.SetBool("STR_IsRendering", true);
                 EditorPrefs.SetInt("STR_TakeNumber", takeNumber);
+                EditorPrefs.SetString("STR_OutputFile", outputFile);
+                EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
                 
                 EditorApplication.isPlaying = true;
                 // The coroutine will be interrupted here, but OnEditorUpdate will continue in Play Mode
@@ -899,34 +897,34 @@ namespace BatchRenderingTool
             // Important: We'll set the bindings on the PlayableDirector after creating it
             
             // Create recorder settings based on type
-            var sanitizedName = SanitizeFileName(originalDirector.gameObject.name);
-            var sanitizedNameWithTake = $"{sanitizedName}_Take{takeNumber:D2}";
+            var context = new WildcardContext(takeNumber, width, height);
+            var processedFileName = WildcardProcessor.ProcessWildcards(outputFile, context);
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
             
             switch (recorderType)
             {
                 case RecorderSettingsType.Image:
-                    var imageSettings = CreateImageRecorderSettings(sanitizedNameWithTake);
+                    var imageSettings = CreateImageRecorderSettings(processedFileName);
                     if (imageSettings != null) recorderSettingsList.Add(imageSettings);
                     break;
                     
                 case RecorderSettingsType.Movie:
-                    var movieSettings = CreateMovieRecorderSettings(sanitizedNameWithTake);
+                    var movieSettings = CreateMovieRecorderSettings(processedFileName);
                     if (movieSettings != null) recorderSettingsList.Add(movieSettings);
                     break;
                     
                 case RecorderSettingsType.AOV:
-                    var aovSettingsList = CreateAOVRecorderSettings(sanitizedNameWithTake);
+                    var aovSettingsList = CreateAOVRecorderSettings(processedFileName);
                     if (aovSettingsList != null) recorderSettingsList.AddRange(aovSettingsList);
                     break;
                     
                 case RecorderSettingsType.Alembic:
-                    var alembicSettings = CreateAlembicRecorderSettings(sanitizedNameWithTake);
+                    var alembicSettings = CreateAlembicRecorderSettings(processedFileName);
                     if (alembicSettings != null) recorderSettingsList.Add(alembicSettings);
                     break;
                     
                 case RecorderSettingsType.Animation:
-                    var animationSettings = CreateAnimationRecorderSettings(sanitizedNameWithTake);
+                    var animationSettings = CreateAnimationRecorderSettings(processedFileName);
                     if (animationSettings != null) recorderSettingsList.Add(animationSettings);
                     break;
                     
@@ -1038,6 +1036,40 @@ namespace BatchRenderingTool
             return sanitized;
         }
         
+        private string GetFileExtension()
+        {
+            switch (recorderType)
+            {
+                case RecorderSettingsType.Image:
+                    switch (imageOutputFormat)
+                    {
+                        case ImageRecorderSettings.ImageRecorderOutputFormat.PNG:
+                            return "png";
+                        case ImageRecorderSettings.ImageRecorderOutputFormat.JPEG:
+                            return "jpg";
+                        case ImageRecorderSettings.ImageRecorderOutputFormat.EXR:
+                            return "exr";
+                        default:
+                            return "png";
+                    }
+                    
+                case RecorderSettingsType.Movie:
+                    return movieOutputFormat.ToString().ToLower();
+                    
+                case RecorderSettingsType.AOV:
+                    return aovOutputFormat == AOVOutputFormat.PNG16 ? "png" : "exr";
+                    
+                case RecorderSettingsType.Alembic:
+                    return "abc";
+                    
+                case RecorderSettingsType.Animation:
+                    return "anim";
+                    
+                default:
+                    return "";
+            }
+        }
+        
         private void OnDestroy()
         {
             StopRendering();
@@ -1074,12 +1106,16 @@ namespace BatchRenderingTool
             string storedTempPath = EditorPrefs.GetString("STR_TempAssetPath", "");
             float timelineDuration = EditorPrefs.GetFloat("STR_Duration", 0f);
             int storedTakeNumber = EditorPrefs.GetInt("STR_TakeNumber", 1);
+            string storedOutputFile = EditorPrefs.GetString("STR_OutputFile", "");
+            RecorderSettingsType storedRecorderType = (RecorderSettingsType)EditorPrefs.GetInt("STR_RecorderType", 0);
             
             // Retrieve exposed name
             string exposedName = EditorPrefs.GetString("STR_ExposedName", "");
             
-            // Use stored take number
+            // Use stored values
             takeNumber = storedTakeNumber;
+            outputFile = storedOutputFile;
+            recorderType = storedRecorderType;
             
             // Store original background execution setting
             bool originalRunInBackground = Application.runInBackground;
@@ -1096,6 +1132,8 @@ namespace BatchRenderingTool
             EditorPrefs.DeleteKey("STR_Duration");
             EditorPrefs.DeleteKey("STR_ExposedName");
             EditorPrefs.DeleteKey("STR_TakeNumber");
+            EditorPrefs.DeleteKey("STR_OutputFile");
+            EditorPrefs.DeleteKey("STR_RecorderType");
             
             // Wait a frame for Play Mode to fully initialize
             yield return null;
@@ -1258,36 +1296,17 @@ namespace BatchRenderingTool
                 currentState = RenderState.Complete;
                 
                 // Create appropriate completion message based on recorder type
-                string outputInfo = "";
-                var takeStr = $"_Take{takeNumber:D2}";
-                switch (recorderType)
+                var context = new WildcardContext(takeNumber, width, height);
+                string processedPath = WildcardProcessor.ProcessWildcards(outputFile, context);
+                string extension = GetFileExtension();
+                
+                string outputInfo = $"Output saved to: {processedPath}.{extension}";
+                
+                if (recorderType == RecorderSettingsType.AOV)
                 {
-                    case RecorderSettingsType.Image:
-                        outputInfo = $"Image sequence saved to: {outputPath}/{directorName}{takeStr}";
-                        break;
-                        
-                    case RecorderSettingsType.Movie:
-                        string ext = movieOutputFormat.ToString().ToLower();
-                        outputInfo = $"Movie saved to: {outputPath}/{directorName}{takeStr}/{directorName}{takeStr}.{ext}";
-                        break;
-                        
-                    case RecorderSettingsType.AOV:
-                        int aovCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
-                            .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
-                        outputInfo = $"{aovCount} AOV sequences saved to: {outputPath}/{directorName}{takeStr}";
-                        break;
-                        
-                    case RecorderSettingsType.Alembic:
-                        outputInfo = $"Alembic file saved to: {outputPath}/{directorName}{takeStr}/{directorName}{takeStr}.abc";
-                        break;
-                        
-                    case RecorderSettingsType.Animation:
-                        outputInfo = $"Animation clip saved to: {outputPath}/{directorName}{takeStr}/{directorName}{takeStr}.anim";
-                        break;
-                        
-                    default:
-                        outputInfo = $"Output saved to: {outputPath}/{directorName}{takeStr}";
-                        break;
+                    int aovCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
+                        .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
+                    outputInfo = $"{aovCount} AOV sequences saved to: {processedPath}";
                 }
                 
                 statusMessage = $"Rendering complete! {outputInfo}";
@@ -1327,7 +1346,7 @@ namespace BatchRenderingTool
         }
         
         // Public properties for testing
-        public string OutputFolder => outputPath;
+        public string OutputFile => outputFile;
         public int OutputWidth => width;
         public int OutputHeight => height;
         public int FrameRate => frameRate;
@@ -1408,18 +1427,26 @@ namespace BatchRenderingTool
                 return false;
             }
             
-            if (string.IsNullOrEmpty(outputPath))
+            if (string.IsNullOrEmpty(outputFile))
             {
-                errorMessage = "Output path is empty";
+                errorMessage = "Output file template is empty";
+                return false;
+            }
+            
+            // Validate file template
+            string templateError;
+            if (!WildcardProcessor.ValidateTemplate(outputFile, out templateError))
+            {
+                errorMessage = templateError;
                 return false;
             }
             
             return true;
         }
         
-        private RecorderSettings CreateImageRecorderSettings(string timelineName)
+        private RecorderSettings CreateImageRecorderSettings(string outputFile)
         {
-            var settings = RecorderClipUtility.CreateProperImageRecorderSettings($"{timelineName}_Recorder");
+            var settings = RecorderClipUtility.CreateProperImageRecorderSettings("ImageRecorder");
             settings.Enabled = true;
             settings.OutputFormat = imageOutputFormat;
             settings.CaptureAlpha = imageCaptureAlpha;
@@ -1429,7 +1456,7 @@ namespace BatchRenderingTool
             settings.CapFrameRate = true;
             
             // Configure output path
-            RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, timelineName, RecorderSettingsType.Image);
+            RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Image);
             
             settings.imageInputSettings = new GameViewInputSettings
             {
@@ -1440,14 +1467,14 @@ namespace BatchRenderingTool
             return settings;
         }
         
-        private RecorderSettings CreateMovieRecorderSettings(string timelineName)
+        private RecorderSettings CreateMovieRecorderSettings(string outputFile)
         {
             MovieRecorderSettings settings = null;
             
             if (useMoviePreset && moviePreset != MovieRecorderPreset.Custom)
             {
                 // Create with preset
-                settings = RecorderSettingsFactory.CreateMovieRecorderSettings($"{timelineName}_Recorder", moviePreset);
+                settings = RecorderSettingsFactory.CreateMovieRecorderSettings("MovieRecorder", moviePreset);
             }
             else
             {
@@ -1471,19 +1498,19 @@ namespace BatchRenderingTool
                     return null;
                 }
                 
-                settings = RecorderSettingsFactory.CreateMovieRecorderSettings($"{timelineName}_Recorder", config);
+                settings = RecorderSettingsFactory.CreateMovieRecorderSettings("MovieRecorder", config);
             }
             
             settings.Enabled = true;
             settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
             
             // Configure output path
-            RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, timelineName, RecorderSettingsType.Movie);
+            RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Movie);
             
             return settings;
         }
         
-        private List<RecorderSettings> CreateAOVRecorderSettings(string timelineName)
+        private List<RecorderSettings> CreateAOVRecorderSettings(string outputFile)
         {
             AOVRecorderSettingsConfig config = null;
             
@@ -1527,18 +1554,18 @@ namespace BatchRenderingTool
                 return null;
             }
             
-            var settingsList = RecorderSettingsFactory.CreateAOVRecorderSettings($"{timelineName}_AOV", config);
+            var settingsList = RecorderSettingsFactory.CreateAOVRecorderSettings("AOVRecorder", config);
             
             // Configure output path for each AOV setting
             foreach (var settings in settingsList)
             {
-                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, timelineName, RecorderSettingsType.AOV);
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.AOV);
             }
             
             return settingsList;
         }
         
-        private RecorderSettings CreateAlembicRecorderSettings(string timelineName)
+        private RecorderSettings CreateAlembicRecorderSettings(string outputFile)
         {
             AlembicRecorderSettingsConfig config = null;
             
@@ -1570,19 +1597,19 @@ namespace BatchRenderingTool
                 return null;
             }
             
-            var settings = RecorderSettingsFactory.CreateAlembicRecorderSettings($"{timelineName}_Alembic", config);
+            var settings = RecorderSettingsFactory.CreateAlembicRecorderSettings("AlembicRecorder", config);
             
             if (settings != null)
             {
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, timelineName, RecorderSettingsType.Alembic);
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Alembic);
             }
             
             return settings;
         }
         
-        private RecorderSettings CreateAnimationRecorderSettings(string timelineName)
+        private RecorderSettings CreateAnimationRecorderSettings(string outputFile)
         {
             AnimationRecorderSettingsConfig config = null;
             
@@ -1621,13 +1648,13 @@ namespace BatchRenderingTool
                 return null;
             }
             
-            var settings = RecorderSettingsFactory.CreateAnimationRecorderSettings($"{timelineName}_Animation", config);
+            var settings = RecorderSettingsFactory.CreateAnimationRecorderSettings("AnimationRecorder", config);
             
             if (settings != null)
             {
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, timelineName, RecorderSettingsType.Animation);
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Animation);
             }
             
             return settings;

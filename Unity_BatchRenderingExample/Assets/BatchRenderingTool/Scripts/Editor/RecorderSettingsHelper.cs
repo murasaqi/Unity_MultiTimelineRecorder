@@ -24,21 +24,25 @@ namespace BatchRenderingTool
         /// <summary>
         /// Configure output path for any RecorderSettings
         /// </summary>
-        public static void ConfigureOutputPath(RecorderSettings settings, string basePath, string timelineName, RecorderSettingsType type)
+        public static void ConfigureOutputPath(RecorderSettings settings, string outputFile, RecorderSettingsType type)
         {
-            string fullOutputPath = basePath;
-            if (!Path.IsPathRooted(fullOutputPath))
-            {
-                fullOutputPath = Path.Combine(Application.dataPath, "..", basePath);
-            }
+            string basePath = Path.GetDirectoryName(outputFile);
+            string fileName = Path.GetFileNameWithoutExtension(outputFile);
             
-            string sanitizedName = SanitizeFileName(timelineName);
-            string finalPath = Path.Combine(fullOutputPath, sanitizedName);
-            finalPath = Path.GetFullPath(finalPath);
-            
-            if (!Directory.Exists(finalPath))
+            if (!string.IsNullOrEmpty(basePath))
             {
-                Directory.CreateDirectory(finalPath);
+                string fullPath = basePath;
+                if (!Path.IsPathRooted(fullPath))
+                {
+                    fullPath = Path.Combine(Application.dataPath, "..", basePath);
+                }
+                
+                fullPath = Path.GetFullPath(fullPath);
+                
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
             }
             
             // Set output file based on recorder type
@@ -48,7 +52,7 @@ namespace BatchRenderingTool
                     var imageSettings = settings as ImageRecorderSettings;
                     if (imageSettings != null)
                     {
-                        imageSettings.OutputFile = $"{finalPath}/{sanitizedName}_<Frame>";
+                        imageSettings.OutputFile = outputFile;
                     }
                     break;
                     
@@ -56,26 +60,33 @@ namespace BatchRenderingTool
                     var movieSettings = settings as MovieRecorderSettings;
                     if (movieSettings != null)
                     {
-                        movieSettings.OutputFile = $"{finalPath}/{sanitizedName}";
+                        movieSettings.OutputFile = outputFile;
                     }
                     break;
                     
                 case RecorderSettingsType.AOV:
                     // AOV output paths are handled differently as they may have multiple outputs
-                    // For now, use a similar pattern to image sequence
                     if (settings is ImageRecorderSettings aovSettings)
                     {
                         // Extract AOV type from settings name if possible
-                        string aovSuffix = "";
+                        string aovType = "";
                         if (settings.name.Contains("_AOV_"))
                         {
                             var parts = settings.name.Split(new[] { "_AOV_" }, StringSplitOptions.None);
                             if (parts.Length > 1)
                             {
-                                aovSuffix = $"_{parts[1]}";
+                                aovType = parts[1];
                             }
                         }
-                        aovSettings.OutputFile = $"{finalPath}/{sanitizedName}{aovSuffix}_<Frame>";
+                        
+                        // Replace <AOVType> wildcard if present
+                        string aovOutputFile = outputFile;
+                        if (!string.IsNullOrEmpty(aovType))
+                        {
+                            aovOutputFile = aovOutputFile.Replace("<AOVType>", aovType);
+                        }
+                        
+                        aovSettings.OutputFile = aovOutputFile;
                     }
                     break;
                     
@@ -84,7 +95,7 @@ namespace BatchRenderingTool
                     // Placeholder: actual AlembicRecorderSettings would have its own output property
                     if (settings is ImageRecorderSettings alembicPlaceholder)
                     {
-                        alembicPlaceholder.OutputFile = $"{finalPath}/{sanitizedName}";
+                        alembicPlaceholder.OutputFile = outputFile;
                     }
                     break;
                     
@@ -93,9 +104,8 @@ namespace BatchRenderingTool
                     var animationSettings = settings as AnimationRecorderSettings;
                     if (animationSettings != null)
                     {
-                        // Use the user-specified path
-                        animationSettings.OutputFile = $"{finalPath}/{sanitizedName}";
-                        Debug.Log($"[RecorderSettingsHelper] Animation will be saved to: {finalPath}/{sanitizedName}.anim");
+                        animationSettings.OutputFile = outputFile;
+                        Debug.Log($"[RecorderSettingsHelper] Animation will be saved to: {outputFile}.anim");
                     }
                     break;
             }
