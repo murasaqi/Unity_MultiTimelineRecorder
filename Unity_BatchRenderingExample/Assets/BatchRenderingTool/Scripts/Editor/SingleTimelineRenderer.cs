@@ -100,23 +100,46 @@ namespace BatchRenderingTool
         
         private void OnEnable()
         {
+            Debug.Log("[SingleTimelineRenderer] OnEnable called");
             ScanTimelines();
             EditorApplication.update += OnEditorUpdate;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             
             // Initialize output file with default template if empty
             if (string.IsNullOrEmpty(outputFile))
             {
                 outputFile = WildcardProcessor.GetDefaultTemplate(recorderType);
             }
+            
+            // Check if we're resuming from Play Mode transition
+            if (EditorApplication.isPlaying && EditorPrefs.GetBool("STR_IsRendering", false))
+            {
+                currentState = RenderState.WaitingForPlayMode;
+                Debug.Log("[SingleTimelineRenderer] Detected Play Mode rendering in progress");
+            }
+            
+            Debug.Log($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}");
         }
         
         private void OnDisable()
         {
             EditorApplication.update -= OnEditorUpdate;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         }
         
         private void OnGUI()
         {
+            // Debug info at the top
+            if (Event.current.type == EventType.Layout)
+            {
+                if (availableDirectors == null)
+                {
+                    Debug.LogError("[SingleTimelineRenderer] availableDirectors is null!");
+                    availableDirectors = new List<PlayableDirector>();
+                    ScanTimelines();
+                }
+            }
+            
             EditorGUILayout.LabelField("Single Timeline Renderer", EditorStyles.boldLabel);
             EditorGUILayout.Space(10);
             
@@ -144,9 +167,24 @@ namespace BatchRenderingTool
             EditorGUILayout.LabelField($"Available Timelines: {availableDirectors.Count}");
             if (GUILayout.Button("Refresh", GUILayout.Width(80)))
             {
+                Debug.Log("[SingleTimelineRenderer] Manual refresh requested");
                 ScanTimelines();
             }
             EditorGUILayout.EndHorizontal();
+            
+            // Debug info
+            if (availableDirectors.Count == 0)
+            {
+                if (GUILayout.Button("Debug: Show all PlayableDirectors"))
+                {
+                    var allDirectors = GameObject.FindObjectsOfType<PlayableDirector>();
+                    Debug.Log($"[DEBUG] Total PlayableDirectors in scene: {allDirectors.Length}");
+                    foreach (var dir in allDirectors)
+                    {
+                        Debug.Log($"[DEBUG] - {dir.name}: playableAsset={dir.playableAsset?.name ?? "null"} (Type: {dir.playableAsset?.GetType().Name ?? "null"})");
+                    }
+                }
+            }
             
             if (availableDirectors.Count > 0)
             {
@@ -629,7 +667,21 @@ namespace BatchRenderingTool
         {
             EditorGUILayout.BeginHorizontal();
             
-            GUI.enabled = currentState == RenderState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying && RecorderSettingsFactory.IsRecorderTypeSupported(recorderType);
+            bool canRender = currentState == RenderState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying && RecorderSettingsFactory.IsRecorderTypeSupported(recorderType);
+            
+            // Debug info
+            if (!canRender)
+            {
+                string reason = "Cannot render: ";
+                if (currentState != RenderState.Idle) reason += $"State={currentState} ";
+                if (availableDirectors.Count == 0) reason += "No directors ";
+                if (EditorApplication.isPlaying) reason += "In Play Mode ";
+                if (!RecorderSettingsFactory.IsRecorderTypeSupported(recorderType)) reason += $"Recorder {recorderType} not supported";
+                
+                Debug.Log($"[SingleTimelineRenderer] {reason}");
+            }
+            
+            GUI.enabled = canRender;
             if (GUILayout.Button("Start Rendering", GUILayout.Height(30)))
             {
                 StartRendering();
@@ -686,14 +738,21 @@ namespace BatchRenderingTool
         
         private void ScanTimelines()
         {
+            Debug.Log("[SingleTimelineRenderer] ScanTimelines called");
             availableDirectors.Clear();
             PlayableDirector[] allDirectors = GameObject.FindObjectsOfType<PlayableDirector>();
+            Debug.Log($"[SingleTimelineRenderer] Found {allDirectors.Length} total PlayableDirectors");
             
             foreach (var director in allDirectors)
             {
                 if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
                 {
                     availableDirectors.Add(director);
+                    Debug.Log($"[SingleTimelineRenderer] Added director: {director.name}");
+                }
+                else if (director != null)
+                {
+                    Debug.Log($"[SingleTimelineRenderer] Skipped director: {director.name} (asset: {director.playableAsset?.GetType().Name ?? "null"})");
                 }
             }
             
@@ -710,17 +769,25 @@ namespace BatchRenderingTool
             {
                 selectedDirectorIndex = 0;
             }
+            
+            Debug.Log($"[SingleTimelineRenderer] ScanTimelines completed - Found {availableDirectors.Count} valid directors");
         }
         
         private void StartRendering()
         {
             Debug.Log("[SingleTimelineRenderer] StartRendering called");
+            Debug.Log($"[SingleTimelineRenderer] Current state: {currentState}");
+            Debug.Log($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
+            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            Debug.Log($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
             
             if (renderCoroutine != null)
             {
+                Debug.Log("[SingleTimelineRenderer] Stopping existing coroutine");
                 EditorCoroutineUtility.StopCoroutine(renderCoroutine);
             }
             
+            Debug.Log("[SingleTimelineRenderer] Starting new coroutine");
             renderCoroutine = EditorCoroutineUtility.StartCoroutine(RenderTimelineCoroutine(), this);
         }
         
@@ -752,12 +819,33 @@ namespace BatchRenderingTool
         private IEnumerator RenderTimelineCoroutine()
         {
             Debug.Log("[SingleTimelineRenderer] RenderTimelineCoroutine started");
+            Debug.Log($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
+            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
             
             currentState = RenderState.Preparing;
             statusMessage = "Preparing...";
             renderProgress = 0f;
             
+            // Validate selection
+            if (availableDirectors.Count == 0)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "No timelines available";
+                Debug.LogError("[SingleTimelineRenderer] No timelines available");
+                yield break;
+            }
+            
+            if (selectedDirectorIndex < 0 || selectedDirectorIndex >= availableDirectors.Count)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Invalid timeline selection";
+                Debug.LogError($"[SingleTimelineRenderer] Invalid selection index: {selectedDirectorIndex} (count: {availableDirectors.Count})");
+                yield break;
+            }
+            
             var selectedDirector = availableDirectors[selectedDirectorIndex];
+            Debug.Log($"[SingleTimelineRenderer] Selected director: {selectedDirector?.name ?? "null"}");
+            
             if (selectedDirector == null || selectedDirector.gameObject == null)
             {
                 currentState = RenderState.Error;
@@ -1142,24 +1230,13 @@ namespace BatchRenderingTool
         {
             StopRendering();
             EditorApplication.update -= OnEditorUpdate;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         }
         
         private void OnEditorUpdate()
         {
-            // Continue rendering process in Play Mode
-            if (EditorApplication.isPlaying && currentState == RenderState.WaitingForPlayMode)
-            {
-                if (EditorPrefs.GetBool("STR_IsRendering", false))
-                {
-                    EditorPrefs.SetBool("STR_IsRendering", false);
-                    
-                    // Start the Play Mode rendering process
-                    if (renderCoroutine == null)
-                    {
-                        renderCoroutine = EditorCoroutineUtility.StartCoroutine(ContinueRenderingInPlayMode(), this);
-                    }
-                }
-            }
+            // OnPlayModeStateChanged handles Play Mode transitions now
+            // This method can be used for other update tasks if needed
         }
         
         private IEnumerator ContinueRenderingInPlayMode()
@@ -1410,6 +1487,29 @@ namespace BatchRenderingTool
             if (currentState == RenderState.Rendering && renderingDirector != null)
             {
                 Repaint();
+            }
+        }
+        
+        private void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            Debug.Log($"[SingleTimelineRenderer] Play Mode state changed: {state}");
+            
+            if (state == PlayModeStateChange.EnteredPlayMode)
+            {
+                // Check if we have rendering data stored
+                if (EditorPrefs.GetBool("STR_IsRendering", false))
+                {
+                    Debug.Log("[SingleTimelineRenderer] Entered Play Mode with rendering data - starting render process");
+                    currentState = RenderState.WaitingForPlayMode;
+                    
+                    // Clear the flag and start rendering
+                    EditorPrefs.SetBool("STR_IsRendering", false);
+                    
+                    if (renderCoroutine == null)
+                    {
+                        renderCoroutine = EditorCoroutineUtility.StartCoroutine(ContinueRenderingInPlayMode(), this);
+                    }
+                }
             }
         }
         
