@@ -847,28 +847,63 @@ namespace BatchRenderingTool
         
         private TimelineAsset CreateRenderTimeline(PlayableDirector originalDirector, TimelineAsset originalTimeline)
         {
+            Debug.Log($"[SingleTimelineRenderer] CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name}");
+            
             // Create timeline
             var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            if (timeline == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] Failed to create TimelineAsset instance");
+                return null;
+            }
             timeline.name = $"{originalDirector.gameObject.name}_RenderTimeline";
             timeline.editorSettings.frameRate = frameRate;
+            Debug.Log($"[SingleTimelineRenderer] Created TimelineAsset: {timeline.name}, frameRate: {frameRate}");
             
             // Save as temporary asset
             string tempDir = "Assets/BatchRenderingTool/Temp";
             if (!AssetDatabase.IsValidFolder(tempDir))
             {
+                Debug.Log("[SingleTimelineRenderer] Creating temp directory...");
                 if (!AssetDatabase.IsValidFolder("Assets/BatchRenderingTool"))
                 {
                     AssetDatabase.CreateFolder("Assets", "BatchRenderingTool");
+                    Debug.Log("[SingleTimelineRenderer] Created BatchRenderingTool folder");
                 }
                 AssetDatabase.CreateFolder("Assets/BatchRenderingTool", "Temp");
+                Debug.Log("[SingleTimelineRenderer] Created Temp folder");
             }
             
             tempAssetPath = $"{tempDir}/{timeline.name}_{System.DateTime.Now.Ticks}.playable";
-            AssetDatabase.CreateAsset(timeline, tempAssetPath);
+            Debug.Log($"[SingleTimelineRenderer] Creating asset at: {tempAssetPath}");
+            try
+            {
+                AssetDatabase.CreateAsset(timeline, tempAssetPath);
+                Debug.Log($"[SingleTimelineRenderer] Successfully created asset at: {tempAssetPath}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[SingleTimelineRenderer] Failed to create asset: {e.Message}");
+                return null;
+            }
             
             // Create control track
+            Debug.Log("[SingleTimelineRenderer] Creating ControlTrack...");
             var controlTrack = timeline.CreateTrack<ControlTrack>(null, "Control Track");
+            if (controlTrack == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] Failed to create ControlTrack");
+                return null;
+            }
+            Debug.Log("[SingleTimelineRenderer] ControlTrack created successfully");
+            
             var controlClip = controlTrack.CreateClip<ControlPlayableAsset>();
+            if (controlClip == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] Failed to create ControlClip");
+                return null;
+            }
+            Debug.Log("[SingleTimelineRenderer] ControlClip created successfully");
             controlClip.displayName = originalDirector.gameObject.name;
             controlClip.start = 0;
             controlClip.duration = originalTimeline.duration;
@@ -901,11 +936,21 @@ namespace BatchRenderingTool
             var processedFileName = WildcardProcessor.ProcessWildcards(outputFile, context);
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
             
+            Debug.Log($"[SingleTimelineRenderer] Creating recorder settings for type: {recorderType}");
             switch (recorderType)
             {
                 case RecorderSettingsType.Image:
+                    Debug.Log("[SingleTimelineRenderer] Creating ImageRecorderSettings...");
                     var imageSettings = CreateImageRecorderSettings(processedFileName);
-                    if (imageSettings != null) recorderSettingsList.Add(imageSettings);
+                    if (imageSettings != null)
+                    {
+                        recorderSettingsList.Add(imageSettings);
+                        Debug.Log($"[SingleTimelineRenderer] ImageRecorderSettings created: {imageSettings.GetType().Name}");
+                    }
+                    else
+                    {
+                        Debug.LogError("[SingleTimelineRenderer] CreateImageRecorderSettings returned null");
+                    }
                     break;
                     
                 case RecorderSettingsType.Movie:
@@ -935,9 +980,10 @@ namespace BatchRenderingTool
             
             if (recorderSettingsList.Count == 0)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to create recorder settings");
+                Debug.LogError($"[SingleTimelineRenderer] Failed to create recorder settings for type: {recorderType}");
                 return null;
             }
+            Debug.Log($"[SingleTimelineRenderer] Created {recorderSettingsList.Count} recorder settings");
             
             // For AOV, we might have multiple settings, but for now use the first one for the main recorder track
             RecorderSettings recorderSettings = recorderSettingsList[0];
@@ -949,7 +995,14 @@ namespace BatchRenderingTool
             }
             
             // Create recorder track and clip
+            Debug.Log("[SingleTimelineRenderer] Creating RecorderTrack...");
             var recorderTrack = timeline.CreateTrack<RecorderTrack>(null, "Recorder Track");
+            if (recorderTrack == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] Failed to create RecorderTrack");
+                return null;
+            }
+            Debug.Log("[SingleTimelineRenderer] RecorderTrack created successfully");
             var recorderClip = recorderTrack.CreateClip<RecorderClip>();
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
             recorderClip.start = 0;
@@ -1446,7 +1499,14 @@ namespace BatchRenderingTool
         
         private RecorderSettings CreateImageRecorderSettings(string outputFile)
         {
+            Debug.Log($"[SingleTimelineRenderer] CreateImageRecorderSettings called with outputFile: {outputFile}");
             var settings = RecorderClipUtility.CreateProperImageRecorderSettings("ImageRecorder");
+            if (settings == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] RecorderClipUtility.CreateProperImageRecorderSettings returned null");
+                return null;
+            }
+            Debug.Log($"[SingleTimelineRenderer] Created settings of type: {settings.GetType().FullName}");
             settings.Enabled = true;
             settings.OutputFormat = imageOutputFormat;
             settings.CaptureAlpha = imageCaptureAlpha;
@@ -1456,14 +1516,18 @@ namespace BatchRenderingTool
             settings.CapFrameRate = true;
             
             // Configure output path
+            Debug.Log($"[SingleTimelineRenderer] Configuring output path: {outputFile}");
             RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Image);
+            Debug.Log($"[SingleTimelineRenderer] Output path configured successfully");
             
+            Debug.Log($"[SingleTimelineRenderer] Setting image input settings: {width}x{height}");
             settings.imageInputSettings = new GameViewInputSettings
             {
                 OutputWidth = width,
                 OutputHeight = height
             };
             
+            Debug.Log("[SingleTimelineRenderer] ImageRecorderSettings created successfully");
             return settings;
         }
         
