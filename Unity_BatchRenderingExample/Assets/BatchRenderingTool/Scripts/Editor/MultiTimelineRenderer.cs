@@ -942,7 +942,8 @@ namespace BatchRenderingTool
             }
             
             // Configure output path
-            RecorderSettingsHelper.ConfigureOutputPath(recorderSettings, baseOutputPath, outputFolderName, recorderType);
+            string outputFile = $"{baseOutputPath}/{outputFolderName}/{outputFolderName}";
+            RecorderSettingsHelper.ConfigureOutputPath(recorderSettings, outputFile, recorderType);
             
             // Save recorder settings as sub-asset
             AssetDatabase.AddObjectToAsset(recorderSettings, timeline);

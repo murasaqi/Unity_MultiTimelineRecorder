@@ -1009,7 +1009,8 @@ namespace BatchRenderingTool
                 }
                 
                 // Configure output path
-                RecorderSettingsHelper.ConfigureOutputPath(currentSettings, testOutputPath, "DebugTest", selectedType);
+                string outputFile = $"{testOutputPath}/DebugTest";
+                RecorderSettingsHelper.ConfigureOutputPath(currentSettings, outputFile, selectedType);
                 
                 SetStatus($"{selectedType} RecorderSettings created successfully", MessageType.Info);
             }

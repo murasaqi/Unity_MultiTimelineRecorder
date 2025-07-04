@@ -1658,7 +1658,19 @@ MonoBehaviour:
   m_References:
     m_Keys:
     - f6c6318173a035a448322d443c052a81
+    - 5c3d83a0ebd55854b82a45bafecfa98c
+    - decbe0a47eebe5f4caaf51f1dd2d0bfc
+    - 0e65c29876d9ce24c92ed28d847d1f17
+    - 34ea58426b93bcc4dbbc39f1d4ba3c47
+    - 32c2ed3bb179e474c99fa344bc352b3b
+    - 0050eb1cd025fac4d958e00192e45151
     m_Values:
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
     - {fileID: 1922889286}
 --- !u!4 &175957172
 Transform:
@@ -13127,7 +13139,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: field of view
-      value: 51.28201
+      value: 33.39849
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_Anamorphism
@@ -13139,7 +13151,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocalLength
-      value: 25
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_GateFitMode
@@ -13159,7 +13171,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocusDistance
-      value: 2.9315078
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: near clip plane
@@ -13183,31 +13195,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.8901293
+      value: 6.505271
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.3000002
+      value: -0.40976477
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 70.35468
+      value: 2.5106199
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.5537205
+      value: -0.5078573
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.0037495496
+      value: 0.29364276
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.83267534
+      value: 0.6568711
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0056047067
+      value: 0.47368273
       objectReference: {fileID: 0}
     - target: {fileID: 2702308875592398683, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -23473,9 +23485,9 @@ Camera:
   m_FOVAxisMode: 0
   m_Iso: 200
   m_ShutterSpeed: 0.005
-  m_Aperture: 2
-  m_FocusDistance: 5.6436024
-  m_FocalLength: 40
+  m_Aperture: 1
+  m_FocusDistance: 37.93524
+  m_FocalLength: 40.400005
   m_BladeCount: 9
   m_Curvature: {x: 2, y: 11}
   m_BarrelClipping: 0.25
@@ -23490,7 +23502,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 33.39849
+  field of view: 33.085964
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -31378,8 +31390,8 @@ Camera:
   m_Iso: 200
   m_ShutterSpeed: 0.005
   m_Aperture: 2
-  m_FocusDistance: 2.9315078
-  m_FocalLength: 25
+  m_FocusDistance: 0.5
+  m_FocalLength: 40
   m_BladeCount: 9
   m_Curvature: {x: 2, y: 11}
   m_BarrelClipping: 0.25
@@ -31394,7 +31406,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 51.28201
+  field of view: 33.39849
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -31420,8 +31432,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1922889286}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0013117939, y: -0.98032993, z: -0.0066144583, w: 0.19725087}
-  m_LocalPosition: {x: 64.354675, y: 2.81, z: 2.8901215}
+  m_LocalRotation: {x: 0.5425811, y: 0.10536864, z: 0.12730749, w: -0.82358736}
+  m_LocalPosition: {x: -3.4893813, y: 3.7002354, z: -6.5052705}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
