@@ -565,35 +565,23 @@ namespace BatchRenderingTool
             takeNumber = EditorGUILayout.IntField("Take Number:", takeNumber);
             takeNumber = Mathf.Max(1, takeNumber); // Ensure take number is at least 1
             
-            // Output path field - disabled for Animation recorder
+            // Output path field
+            EditorGUILayout.BeginHorizontal();
+            outputPath = EditorGUILayout.TextField("Output Path:", outputPath);
+            if (GUILayout.Button("Browse", GUILayout.Width(60)))
+            {
+                string path = EditorUtility.OpenFolderPanel("Select Output Folder", outputPath, "");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    outputPath = Path.GetRelativePath(Application.dataPath + "/..", path);
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            
+            // Show hint for Animation recorder
             if (recorderType == RecorderSettingsType.Animation)
             {
-                EditorGUILayout.BeginHorizontal();
-                GUI.enabled = false;
-                EditorGUILayout.TextField("Output Path:", outputPath);
-                GUI.enabled = true;
-                
-                // Disabled Browse button
-                GUI.enabled = false;
-                GUILayout.Button("Browse", GUILayout.Width(60));
-                GUI.enabled = true;
-                EditorGUILayout.EndHorizontal();
-                
-                EditorGUILayout.HelpBox("Animation files are always saved to the Assets folder", MessageType.Info);
-            }
-            else
-            {
-                EditorGUILayout.BeginHorizontal();
-                outputPath = EditorGUILayout.TextField("Output Path:", outputPath);
-                if (GUILayout.Button("Browse", GUILayout.Width(60)))
-                {
-                    string path = EditorUtility.OpenFolderPanel("Select Output Folder", outputPath, "");
-                    if (!string.IsNullOrEmpty(path))
-                    {
-                        outputPath = Path.GetRelativePath(Application.dataPath + "/..", path);
-                    }
-                }
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.HelpBox("Animation files are typically saved to the Assets folder for easy access in Unity", MessageType.Info);
             }
             
             if (availableDirectors.Count > 0 && selectedDirectorIndex < availableDirectors.Count && 
@@ -627,8 +615,7 @@ namespace BatchRenderingTool
                         break;
                         
                     case RecorderSettingsType.Animation:
-                        // Animation files go directly to Assets folder
-                        outputPreview = $"Output: Assets/{sanitized}{takeStr}.anim";
+                        outputPreview = $"Output: {outputPath}/{sanitized}{takeStr}/{sanitized}{takeStr}.anim";
                         break;
                         
                     default:
@@ -1295,7 +1282,7 @@ namespace BatchRenderingTool
                         break;
                         
                     case RecorderSettingsType.Animation:
-                        outputInfo = $"Animation clip saved to: Assets/{directorName}{takeStr}.anim";
+                        outputInfo = $"Animation clip saved to: {outputPath}/{directorName}{takeStr}/{directorName}{takeStr}.anim";
                         break;
                         
                     default:
