@@ -1,7 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
 using UnityEditor;
-using UnityEngine.Recorder;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Input;
 

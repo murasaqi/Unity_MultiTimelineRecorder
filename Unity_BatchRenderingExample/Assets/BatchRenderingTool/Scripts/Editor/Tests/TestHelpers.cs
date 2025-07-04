@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine.Timeline;
 using UnityEngine.Playables;
 using System.IO;
+using NUnit.Framework;
 
 namespace BatchRenderingTool.Editor.Tests
 {
@@ -34,19 +35,21 @@ namespace BatchRenderingTool.Editor.Tests
         }
 
         /// <summary>
-        /// テスト用のRecorderSettingsを作成
+        /// テスト用のRecorderSettings構成情報を作成
         /// </summary>
-        public static RecorderSettingsHelper CreateTestRecorderSettings()
+        public class TestRecorderConfig
         {
-            Debug.Log("TestHelpers - テスト用RecorderSettings作成");
-            return new RecorderSettingsHelper
-            {
-                OutputFolder = "TestOutput",
-                OutputWidth = 1280,
-                OutputHeight = 720,
-                FrameRate = 24,
-                ImageFormat = RecorderSettingsHelper.ImageFormat.PNG
-            };
+            public string OutputFolder { get; set; } = "TestOutput";
+            public int OutputWidth { get; set; } = 1280;
+            public int OutputHeight { get; set; } = 720;
+            public int FrameRate { get; set; } = 24;
+            public RecorderSettingsHelper.ImageFormat ImageFormat { get; set; } = RecorderSettingsHelper.ImageFormat.PNG;
+        }
+        
+        public static TestRecorderConfig CreateTestRecorderConfig()
+        {
+            Debug.Log("TestHelpers - テスト用RecorderConfig作成");
+            return new TestRecorderConfig();
         }
 
         /// <summary>
