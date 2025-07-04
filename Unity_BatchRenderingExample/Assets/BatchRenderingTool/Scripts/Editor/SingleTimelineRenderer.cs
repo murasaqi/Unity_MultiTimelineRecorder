@@ -1004,12 +1004,27 @@ namespace BatchRenderingTool
             }
             Debug.Log("[SingleTimelineRenderer] RecorderTrack created successfully");
             var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+            if (recorderClip == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] Failed to create RecorderClip");
+                return null;
+            }
+            Debug.Log("[SingleTimelineRenderer] RecorderClip created successfully");
+            
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
             recorderClip.start = 0;
             recorderClip.duration = originalTimeline.duration;
             
             var recorderAsset = recorderClip.asset as RecorderClip;
+            if (recorderAsset == null)
+            {
+                Debug.LogError("[SingleTimelineRenderer] Failed to get RecorderClip asset");
+                return null;
+            }
+            Debug.Log($"[SingleTimelineRenderer] RecorderClip asset type: {recorderAsset.GetType().FullName}");
+            
             recorderAsset.settings = recorderSettings;
+            Debug.Log($"[SingleTimelineRenderer] Assigned RecorderSettings of type: {recorderSettings.GetType().FullName}");
             
             // Use RecorderClipUtility to ensure proper initialization
             RecorderClipUtility.EnsureRecorderTypeIsSet(recorderAsset, recorderSettings);
