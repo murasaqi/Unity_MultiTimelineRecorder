@@ -89,11 +89,14 @@ namespace BatchRenderingTool
                     break;
                     
                 case RecorderSettingsType.Animation:
-                    // Animation uses a single .anim file
+                    // Animation uses a single .anim file and outputs directly to Assets folder
                     var animationSettings = settings as AnimationRecorderSettings;
                     if (animationSettings != null)
                     {
-                        animationSettings.OutputFile = $"{finalPath}/{sanitizedName}";
+                        // Animation files are saved directly to Assets folder
+                        string assetPath = Path.Combine(Application.dataPath, $"{sanitizedName}.anim");
+                        animationSettings.OutputFile = assetPath;
+                        Debug.Log($"[RecorderSettingsHelper] Animation will be saved to: {assetPath}");
                     }
                     break;
             }
