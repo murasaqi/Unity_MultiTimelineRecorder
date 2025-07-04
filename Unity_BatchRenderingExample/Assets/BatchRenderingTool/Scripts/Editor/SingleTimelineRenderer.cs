@@ -18,6 +18,10 @@ namespace BatchRenderingTool
     /// </summary>
     public class SingleTimelineRenderer : EditorWindow
     {
+        // Static instance tracking
+        private static SingleTimelineRenderer instance;
+        private static bool isRenderingInProgress = false;
+        
         public enum RenderState
         {
             Idle,
@@ -95,12 +99,24 @@ namespace BatchRenderingTool
             var window = GetWindow<SingleTimelineRenderer>();
             window.titleContent = new GUIContent("Single Timeline Renderer");
             window.minSize = new Vector2(400, 450);
+            instance = window;
             return window;
         }
         
         private void OnEnable()
         {
             Debug.Log("[SingleTimelineRenderer] OnEnable called");
+            instance = this;
+            
+            // Reset state if not in Play Mode
+            if (!EditorApplication.isPlaying)
+            {
+                currentState = RenderState.Idle;
+                renderCoroutine = null;
+                isRenderingInProgress = false;
+                Debug.Log("[SingleTimelineRenderer] Reset to Idle state");
+            }
+            
             ScanTimelines();
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -112,10 +128,28 @@ namespace BatchRenderingTool
             }
             
             // Check if we're resuming from Play Mode transition
-            if (EditorApplication.isPlaying && EditorPrefs.GetBool("STR_IsRendering", false))
+            if (EditorApplication.isPlaying && (EditorPrefs.GetBool("STR_IsRendering", false) || isRenderingInProgress))
             {
                 currentState = RenderState.WaitingForPlayMode;
-                Debug.Log("[SingleTimelineRenderer] Detected Play Mode rendering in progress");
+                Debug.LogError("[SingleTimelineRenderer] === Detected Play Mode rendering in progress ===");
+                
+                // Immediately start the rendering coroutine in Play Mode
+                EditorApplication.delayCall += () => {
+                    if (EditorApplication.isPlaying)
+                    {
+                        Debug.LogError("[SingleTimelineRenderer] === Starting ContinueRenderingInPlayMode from delayCall ===");
+                        try
+                        {
+                            renderCoroutine = EditorCoroutineUtility.StartCoroutine(ContinueRenderingInPlayMode(), this);
+                            Debug.LogError($"[SingleTimelineRenderer] === delayCall coroutine started: {renderCoroutine != null} ===");
+                        }
+                        catch (System.Exception e)
+                        {
+                            Debug.LogError($"[SingleTimelineRenderer] === delayCall Exception: {e.Message} ===");
+                            Debug.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
+                        }
+                    }
+                };
             }
             
             Debug.Log($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}");
@@ -125,6 +159,11 @@ namespace BatchRenderingTool
         {
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            
+            if (instance == this)
+            {
+                instance = null;
+            }
         }
         
         private void OnGUI()
@@ -669,16 +708,17 @@ namespace BatchRenderingTool
             
             bool canRender = currentState == RenderState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying && RecorderSettingsFactory.IsRecorderTypeSupported(recorderType);
             
-            // Debug info
-            if (!canRender)
+            // Add Reset button if stuck in WaitingForPlayMode
+            if (currentState == RenderState.WaitingForPlayMode && !EditorApplication.isPlaying)
             {
-                string reason = "Cannot render: ";
-                if (currentState != RenderState.Idle) reason += $"State={currentState} ";
-                if (availableDirectors.Count == 0) reason += "No directors ";
-                if (EditorApplication.isPlaying) reason += "In Play Mode ";
-                if (!RecorderSettingsFactory.IsRecorderTypeSupported(recorderType)) reason += $"Recorder {recorderType} not supported";
-                
-                Debug.Log($"[SingleTimelineRenderer] {reason}");
+                EditorGUILayout.HelpBox("Renderer is stuck in WaitingForPlayMode state. Click Reset to fix.", MessageType.Warning);
+                if (GUILayout.Button("Reset State", GUILayout.Height(25)))
+                {
+                    currentState = RenderState.Idle;
+                    renderCoroutine = null;
+                    statusMessage = "State reset to Idle";
+                    Debug.Log("[SingleTimelineRenderer] State manually reset to Idle");
+                }
             }
             
             GUI.enabled = canRender;
@@ -733,6 +773,43 @@ namespace BatchRenderingTool
                 }
             }
             
+            // Debug controls
+            if (currentState != RenderState.Idle)
+            {
+                EditorGUILayout.Space(5);
+                EditorGUILayout.BeginHorizontal();
+                
+                if (GUILayout.Button("Force Reset", GUILayout.Width(100)))
+                {
+                    Debug.Log($"[SingleTimelineRenderer] Force reset from state: {currentState}");
+                    currentState = RenderState.Idle;
+                    statusMessage = "Reset to Idle";
+                    
+                    if (renderCoroutine != null)
+                    {
+                        EditorCoroutineUtility.StopCoroutine(renderCoroutine);
+                        renderCoroutine = null;
+                    }
+                    
+                    CleanupRendering();
+                }
+                
+                if (GUILayout.Button("Clear EditorPrefs", GUILayout.Width(120)))
+                {
+                    Debug.Log("[SingleTimelineRenderer] Clearing all EditorPrefs");
+                    EditorPrefs.DeleteKey("STR_DirectorName");
+                    EditorPrefs.DeleteKey("STR_TempAssetPath");
+                    EditorPrefs.DeleteKey("STR_Duration");
+                    EditorPrefs.DeleteKey("STR_ExposedName");
+                    EditorPrefs.DeleteKey("STR_TakeNumber");
+                    EditorPrefs.DeleteKey("STR_OutputFile");
+                    EditorPrefs.DeleteKey("STR_RecorderType");
+                    EditorPrefs.SetBool("STR_IsRendering", false);
+                }
+                
+                EditorGUILayout.EndHorizontal();
+            }
+            
             EditorGUILayout.EndVertical();
         }
         
@@ -775,11 +852,11 @@ namespace BatchRenderingTool
         
         private void StartRendering()
         {
-            Debug.Log("[SingleTimelineRenderer] StartRendering called");
-            Debug.Log($"[SingleTimelineRenderer] Current state: {currentState}");
-            Debug.Log($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
-            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
-            Debug.Log($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
+            Debug.LogError("[SingleTimelineRenderer] === StartRendering called ===");
+            Debug.LogError($"[SingleTimelineRenderer] Current state: {currentState}");
+            Debug.LogError($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
+            Debug.LogError($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            Debug.LogError($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
             
             if (renderCoroutine != null)
             {
@@ -818,9 +895,9 @@ namespace BatchRenderingTool
         
         private IEnumerator RenderTimelineCoroutine()
         {
-            Debug.Log("[SingleTimelineRenderer] RenderTimelineCoroutine started");
-            Debug.Log($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
-            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            Debug.LogError("[SingleTimelineRenderer] === RenderTimelineCoroutine started ===");
+            Debug.LogError($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
+            Debug.LogError($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
             
             currentState = RenderState.Preparing;
             statusMessage = "Preparing...";
@@ -892,7 +969,7 @@ namespace BatchRenderingTool
                     yield break;
                 }
                 
-                Debug.Log($"[SingleTimelineRenderer] Created render timeline at: {tempAssetPath}");
+                Debug.LogError($"[SingleTimelineRenderer] === Successfully created render timeline at: {tempAssetPath} ===");
             }
             catch (System.Exception e)
             {
@@ -914,11 +991,11 @@ namespace BatchRenderingTool
             currentState = RenderState.WaitingForPlayMode;
             statusMessage = "Starting Unity Play Mode...";
             
-            Debug.Log($"[SingleTimelineRenderer] Current Play Mode state: {EditorApplication.isPlaying}");
+            Debug.LogError($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
             
             if (!EditorApplication.isPlaying)
             {
-                Debug.Log("[SingleTimelineRenderer] Entering Play Mode...");
+                Debug.LogError("[SingleTimelineRenderer] === Entering Play Mode... ===");
                 // Store necessary data for Play Mode
                 EditorPrefs.SetString("STR_DirectorName", directorName);
                 EditorPrefs.SetString("STR_TempAssetPath", tempAssetPath);
@@ -928,6 +1005,9 @@ namespace BatchRenderingTool
                 EditorPrefs.SetString("STR_OutputFile", outputFile);
                 EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
                 
+                // Set static flag
+                isRenderingInProgress = true;
+                
                 EditorApplication.isPlaying = true;
                 // The coroutine will be interrupted here, but OnEditorUpdate will continue in Play Mode
             }
@@ -935,10 +1015,12 @@ namespace BatchRenderingTool
         
         private TimelineAsset CreateRenderTimeline(PlayableDirector originalDirector, TimelineAsset originalTimeline)
         {
-            Debug.Log($"[SingleTimelineRenderer] CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name}");
+            Debug.LogError($"[SingleTimelineRenderer] === CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name} ===");
             
-            // Create timeline
-            var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            try
+            {
+                // Create timeline
+                var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             if (timeline == null)
             {
                 Debug.LogError("[SingleTimelineRenderer] Failed to create TimelineAsset instance");
@@ -946,7 +1028,7 @@ namespace BatchRenderingTool
             }
             timeline.name = $"{originalDirector.gameObject.name}_RenderTimeline";
             timeline.editorSettings.frameRate = frameRate;
-            Debug.Log($"[SingleTimelineRenderer] Created TimelineAsset: {timeline.name}, frameRate: {frameRate}");
+            Debug.LogError($"[SingleTimelineRenderer] === Created TimelineAsset: {timeline.name}, frameRate: {frameRate} ===");
             
             // Save as temporary asset
             string tempDir = "Assets/BatchRenderingTool/Temp";
@@ -1083,27 +1165,27 @@ namespace BatchRenderingTool
             }
             
             // Create recorder track and clip
-            Debug.Log("[SingleTimelineRenderer] Creating RecorderTrack...");
-            var recorderTrack = timeline.CreateTrack<RecorderTrack>(null, "Recorder Track");
+            Debug.LogError("[SingleTimelineRenderer] === Creating RecorderTrack... ===");
+            var recorderTrack = timeline.CreateTrack<UnityEditor.Recorder.Timeline.RecorderTrack>(null, "Recorder Track");
             if (recorderTrack == null)
             {
                 Debug.LogError("[SingleTimelineRenderer] Failed to create RecorderTrack");
                 return null;
             }
-            Debug.Log("[SingleTimelineRenderer] RecorderTrack created successfully");
-            var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+            Debug.LogError("[SingleTimelineRenderer] === RecorderTrack created successfully ===");
+            var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
             if (recorderClip == null)
             {
                 Debug.LogError("[SingleTimelineRenderer] Failed to create RecorderClip");
                 return null;
             }
-            Debug.Log("[SingleTimelineRenderer] RecorderClip created successfully");
+            Debug.LogError("[SingleTimelineRenderer] === RecorderClip created successfully ===");
             
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
             recorderClip.start = 0;
             recorderClip.duration = originalTimeline.duration;
             
-            var recorderAsset = recorderClip.asset as RecorderClip;
+            var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             if (recorderAsset == null)
             {
                 Debug.LogError("[SingleTimelineRenderer] Failed to get RecorderClip asset");
@@ -1128,6 +1210,13 @@ namespace BatchRenderingTool
             Debug.Log($"[SingleTimelineRenderer] Created timeline with ControlTrack, exposed name: {exposedName}");
             
             return timeline;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[SingleTimelineRenderer] Exception in CreateRenderTimeline: {e.Message}");
+                Debug.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
+                return null;
+            }
         }
         
         private void CleanupRendering()
@@ -1231,6 +1320,12 @@ namespace BatchRenderingTool
             StopRendering();
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            
+            if (instance == this)
+            {
+                instance = null;
+                isRenderingInProgress = false;
+            }
         }
         
         private void OnEditorUpdate()
@@ -1239,12 +1334,17 @@ namespace BatchRenderingTool
             // This method can be used for other update tasks if needed
         }
         
-        private IEnumerator ContinueRenderingInPlayMode()
+        public IEnumerator ContinueRenderingInPlayMode()
         {
-            Debug.Log("[SingleTimelineRenderer] Continuing rendering in Play Mode");
+            Debug.LogError("[SingleTimelineRenderer] === ContinueRenderingInPlayMode called ===");
+            Debug.LogError($"[SingleTimelineRenderer] Current window instance: {this?.GetHashCode()}");
+            Debug.LogError($"[SingleTimelineRenderer] EditorApplication.isPlaying: {EditorApplication.isPlaying}");
             
             currentState = RenderState.Rendering;
             statusMessage = "Setting up rendering in Play Mode...";
+            
+            // Force window to repaint
+            Repaint();
             
             // Retrieve stored data
             string directorName = EditorPrefs.GetString("STR_DirectorName", "");
@@ -1284,8 +1384,13 @@ namespace BatchRenderingTool
             yield return null;
             yield return null; // Extra frame for safety
             
-            // Find the director in Play Mode
+            Debug.Log($"[SingleTimelineRenderer] Stored values - Director: {directorName}, TempPath: {storedTempPath}, Duration: {timelineDuration}");
+            
+            // Update UI
             statusMessage = "Finding director in Play Mode...";
+            Repaint();
+            
+            // Find the director in Play Mode
             Debug.Log($"[SingleTimelineRenderer] Looking for director: {directorName}");
             
             // Find the target director in Play Mode
@@ -1465,6 +1570,9 @@ namespace BatchRenderingTool
             Time.captureFramerate = originalCaptureFramerate;
             Debug.Log("[SingleTimelineRenderer] Restored original background execution settings");
             
+            // Clear static flag
+            isRenderingInProgress = false;
+            
             // Exit Play Mode
             if (EditorApplication.isPlaying)
             {
@@ -1492,25 +1600,71 @@ namespace BatchRenderingTool
         
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            Debug.Log($"[SingleTimelineRenderer] Play Mode state changed: {state}");
+            Debug.LogError($"[SingleTimelineRenderer] === Play Mode state changed: {state} ===");
             
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                // Check if we have rendering data stored
-                if (EditorPrefs.GetBool("STR_IsRendering", false))
+                Debug.LogError("[SingleTimelineRenderer] === Entered Play Mode ===");
+                
+                // Check if rendering is in progress
+                if (EditorPrefs.GetBool("STR_IsRendering", false) || isRenderingInProgress)
                 {
-                    Debug.Log("[SingleTimelineRenderer] Entered Play Mode with rendering data - starting render process");
-                    currentState = RenderState.WaitingForPlayMode;
+                    Debug.LogError("[SingleTimelineRenderer] === Rendering in progress, starting ContinueRenderingInPlayMode ===");
+                    currentState = RenderState.Rendering;
+                    statusMessage = "Continuing rendering in Play Mode...";
                     
-                    // Clear the flag and start rendering
-                    EditorPrefs.SetBool("STR_IsRendering", false);
-                    
-                    if (renderCoroutine == null)
+                    try
                     {
-                        renderCoroutine = EditorCoroutineUtility.StartCoroutine(ContinueRenderingInPlayMode(), this);
+                        // Use delayCall to ensure proper execution context
+                        Debug.LogError("[SingleTimelineRenderer] === Using delayCall to start coroutine ===");
+                        EditorApplication.delayCall += () => {
+                            Debug.LogError("[SingleTimelineRenderer] === delayCall executed ===");
+                            if (EditorApplication.isPlaying && instance != null)
+                            {
+                                Debug.LogError($"[SingleTimelineRenderer] === Starting coroutine on instance: {instance.GetHashCode()} ===");
+                                renderCoroutine = EditorCoroutineUtility.StartCoroutine(instance.ContinueRenderingInPlayMode(), instance);
+                                Debug.LogError($"[SingleTimelineRenderer] === Coroutine started: {renderCoroutine != null} ===");
+                            }
+                            else
+                            {
+                                Debug.LogError($"[SingleTimelineRenderer] === Cannot start coroutine - isPlaying: {EditorApplication.isPlaying}, instance: {instance != null} ===");
+                            }
+                        };
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[SingleTimelineRenderer] === Exception: {e.Message} ===");
+                        Debug.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
+                        currentState = RenderState.Error;
+                        statusMessage = $"Failed to start coroutine: {e.Message}";
                     }
                 }
             }
+            else if (state == PlayModeStateChange.ExitingPlayMode)
+            {
+                Debug.LogError("[SingleTimelineRenderer] === Exiting Play Mode ===");
+                
+                // Stop any running coroutines
+                if (renderCoroutine != null)
+                {
+                    EditorCoroutineUtility.StopCoroutine(renderCoroutine);
+                    renderCoroutine = null;
+                }
+                
+                // Clean up
+                CleanupRendering();
+                currentState = RenderState.Idle;
+                statusMessage = "Play Mode exited";
+                isRenderingInProgress = false;
+                EditorPrefs.SetBool("STR_IsRendering", false);
+            }
+        }
+        
+        public void UpdateRenderProgress(float progress, string message)
+        {
+            renderProgress = progress;
+            statusMessage = message;
+            Repaint();
         }
         
         // Public properties for testing
@@ -1614,14 +1768,14 @@ namespace BatchRenderingTool
         
         private RecorderSettings CreateImageRecorderSettings(string outputFile)
         {
-            Debug.Log($"[SingleTimelineRenderer] CreateImageRecorderSettings called with outputFile: {outputFile}");
+            Debug.LogError($"[SingleTimelineRenderer] === CreateImageRecorderSettings called with outputFile: {outputFile} ===");
             var settings = RecorderClipUtility.CreateProperImageRecorderSettings("ImageRecorder");
             if (settings == null)
             {
                 Debug.LogError("[SingleTimelineRenderer] RecorderClipUtility.CreateProperImageRecorderSettings returned null");
                 return null;
             }
-            Debug.Log($"[SingleTimelineRenderer] Created settings of type: {settings.GetType().FullName}");
+            Debug.LogError($"[SingleTimelineRenderer] === Created settings of type: {settings.GetType().FullName} ===");
             settings.Enabled = true;
             settings.OutputFormat = imageOutputFormat;
             settings.CaptureAlpha = imageCaptureAlpha;

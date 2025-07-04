@@ -5,7 +5,8 @@
         "Unity.Timeline",
         "Unity.Timeline.Editor",
         "Unity.RecorderCoreModule",
-        "Unity.Recorder.RecorderLibrary"
+        "Unity.Recorder.RecorderLibrary",
+        "Unity.EditorCoroutines.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
