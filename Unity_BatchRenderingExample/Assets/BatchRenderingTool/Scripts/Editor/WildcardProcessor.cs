@@ -56,16 +56,16 @@ namespace BatchRenderingTool
                     return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}/{Wildcards.Scene}_{Wildcards.Take}_{Wildcards.Frame}";
                     
                 case RecorderSettingsType.Movie:
-                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}/{Wildcards.Scene}_{Wildcards.Take}";
+                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}";
                     
                 case RecorderSettingsType.Animation:
-                    return $"Assets/{Wildcards.Scene}_{Wildcards.Take}";
+                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}";
                     
                 case RecorderSettingsType.Alembic:
-                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}/{Wildcards.Scene}_{Wildcards.Take}";
+                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}";
                     
                 case RecorderSettingsType.AOV:
-                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}/{Wildcards.AOVType}_{Wildcards.Frame}";
+                    return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}_{Wildcards.AOVType}/{Wildcards.AOVType}_{Wildcards.Frame}";
                     
                 default:
                     return $"Recordings/{Wildcards.Scene}_{Wildcards.Take}/{Wildcards.Scene}_{Wildcards.Take}";

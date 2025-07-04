@@ -306,8 +306,8 @@ namespace BatchRenderingTool
                 // 4. Test recorder types
                 System.Type[] recorderTypes = new System.Type[]
                 {
-                    typeof(UnityEditor.Recorder.RecorderTrack),
-                    typeof(UnityEditor.Recorder.RecorderClip),
+                    typeof(UnityEditor.Recorder.Timeline.RecorderTrack),
+                    typeof(UnityEditor.Recorder.Timeline.RecorderClip),
                     typeof(UnityEditor.Recorder.ImageRecorderSettings)
                 };
                 
