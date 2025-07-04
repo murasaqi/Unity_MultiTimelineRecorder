@@ -1,4 +1,4 @@
-# 開発メモ
+<!-- # 開発メモ
 
 ## プロジェクト状態
 SingleTimelineRendererが完全に動作することを確認。複雑な実装をすべて削除し、シンプルで確実な単一Timelineレンダリング機能のみを提供。
@@ -117,4 +117,4 @@ controller.OnError += (timelineName, errorMessage) =>
 
 - [Unity Recorder Documentation](https://docs.unity3d.com/Packages/com.unity.recorder@latest)
 - [Timeline Documentation](https://docs.unity3d.com/Packages/com.unity.timeline@latest)
-- [Editor Coroutines](https://docs.unity3d.com/Packages/com.unity.editorcoroutines@latest)
+- [Editor Coroutines](https://docs.unity3d.com/Packages/com.unity.editorcoroutines@latest) -->

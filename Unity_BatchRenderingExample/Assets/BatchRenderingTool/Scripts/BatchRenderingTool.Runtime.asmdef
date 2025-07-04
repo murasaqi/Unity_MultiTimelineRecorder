@@ -1,0 +1,19 @@
+{
+    "name": "BatchRenderingTool.Runtime",
+    "rootNamespace": "BatchRenderingTool",
+    "references": [
+        "Unity.Timeline",
+        "Unity.Timeline.Editor",
+        "Unity.RecorderCoreModule",
+        "Unity.Recorder.RecorderLibrary"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

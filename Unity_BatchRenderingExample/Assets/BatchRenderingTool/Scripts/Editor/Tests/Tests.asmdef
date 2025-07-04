@@ -1,0 +1,36 @@
+{
+    "name": "BatchRenderingTool.Editor.Tests",
+    "rootNamespace": "BatchRenderingTool.Editor.Tests",
+    "references": [
+        "BatchRenderingTool.Runtime",
+        "BatchRenderingTool.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.Timeline",
+        "Unity.Timeline.Editor",
+        "Unity.RecorderCoreModule",
+        "Unity.RecorderCore",
+        "Unity.RecorderCore.Editor",
+        "Unity.Recorder.RecorderLibrary",
+        "Unity.Recorder.Timeline",
+        "Unity.Recorder.Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

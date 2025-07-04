@@ -54,13 +54,25 @@ namespace BatchRenderingTool
         private List<TimelineRenderItem> renderItems = new List<TimelineRenderItem>();
         private Vector2 timelineScrollPosition;
         
-        // Render settings
+        // Common render settings
+        private RecorderSettingsType recorderType = RecorderSettingsType.Image;
         private int frameRate = 24;
         private int width = 1920;
         private int height = 1080;
-        private ImageRecorderSettings.ImageRecorderOutputFormat outputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
         private string outputPath = "Recordings";
         private ErrorHandling errorHandling = ErrorHandling.StopOnError;
+        
+        // Image recorder settings
+        private ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
+        private bool imageCaptureAlpha = false;
+        
+        // Movie recorder settings
+        private MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
+        private VideoBitrateMode movieQuality = VideoBitrateMode.High;
+        private bool movieCaptureAudio = false;
+        private bool movieCaptureAlpha = false;
+        private MovieRecorderPreset moviePreset = MovieRecorderPreset.HighQuality1080p;
+        private bool useMoviePreset = false;
         
         // Rendering state
         private int currentRenderIndex = -1;
@@ -238,10 +250,34 @@ namespace BatchRenderingTool
             EditorGUILayout.LabelField("Render Settings", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
+            // Recorder type selection
+            recorderType = (RecorderSettingsType)EditorGUILayout.EnumPopup("Recorder Type:", recorderType);
+            
+            if (!RecorderSettingsFactory.IsRecorderTypeSupported(recorderType))
+            {
+                EditorGUILayout.HelpBox($"{recorderType} recorder is not yet implemented", MessageType.Warning);
+            }
+            
+            EditorGUILayout.Space(5);
+            
+            // Common settings
             frameRate = EditorGUILayout.IntField("Frame Rate:", frameRate);
-            width = EditorGUILayout.IntField("Width:", width);
-            height = EditorGUILayout.IntField("Height:", height);
-            outputFormat = (ImageRecorderSettings.ImageRecorderOutputFormat)EditorGUILayout.EnumPopup("Format:", outputFormat);
+            
+            // Type-specific settings
+            switch (recorderType)
+            {
+                case RecorderSettingsType.Image:
+                    DrawImageRecorderSettings();
+                    break;
+                    
+                case RecorderSettingsType.Movie:
+                    DrawMovieRecorderSettings();
+                    break;
+                    
+                default:
+                    EditorGUILayout.HelpBox("This recorder type is not yet supported", MessageType.Info);
+                    break;
+            }
             
             EditorGUILayout.Space(5);
             
@@ -254,6 +290,64 @@ namespace BatchRenderingTool
             }
             
             EditorGUILayout.EndVertical();
+        }
+        
+        private void DrawImageRecorderSettings()
+        {
+            width = EditorGUILayout.IntField("Width:", width);
+            height = EditorGUILayout.IntField("Height:", height);
+            imageOutputFormat = (ImageRecorderSettings.ImageRecorderOutputFormat)EditorGUILayout.EnumPopup("Format:", imageOutputFormat);
+            imageCaptureAlpha = EditorGUILayout.Toggle("Capture Alpha:", imageCaptureAlpha);
+            
+            if (imageCaptureAlpha && imageOutputFormat != ImageRecorderSettings.ImageRecorderOutputFormat.EXR)
+            {
+                EditorGUILayout.HelpBox("Alpha channel is best supported with EXR format", MessageType.Info);
+            }
+        }
+        
+        private void DrawMovieRecorderSettings()
+        {
+            useMoviePreset = EditorGUILayout.Toggle("Use Preset:", useMoviePreset);
+            
+            if (useMoviePreset)
+            {
+                moviePreset = (MovieRecorderPreset)EditorGUILayout.EnumPopup("Preset:", moviePreset);
+                
+                // Apply preset values
+                if (moviePreset != MovieRecorderPreset.Custom)
+                {
+                    var presetConfig = MovieRecorderSettingsConfig.GetPreset(moviePreset);
+                    width = presetConfig.width;
+                    height = presetConfig.height;
+                    frameRate = presetConfig.frameRate;
+                    movieOutputFormat = presetConfig.outputFormat;
+                    movieQuality = presetConfig.videoBitrateMode;
+                    movieCaptureAudio = presetConfig.captureAudio;
+                    movieCaptureAlpha = presetConfig.captureAlpha;
+                    
+                    EditorGUILayout.HelpBox(
+                        $"Preset: {presetConfig.width}x{presetConfig.height} @ {presetConfig.frameRate}fps",
+                        MessageType.Info
+                    );
+                }
+            }
+            else
+            {
+                width = EditorGUILayout.IntField("Width:", width);
+                height = EditorGUILayout.IntField("Height:", height);
+                movieOutputFormat = (MovieRecorderSettings.VideoRecorderOutputFormat)EditorGUILayout.EnumPopup("Format:", movieOutputFormat);
+                movieQuality = (VideoBitrateMode)EditorGUILayout.EnumPopup("Quality:", movieQuality);
+                movieCaptureAudio = EditorGUILayout.Toggle("Capture Audio:", movieCaptureAudio);
+                movieCaptureAlpha = EditorGUILayout.Toggle("Capture Alpha:", movieCaptureAlpha);
+            }
+            
+            // Platform-specific warnings
+            if (movieOutputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.MOV)
+            {
+                #if !UNITY_EDITOR_OSX
+                EditorGUILayout.HelpBox("MOV format with ProRes is only available on macOS", MessageType.Warning);
+                #endif
+            }
         }
         
         private void DrawOutputSettings()
@@ -283,7 +377,7 @@ namespace BatchRenderingTool
             EditorGUILayout.BeginHorizontal();
             
             bool hasSelected = renderItems.Any(item => item.selected);
-            GUI.enabled = currentState == RenderState.Idle && hasSelected && !EditorApplication.isPlaying;
+            GUI.enabled = currentState == RenderState.Idle && hasSelected && !EditorApplication.isPlaying && RecorderSettingsFactory.IsRecorderTypeSupported(recorderType);
             
             if (GUILayout.Button("Start Batch Rendering", GUILayout.Height(30)))
             {
@@ -488,7 +582,15 @@ namespace BatchRenderingTool
                 EditorPrefs.SetInt("MTR_FrameRate", frameRate);
                 EditorPrefs.SetInt("MTR_Width", width);
                 EditorPrefs.SetInt("MTR_Height", height);
-                EditorPrefs.SetString("MTR_OutputFormat", outputFormat.ToString());
+                EditorPrefs.SetString("MTR_RecorderType", recorderType.ToString());
+                EditorPrefs.SetString("MTR_ImageOutputFormat", imageOutputFormat.ToString());
+                EditorPrefs.SetString("MTR_MovieOutputFormat", movieOutputFormat.ToString());
+                EditorPrefs.SetString("MTR_MovieQuality", movieQuality.ToString());
+                EditorPrefs.SetBool("MTR_MovieCaptureAudio", movieCaptureAudio);
+                EditorPrefs.SetBool("MTR_MovieCaptureAlpha", movieCaptureAlpha);
+                EditorPrefs.SetBool("MTR_ImageCaptureAlpha", imageCaptureAlpha);
+                EditorPrefs.SetString("MTR_MoviePreset", moviePreset.ToString());
+                EditorPrefs.SetBool("MTR_UseMoviePreset", useMoviePreset);
                 EditorPrefs.SetString("MTR_ErrorHandling", errorHandling.ToString());
                 
                 // Store selected items
@@ -544,11 +646,29 @@ namespace BatchRenderingTool
             int storedFrameRate = EditorPrefs.GetInt("MTR_FrameRate", 24);
             int storedWidth = EditorPrefs.GetInt("MTR_Width", 1920);
             int storedHeight = EditorPrefs.GetInt("MTR_Height", 1080);
-            string formatString = EditorPrefs.GetString("MTR_OutputFormat", "PNG");
-            string errorHandlingString = EditorPrefs.GetString("MTR_ErrorHandling", "StopOnError");
             
-            // Parse enums
-            System.Enum.TryParse<ImageRecorderSettings.ImageRecorderOutputFormat>(formatString, out var storedFormat);
+            // Restore recorder type and settings
+            string recorderTypeString = EditorPrefs.GetString("MTR_RecorderType", "Image");
+            System.Enum.TryParse<RecorderSettingsType>(recorderTypeString, out recorderType);
+            
+            string imageFormatString = EditorPrefs.GetString("MTR_ImageOutputFormat", "PNG");
+            System.Enum.TryParse<ImageRecorderSettings.ImageRecorderOutputFormat>(imageFormatString, out imageOutputFormat);
+            
+            string movieFormatString = EditorPrefs.GetString("MTR_MovieOutputFormat", "MP4");
+            System.Enum.TryParse<MovieRecorderSettings.VideoRecorderOutputFormat>(movieFormatString, out movieOutputFormat);
+            
+            string movieQualityString = EditorPrefs.GetString("MTR_MovieQuality", "High");
+            System.Enum.TryParse<VideoBitrateMode>(movieQualityString, out movieQuality);
+            
+            movieCaptureAudio = EditorPrefs.GetBool("MTR_MovieCaptureAudio", false);
+            movieCaptureAlpha = EditorPrefs.GetBool("MTR_MovieCaptureAlpha", false);
+            imageCaptureAlpha = EditorPrefs.GetBool("MTR_ImageCaptureAlpha", false);
+            
+            string moviePresetString = EditorPrefs.GetString("MTR_MoviePreset", "HighQuality1080p");
+            System.Enum.TryParse<MovieRecorderPreset>(moviePresetString, out moviePreset);
+            useMoviePreset = EditorPrefs.GetBool("MTR_UseMoviePreset", false);
+            
+            string errorHandlingString = EditorPrefs.GetString("MTR_ErrorHandling", "StopOnError");
             System.Enum.TryParse<ErrorHandling>(errorHandlingString, out var storedErrorHandling);
             
             // Wait for Play Mode to fully initialize
@@ -623,7 +743,7 @@ namespace BatchRenderingTool
                     {
                         renderTimeline = CreateRenderTimeline(targetDirector, originalTimeline, 
                                                              outputFolder, storedOutputPath,
-                                                             storedFrameRate, storedWidth, storedHeight, storedFormat);
+                                                             storedFrameRate, storedWidth, storedHeight);
                         
                         if (renderTimeline != null)
                         {
@@ -728,7 +848,15 @@ namespace BatchRenderingTool
             EditorPrefs.DeleteKey("MTR_FrameRate");
             EditorPrefs.DeleteKey("MTR_Width");
             EditorPrefs.DeleteKey("MTR_Height");
-            EditorPrefs.DeleteKey("MTR_OutputFormat");
+            EditorPrefs.DeleteKey("MTR_RecorderType");
+            EditorPrefs.DeleteKey("MTR_ImageOutputFormat");
+            EditorPrefs.DeleteKey("MTR_MovieOutputFormat");
+            EditorPrefs.DeleteKey("MTR_MovieQuality");
+            EditorPrefs.DeleteKey("MTR_MovieCaptureAudio");
+            EditorPrefs.DeleteKey("MTR_MovieCaptureAlpha");
+            EditorPrefs.DeleteKey("MTR_ImageCaptureAlpha");
+            EditorPrefs.DeleteKey("MTR_MoviePreset");
+            EditorPrefs.DeleteKey("MTR_UseMoviePreset");
             EditorPrefs.DeleteKey("MTR_ErrorHandling");
             
             // Update final status
@@ -746,8 +874,7 @@ namespace BatchRenderingTool
         
         private TimelineAsset CreateRenderTimeline(PlayableDirector originalDirector, TimelineAsset originalTimeline,
                                                    string outputFolderName, string baseOutputPath,
-                                                   int fps, int resWidth, int resHeight, 
-                                                   ImageRecorderSettings.ImageRecorderOutputFormat format)
+                                                   int fps, int resWidth, int resHeight)
         {
             // Create timeline
             var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
@@ -790,37 +917,32 @@ namespace BatchRenderingTool
             controlAsset.active = true;
             controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
             
-            // Create recorder settings
-            var recorderSettings = RecorderClipUtility.CreateProperImageRecorderSettings($"{outputFolderName}_Recorder");
-            recorderSettings.Enabled = true;
-            recorderSettings.OutputFormat = format;
-            recorderSettings.CaptureAlpha = format == ImageRecorderSettings.ImageRecorderOutputFormat.EXR;
-            recorderSettings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-            recorderSettings.FrameRatePlayback = UnityEditor.Recorder.FrameRatePlayback.Constant;
-            recorderSettings.FrameRate = fps;
-            recorderSettings.CapFrameRate = true;
+            // Create recorder settings based on type
+            RecorderSettings recorderSettings = null;
+            
+            switch (recorderType)
+            {
+                case RecorderSettingsType.Image:
+                    recorderSettings = CreateImageRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
+                    break;
+                    
+                case RecorderSettingsType.Movie:
+                    recorderSettings = CreateMovieRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
+                    break;
+                    
+                default:
+                    Debug.LogError($"[MultiTimelineRenderer] Unsupported recorder type: {recorderType}");
+                    return null;
+            }
+            
+            if (recorderSettings == null)
+            {
+                Debug.LogError("[MultiTimelineRenderer] Failed to create recorder settings");
+                return null;
+            }
             
             // Configure output path
-            string fullOutputPath = baseOutputPath;
-            if (!System.IO.Path.IsPathRooted(fullOutputPath))
-            {
-                fullOutputPath = System.IO.Path.Combine(Application.dataPath, "..", baseOutputPath);
-            }
-            
-            string finalPath = System.IO.Path.Combine(fullOutputPath, outputFolderName);
-            finalPath = System.IO.Path.GetFullPath(finalPath);
-            
-            if (!System.IO.Directory.Exists(finalPath))
-            {
-                System.IO.Directory.CreateDirectory(finalPath);
-            }
-            
-            recorderSettings.OutputFile = $"{finalPath}/{outputFolderName}_<Frame>";
-            recorderSettings.imageInputSettings = new GameViewInputSettings
-            {
-                OutputWidth = resWidth,
-                OutputHeight = resHeight
-            };
+            RecorderSettingsHelper.ConfigureOutputPath(recorderSettings, baseOutputPath, outputFolderName, recorderType);
             
             // Save recorder settings as sub-asset
             AssetDatabase.AddObjectToAsset(recorderSettings, timeline);
@@ -950,6 +1072,89 @@ namespace BatchRenderingTool
             {
                 Repaint();
             }
+        }
+        
+        private RecorderSettings CreateImageRecorderSettingsForBatch(string name, int fps, int width, int height)
+        {
+            Debug.Log($"[MultiTimelineRenderer] Creating Image recorder settings: {name}");
+            
+            var settings = RecorderClipUtility.CreateProperImageRecorderSettings($"{name}_Recorder");
+            settings.Enabled = true;
+            settings.OutputFormat = imageOutputFormat;
+            settings.CaptureAlpha = imageCaptureAlpha;
+            settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+            settings.FrameRatePlayback = UnityEditor.Recorder.FrameRatePlayback.Constant;
+            settings.FrameRate = fps;
+            settings.CapFrameRate = true;
+            
+            settings.imageInputSettings = new GameViewInputSettings
+            {
+                OutputWidth = width,
+                OutputHeight = height
+            };
+            
+            Debug.Log($"[MultiTimelineRenderer] Image settings created: {width}x{height}@{fps}fps, Format: {imageOutputFormat}");
+            
+            return settings;
+        }
+        
+        private RecorderSettings CreateMovieRecorderSettingsForBatch(string name, int fps, int width, int height)
+        {
+            Debug.Log($"[MultiTimelineRenderer] Creating Movie recorder settings: {name}");
+            
+            MovieRecorderSettings settings = null;
+            
+            if (useMoviePreset && moviePreset != MovieRecorderPreset.Custom)
+            {
+                Debug.Log($"[MultiTimelineRenderer] Using movie preset: {moviePreset}");
+                
+                // Create with preset
+                settings = RecorderSettingsFactory.CreateMovieRecorderSettings($"{name}_Recorder", moviePreset);
+                // Override resolution if needed
+                if (moviePreset == MovieRecorderPreset.Custom)
+                {
+                    settings.ImageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = width,
+                        OutputHeight = height
+                    };
+                }
+            }
+            else
+            {
+                Debug.Log("[MultiTimelineRenderer] Using custom movie settings");
+                
+                // Create with custom settings
+                var config = new MovieRecorderSettingsConfig
+                {
+                    outputFormat = movieOutputFormat,
+                    videoBitrateMode = movieQuality,
+                    captureAudio = movieCaptureAudio,
+                    captureAlpha = movieCaptureAlpha,
+                    width = width,
+                    height = height,
+                    frameRate = fps,
+                    capFrameRate = true
+                };
+                
+                string errorMessage;
+                if (!config.Validate(out errorMessage))
+                {
+                    Debug.LogError($"[MultiTimelineRenderer] Invalid movie configuration: {errorMessage}");
+                    return null;
+                }
+                
+                settings = RecorderSettingsFactory.CreateMovieRecorderSettings($"{name}_Recorder", config);
+            }
+            
+            if (settings != null)
+            {
+                settings.Enabled = true;
+                settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+                Debug.Log($"[MultiTimelineRenderer] Movie settings created: {width}x{height}@{fps}fps, Format: {movieOutputFormat}");
+            }
+            
+            return settings;
         }
     }
 }
