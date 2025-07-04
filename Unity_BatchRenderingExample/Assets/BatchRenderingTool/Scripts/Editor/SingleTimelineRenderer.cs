@@ -1038,6 +1038,15 @@ namespace BatchRenderingTool
             // Retrieve exposed name
             string exposedName = EditorPrefs.GetString("STR_ExposedName", "");
             
+            // Store original background execution setting
+            bool originalRunInBackground = Application.runInBackground;
+            int originalCaptureFramerate = Time.captureFramerate;
+            
+            // Enable background execution to prevent stopping when focus is lost
+            Application.runInBackground = true;
+            Time.captureFramerate = frameRate;
+            Debug.Log($"[SingleTimelineRenderer] Enabled background execution. CaptureFramerate: {frameRate}");
+            
             // Clean up EditorPrefs
             EditorPrefs.DeleteKey("STR_DirectorName");
             EditorPrefs.DeleteKey("STR_TempAssetPath");
@@ -1180,6 +1189,13 @@ namespace BatchRenderingTool
             
             while (renderingDirector != null && renderingDirector.state == PlayState.Playing && renderTime < renderTimeout)
             {
+                // Check if Unity Editor is paused and unpause it
+                if (EditorApplication.isPaused)
+                {
+                    Debug.LogWarning("[SingleTimelineRenderer] Editor was paused, unpausing...");
+                    EditorApplication.isPaused = false;
+                }
+                
                 renderProgress = (float)(renderingDirector.time / renderingDirector.duration);
                 renderTime += Time.deltaTime;
                 yield return null;
@@ -1234,6 +1250,11 @@ namespace BatchRenderingTool
                 
                 Debug.Log($"[SingleTimelineRenderer] Rendering complete for {directorName}");
             }
+            
+            // Restore original settings
+            Application.runInBackground = originalRunInBackground;
+            Time.captureFramerate = originalCaptureFramerate;
+            Debug.Log("[SingleTimelineRenderer] Restored original background execution settings");
             
             // Exit Play Mode
             if (EditorApplication.isPlaying)
