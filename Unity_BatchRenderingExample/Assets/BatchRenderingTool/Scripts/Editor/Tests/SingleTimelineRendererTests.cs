@@ -58,7 +58,8 @@ namespace BatchRenderingTool.Editor.Tests
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             
             Assert.IsNotNull(renderer);
-            Assert.AreEqual("Recordings", renderer.OutputFolder);
+            Assert.IsNotNull(renderer.OutputFile);
+            Assert.IsTrue(renderer.OutputFile.Contains("Recordings"));
             Assert.AreEqual(1920, renderer.OutputWidth);
             Assert.AreEqual(1080, renderer.OutputHeight);
             Assert.AreEqual(24, renderer.FrameRate);
