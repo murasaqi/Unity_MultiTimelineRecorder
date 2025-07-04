@@ -26,7 +26,10 @@ namespace BatchRenderingTool
         {
             Idle,
             Preparing,
+            PreparingAssets,      // アセット準備中
+            SavingAssets,         // アセット保存中  
             WaitingForPlayMode,
+            InitializingInPlayMode, // Play Mode内での初期化中
             Rendering,
             Complete,
             Error
@@ -127,29 +130,13 @@ namespace BatchRenderingTool
                 outputFile = WildcardProcessor.GetDefaultTemplate(recorderType);
             }
             
-            // Check if we're resuming from Play Mode transition
-            if (EditorApplication.isPlaying && (EditorPrefs.GetBool("STR_IsRendering", false) || isRenderingInProgress))
+            // MonoBehaviourベースの新しい実装では、Play Mode遷移時の複雑な処理は不要
+            if (EditorApplication.isPlaying && EditorPrefs.GetBool("STR_IsRendering", false))
             {
+                // Play Mode内でTimelineRendererが処理中
                 currentState = RenderState.WaitingForPlayMode;
-                Debug.LogError("[SingleTimelineRenderer] === Detected Play Mode rendering in progress ===");
-                
-                // Immediately start the rendering coroutine in Play Mode
-                EditorApplication.delayCall += () => {
-                    if (EditorApplication.isPlaying)
-                    {
-                        Debug.LogError("[SingleTimelineRenderer] === Starting ContinueRenderingInPlayMode from delayCall ===");
-                        try
-                        {
-                            renderCoroutine = EditorCoroutineUtility.StartCoroutine(ContinueRenderingInPlayMode(), this);
-                            Debug.LogError($"[SingleTimelineRenderer] === delayCall coroutine started: {renderCoroutine != null} ===");
-                        }
-                        catch (System.Exception e)
-                        {
-                            Debug.LogError($"[SingleTimelineRenderer] === delayCall Exception: {e.Message} ===");
-                            Debug.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
-                        }
-                    }
-                };
+                statusMessage = "Rendering in Play Mode...";
+                Debug.Log("[SingleTimelineRenderer] Detected rendering in progress in Play Mode");
             }
             
             Debug.Log($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}");
@@ -895,9 +882,9 @@ namespace BatchRenderingTool
         
         private IEnumerator RenderTimelineCoroutine()
         {
-            Debug.LogError("[SingleTimelineRenderer] === RenderTimelineCoroutine started ===");
-            Debug.LogError($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
-            Debug.LogError($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            Debug.Log("[SingleTimelineRenderer] RenderTimelineCoroutine started");
+            Debug.Log($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
+            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
             
             currentState = RenderState.Preparing;
             statusMessage = "Preparing...";
@@ -954,7 +941,7 @@ namespace BatchRenderingTool
             Debug.Log($"[SingleTimelineRenderer] Timeline duration: {timelineDuration}, PlayOnAwake was: {originalPlayOnAwake}");
             
             // Create render timeline BEFORE entering Play Mode
-            currentState = RenderState.Preparing;
+            currentState = RenderState.PreparingAssets;
             statusMessage = "Creating render timeline...";
             
             try
@@ -980,12 +967,31 @@ namespace BatchRenderingTool
                 yield break;
             }
             
-            // Force save assets before entering Play Mode
+            // Save assets and verify
+            currentState = RenderState.SavingAssets;
+            statusMessage = "Saving timeline asset...";
+            yield return null; // Allow UI to update
+            
+            Debug.Log("[SingleTimelineRenderer] Saving assets...");
             AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(tempAssetPath, ImportAssetOptions.ForceUpdate);
             AssetDatabase.Refresh();
             
-            // Wait a bit to ensure asset is saved
-            yield return new WaitForSeconds(0.1f);
+            // Verify asset was saved
+            Debug.Log("[SingleTimelineRenderer] Verifying saved asset...");
+            var verifyAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
+            if (verifyAsset == null)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Failed to save Timeline asset";
+                Debug.LogError($"[SingleTimelineRenderer] Failed to verify saved asset at: {tempAssetPath}");
+                selectedDirector.playOnAwake = originalPlayOnAwake;
+                yield break;
+            }
+            Debug.Log($"[SingleTimelineRenderer] Asset verified successfully: {verifyAsset.name}");
+            
+            // Wait to ensure asset is fully saved
+            yield return new WaitForSeconds(0.5f);
             
             // Enter Play Mode
             currentState = RenderState.WaitingForPlayMode;
@@ -1004,12 +1010,16 @@ namespace BatchRenderingTool
                 EditorPrefs.SetInt("STR_TakeNumber", takeNumber);
                 EditorPrefs.SetString("STR_OutputFile", outputFile);
                 EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
+                EditorPrefs.SetInt("STR_FrameRate", frameRate);
+                
+                // MonoBehaviourベースのレンダラーを使用するフラグ
+                EditorPrefs.SetBool("STR_UseMonoBehaviour", true);
                 
                 // Set static flag
                 isRenderingInProgress = true;
                 
                 EditorApplication.isPlaying = true;
-                // The coroutine will be interrupted here, but OnEditorUpdate will continue in Play Mode
+                // Play Modeに入ると、TimelineRendererが自動的に処理を引き継ぐ
             }
         }
         
@@ -1334,261 +1344,7 @@ namespace BatchRenderingTool
             // This method can be used for other update tasks if needed
         }
         
-        public IEnumerator ContinueRenderingInPlayMode()
-        {
-            Debug.LogError("[SingleTimelineRenderer] === ContinueRenderingInPlayMode called ===");
-            Debug.LogError($"[SingleTimelineRenderer] Current window instance: {this?.GetHashCode()}");
-            Debug.LogError($"[SingleTimelineRenderer] EditorApplication.isPlaying: {EditorApplication.isPlaying}");
-            
-            currentState = RenderState.Rendering;
-            statusMessage = "Setting up rendering in Play Mode...";
-            
-            // Force window to repaint
-            Repaint();
-            
-            // Retrieve stored data
-            string directorName = EditorPrefs.GetString("STR_DirectorName", "");
-            string storedTempPath = EditorPrefs.GetString("STR_TempAssetPath", "");
-            float timelineDuration = EditorPrefs.GetFloat("STR_Duration", 0f);
-            int storedTakeNumber = EditorPrefs.GetInt("STR_TakeNumber", 1);
-            string storedOutputFile = EditorPrefs.GetString("STR_OutputFile", "");
-            RecorderSettingsType storedRecorderType = (RecorderSettingsType)EditorPrefs.GetInt("STR_RecorderType", 0);
-            
-            // Retrieve exposed name
-            string exposedName = EditorPrefs.GetString("STR_ExposedName", "");
-            
-            // Use stored values
-            takeNumber = storedTakeNumber;
-            outputFile = storedOutputFile;
-            recorderType = storedRecorderType;
-            
-            // Store original background execution setting
-            bool originalRunInBackground = Application.runInBackground;
-            int originalCaptureFramerate = Time.captureFramerate;
-            
-            // Enable background execution to prevent stopping when focus is lost
-            Application.runInBackground = true;
-            Time.captureFramerate = frameRate;
-            Debug.Log($"[SingleTimelineRenderer] Enabled background execution. CaptureFramerate: {frameRate}");
-            
-            // Clean up EditorPrefs
-            EditorPrefs.DeleteKey("STR_DirectorName");
-            EditorPrefs.DeleteKey("STR_TempAssetPath");
-            EditorPrefs.DeleteKey("STR_Duration");
-            EditorPrefs.DeleteKey("STR_ExposedName");
-            EditorPrefs.DeleteKey("STR_TakeNumber");
-            EditorPrefs.DeleteKey("STR_OutputFile");
-            EditorPrefs.DeleteKey("STR_RecorderType");
-            
-            // Wait a frame for Play Mode to fully initialize
-            yield return null;
-            yield return null; // Extra frame for safety
-            
-            Debug.Log($"[SingleTimelineRenderer] Stored values - Director: {directorName}, TempPath: {storedTempPath}, Duration: {timelineDuration}");
-            
-            // Update UI
-            statusMessage = "Finding director in Play Mode...";
-            Repaint();
-            
-            // Find the director in Play Mode
-            Debug.Log($"[SingleTimelineRenderer] Looking for director: {directorName}");
-            
-            // Find the target director in Play Mode
-            var targetDirector = GameObject.Find(directorName)?.GetComponent<PlayableDirector>();
-            
-            if (targetDirector == null)
-            {
-                currentState = RenderState.Error;
-                statusMessage = "Failed to find target director in Play Mode";
-                Debug.LogError($"[SingleTimelineRenderer] Failed to find director: {directorName}");
-                EditorApplication.isPlaying = false;
-                yield break;
-            }
-            
-            Debug.Log($"[SingleTimelineRenderer] Found target director: {targetDirector.gameObject.name}");
-            
-            // Verify timeline asset
-            var targetTimeline = targetDirector.playableAsset as TimelineAsset;
-            if (targetTimeline == null)
-            {
-                currentState = RenderState.Error;
-                statusMessage = "Target director's playable asset is not a Timeline";
-                Debug.LogError("[SingleTimelineRenderer] Target director's playable asset is not a Timeline");
-                EditorApplication.isPlaying = false;
-                yield break;
-            }
-            
-            bool hasError = false;
-            string errorMessage = "";
-            
-            try
-            {
-                // Load the pre-created render timeline
-                renderTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(storedTempPath);
-                if (renderTimeline == null)
-                {
-                    hasError = true;
-                    errorMessage = "Failed to load render timeline";
-                    Debug.LogError($"[SingleTimelineRenderer] Failed to load render timeline from: {storedTempPath}");
-                }
-                
-                if (!hasError)
-                {
-                    Debug.Log($"[SingleTimelineRenderer] Loaded render timeline: {renderTimeline.name}");
-                    
-                    // Create rendering GameObject and Director
-                    renderingGameObject = new GameObject($"{directorName}_Renderer");
-                    renderingDirector = renderingGameObject.AddComponent<PlayableDirector>();
-                    renderingDirector.playableAsset = renderTimeline;
-                    renderingDirector.playOnAwake = false;
-                    
-                    // Set bindings for all tracks
-                    foreach (var output in renderTimeline.outputs)
-                    {
-                        if (output.sourceObject is ControlTrack track)
-                        {
-                            // Bind the ControlTrack to the target director's GameObject
-                            renderingDirector.SetGenericBinding(track, targetDirector.gameObject);
-                            Debug.Log($"[SingleTimelineRenderer] Set ControlTrack binding to {targetDirector.gameObject.name}");
-                            
-                            // Also ensure the control clips are properly configured
-                            foreach (var clip in track.GetClips())
-                            {
-                                var clipAsset = clip.asset as ControlPlayableAsset;
-                                if (clipAsset != null)
-                                {
-                                    // Use the stored exposed name if available
-                                    string clipExposedName = clipAsset.sourceGameObject.exposedName.ToString();
-                                    if (string.IsNullOrEmpty(clipExposedName) && !string.IsNullOrEmpty(exposedName))
-                                    {
-                                        clipExposedName = exposedName;
-                                    }
-                                    
-                                    if (!string.IsNullOrEmpty(clipExposedName))
-                                    {
-                                        // Set the reference value for exposed properties
-                                        renderingDirector.SetReferenceValue(clipExposedName, targetDirector.gameObject);
-                                        Debug.Log($"[SingleTimelineRenderer] Set reference value for exposed name: {clipExposedName}");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Force rebuild the playable graph to ensure bindings are applied
-                    renderingDirector.RebuildGraph();
-                    
-                    // Verify the binding
-                    var controlTrack = System.Linq.Enumerable.FirstOrDefault(
-                        System.Linq.Enumerable.OfType<ControlTrack>(renderTimeline.GetOutputTracks()));
-                    if (controlTrack != null)
-                    {
-                        var boundObject = renderingDirector.GetGenericBinding(controlTrack);
-                        if (boundObject != null)
-                        {
-                            Debug.Log($"[SingleTimelineRenderer] Verified ControlTrack is bound to: {(boundObject as GameObject)?.name}");
-                        }
-                        else
-                        {
-                            Debug.LogWarning("[SingleTimelineRenderer] ControlTrack binding verification failed!");
-                        }
-                    }
-                    
-                    // Start timeline playback
-                    statusMessage = "Rendering in progress...";
-                    renderingDirector.time = 0;
-                    renderingDirector.Play();
-                }
-            }
-            catch (System.Exception e)
-            {
-                hasError = true;
-                errorMessage = e.Message;
-            }
-            
-            if (hasError)
-            {
-                currentState = RenderState.Error;
-                statusMessage = $"Error: {errorMessage}";
-                Debug.LogError($"[SingleTimelineRenderer] Error in Play Mode: {errorMessage}");
-                EditorApplication.isPlaying = false;
-                yield break;
-            }
-            
-            // Monitor progress with timeout
-            float renderTimeout = timelineDuration + 10.0f; // Duration + 10 seconds buffer
-            float renderTime = 0;
-            
-            while (renderingDirector != null && renderingDirector.state == PlayState.Playing && renderTime < renderTimeout)
-            {
-                // Check if Unity Editor is paused and unpause it
-                if (EditorApplication.isPaused)
-                {
-                    Debug.LogWarning("[SingleTimelineRenderer] Editor was paused, unpausing...");
-                    EditorApplication.isPaused = false;
-                }
-                
-                renderProgress = (float)(renderingDirector.time / renderingDirector.duration);
-                renderTime += Time.deltaTime;
-                yield return null;
-            }
-            
-            if (renderTime >= renderTimeout)
-            {
-                hasError = true;
-                errorMessage = $"Rendering timeout after {renderTime} seconds";
-                Debug.LogWarning($"[SingleTimelineRenderer] {errorMessage}");
-            }
-            
-            // Complete
-            if (!hasError && currentState == RenderState.Rendering)
-            {
-                currentState = RenderState.Complete;
-                
-                // Create appropriate completion message based on recorder type
-                var context = new WildcardContext(takeNumber, width, height);
-                string processedPath = WildcardProcessor.ProcessWildcards(outputFile, context);
-                string extension = GetFileExtension();
-                
-                string outputInfo = $"Output saved to: {processedPath}.{extension}";
-                
-                if (recorderType == RecorderSettingsType.AOV)
-                {
-                    int aovCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
-                        .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
-                    outputInfo = $"{aovCount} AOV sequences saved to: {processedPath}";
-                }
-                
-                statusMessage = $"Rendering complete! {outputInfo}";
-                renderProgress = 1f;
-                
-                Debug.Log($"[SingleTimelineRenderer] Rendering complete for {directorName}");
-            }
-            
-            // Restore original settings
-            Application.runInBackground = originalRunInBackground;
-            Time.captureFramerate = originalCaptureFramerate;
-            Debug.Log("[SingleTimelineRenderer] Restored original background execution settings");
-            
-            // Clear static flag
-            isRenderingInProgress = false;
-            
-            // Exit Play Mode
-            if (EditorApplication.isPlaying)
-            {
-                EditorApplication.isPlaying = false;
-            }
-            
-            // Wait for Play Mode to exit
-            while (EditorApplication.isPlaying)
-            {
-                yield return null;
-            }
-            
-            // Wait a bit before cleanup
-            yield return new WaitForSeconds(0.5f);
-            CleanupRendering();
-        }
+        // ContinueRenderingInPlayMode メソッドは削除 - MonoBehaviourベースの実装に置き換え
         
         private void Update()
         {
@@ -1600,64 +1356,131 @@ namespace BatchRenderingTool
         
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            Debug.LogError($"[SingleTimelineRenderer] === Play Mode state changed: {state} ===");
+            Debug.Log($"[SingleTimelineRenderer] Play Mode state changed: {state}");
             
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                Debug.LogError("[SingleTimelineRenderer] === Entered Play Mode ===");
+                Debug.Log("[SingleTimelineRenderer] Entered Play Mode");
                 
-                // Check if rendering is in progress
-                if (EditorPrefs.GetBool("STR_IsRendering", false) || isRenderingInProgress)
+                // レンダリングが進行中の場合、TimelineRendererを作成
+                bool isRendering = EditorPrefs.GetBool("STR_IsRendering", false);
+                bool useMonoBehaviour = EditorPrefs.GetBool("STR_UseMonoBehaviour", false);
+                
+                Debug.Log($"[SingleTimelineRenderer] STR_IsRendering: {isRendering}, STR_UseMonoBehaviour: {useMonoBehaviour}");
+                
+                if (isRendering)
                 {
-                    Debug.LogError("[SingleTimelineRenderer] === Rendering in progress, starting ContinueRenderingInPlayMode ===");
+                    Debug.Log("[SingleTimelineRenderer] Creating PlayModeTimelineRenderer GameObject");
                     currentState = RenderState.Rendering;
-                    statusMessage = "Continuing rendering in Play Mode...";
+                    statusMessage = "Rendering in Play Mode...";
                     
-                    try
+                    // レンダリングデータを準備
+                    string directorName = EditorPrefs.GetString("STR_DirectorName", "");
+                    string tempAssetPath = EditorPrefs.GetString("STR_TempAssetPath", "");
+                    float duration = EditorPrefs.GetFloat("STR_Duration", 0f);
+                    string exposedName = EditorPrefs.GetString("STR_ExposedName", "");
+                    int frameRate = EditorPrefs.GetInt("STR_FrameRate", 24);
+                    
+                    // Render Timelineをロード
+                    var renderTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
+                    if (renderTimeline == null)
                     {
-                        // Use delayCall to ensure proper execution context
-                        Debug.LogError("[SingleTimelineRenderer] === Using delayCall to start coroutine ===");
-                        EditorApplication.delayCall += () => {
-                            Debug.LogError("[SingleTimelineRenderer] === delayCall executed ===");
-                            if (EditorApplication.isPlaying && instance != null)
-                            {
-                                Debug.LogError($"[SingleTimelineRenderer] === Starting coroutine on instance: {instance.GetHashCode()} ===");
-                                renderCoroutine = EditorCoroutineUtility.StartCoroutine(instance.ContinueRenderingInPlayMode(), instance);
-                                Debug.LogError($"[SingleTimelineRenderer] === Coroutine started: {renderCoroutine != null} ===");
-                            }
-                            else
-                            {
-                                Debug.LogError($"[SingleTimelineRenderer] === Cannot start coroutine - isPlaying: {EditorApplication.isPlaying}, instance: {instance != null} ===");
-                            }
-                        };
-                    }
-                    catch (System.Exception e)
-                    {
-                        Debug.LogError($"[SingleTimelineRenderer] === Exception: {e.Message} ===");
-                        Debug.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
+                        Debug.LogError($"[SingleTimelineRenderer] Failed to load timeline from: {tempAssetPath}");
                         currentState = RenderState.Error;
-                        statusMessage = $"Failed to start coroutine: {e.Message}";
+                        statusMessage = "Failed to load render timeline";
+                        return;
                     }
+                    
+                    // レンダリングデータを持つGameObjectを作成
+                    var dataGO = new GameObject("[RenderingData]");
+                    var renderingData = dataGO.AddComponent<RenderingData>();
+                    renderingData.directorName = directorName;
+                    renderingData.renderTimeline = renderTimeline;
+                    renderingData.duration = duration;
+                    renderingData.exposedName = exposedName;
+                    renderingData.frameRate = frameRate;
+                    
+                    // PlayModeTimelineRenderer GameObjectを作成
+                    var rendererGO = new GameObject("[PlayModeTimelineRenderer]");
+                    var renderer = rendererGO.AddComponent<PlayModeTimelineRenderer>();
+                    
+                    // 作成確認
+                    if (renderer != null)
+                    {
+                        Debug.Log("[SingleTimelineRenderer] PlayModeTimelineRenderer successfully created");
+                    }
+                    else
+                    {
+                        Debug.LogError("[SingleTimelineRenderer] Failed to create PlayModeTimelineRenderer");
+                    }
+                    
+                    // EditorPrefsをクリア
+                    EditorPrefs.SetBool("STR_IsRendering", false);
+                    
+                    // このEditorWindowでは進行状況の監視のみ行う
+                    renderCoroutine = EditorCoroutineUtility.StartCoroutine(MonitorRenderingProgress(), this);
+                }
+                else
+                {
+                    Debug.LogWarning("[SingleTimelineRenderer] STR_IsRendering is false - PlayModeTimelineRenderer will not be created");
                 }
             }
             else if (state == PlayModeStateChange.ExitingPlayMode)
             {
-                Debug.LogError("[SingleTimelineRenderer] === Exiting Play Mode ===");
+                Debug.Log("[SingleTimelineRenderer] Exiting Play Mode");
                 
-                // Stop any running coroutines
+                // レンダリング完了を確認
+                if (EditorPrefs.GetBool("STR_RenderingComplete", false))
+                {
+                    string completionStatus = EditorPrefs.GetString("STR_RenderingStatus", "Unknown");
+                    
+                    if (completionStatus.Contains("complete"))
+                    {
+                        currentState = RenderState.Complete;
+                        statusMessage = completionStatus;
+                        renderProgress = 1f;
+                    }
+                    else
+                    {
+                        currentState = RenderState.Error;
+                        statusMessage = completionStatus;
+                    }
+                    
+                    EditorPrefs.DeleteKey("STR_RenderingComplete");
+                    EditorPrefs.DeleteKey("STR_RenderingStatus");
+                }
+                else
+                {
+                    currentState = RenderState.Idle;
+                    statusMessage = "Play Mode exited";
+                }
+                
+                // クリーンアップ
                 if (renderCoroutine != null)
                 {
                     EditorCoroutineUtility.StopCoroutine(renderCoroutine);
                     renderCoroutine = null;
                 }
                 
-                // Clean up
                 CleanupRendering();
-                currentState = RenderState.Idle;
-                statusMessage = "Play Mode exited";
                 isRenderingInProgress = false;
                 EditorPrefs.SetBool("STR_IsRendering", false);
+                EditorPrefs.SetBool("STR_UseMonoBehaviour", false);
             }
+        }
+        
+        private IEnumerator MonitorRenderingProgress()
+        {
+            Debug.Log("[SingleTimelineRenderer] Starting rendering progress monitoring");
+            
+            while (EditorApplication.isPlaying)
+            {
+                // TimelineRendererの進行状況を監視する場合はここに実装
+                // 現在はPlay Modeが終了するまで待つのみ
+                yield return new WaitForSeconds(0.5f);
+            }
+            
+            Debug.Log("[SingleTimelineRenderer] Rendering progress monitoring ended");
         }
         
         public void UpdateRenderProgress(float progress, string message)

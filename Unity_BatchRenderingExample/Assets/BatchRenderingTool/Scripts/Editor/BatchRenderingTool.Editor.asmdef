@@ -2,7 +2,7 @@
     "name": "BatchRenderingTool.Editor",
     "rootNamespace": "BatchRenderingTool.Editor",
     "references": [
-        "BatchRenderingTool.Runtime",
+        "BatchRenderingTool",
         "Unity.Timeline",
         "Unity.Timeline.Editor",
         "Unity.RecorderCoreModule",
