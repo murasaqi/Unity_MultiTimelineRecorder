@@ -128,7 +128,18 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト開始");
             
+            // 一時的にtestDirectorを破棄して、Directorがない状態を作る
+            if (testGameObject != null)
+            {
+                Object.DestroyImmediate(testGameObject);
+                testGameObject = null;
+                testDirector = null;
+            }
+            
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
+            
+            // 手動でScanTimelinesを呼び出して、Directorがない状態を確実にする
+            renderer.GetAllPlayableDirectors().Clear();
             
             bool isValid = renderer.ValidateSettings(out string errorMessage);
             
@@ -141,6 +152,10 @@ namespace BatchRenderingTool.Editor.Tests
             
             // EditorWindowのクリーンアップ
             Object.DestroyImmediate(renderer);
+            
+            // testDirectorを再作成（TearDownで期待されているため）
+            testGameObject = new GameObject("TestDirector");
+            testDirector = testGameObject.AddComponent<PlayableDirector>();
         }
     }
 }
