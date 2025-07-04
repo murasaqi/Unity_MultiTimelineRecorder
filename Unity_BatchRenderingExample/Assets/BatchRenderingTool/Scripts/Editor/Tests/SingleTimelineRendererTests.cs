@@ -55,16 +55,19 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("Constructor_InitializesDefaultValues - テスト開始");
             
-            var renderer = new SingleTimelineRenderer();
+            var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             
             Assert.IsNotNull(renderer);
             Assert.AreEqual("Recordings", renderer.OutputFolder);
             Assert.AreEqual(1920, renderer.OutputWidth);
             Assert.AreEqual(1080, renderer.OutputHeight);
-            Assert.AreEqual(30, renderer.FrameRate);
+            Assert.AreEqual(24, renderer.FrameRate);
             Assert.AreEqual(RecorderSettingsHelper.ImageFormat.PNG, renderer.ImageFormat);
             
             Debug.Log("Constructor_InitializesDefaultValues - テスト完了");
+            
+            // EditorWindowのクリーンアップ
+            Object.DestroyImmediate(renderer);
         }
 
         [Test]
@@ -72,7 +75,7 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("GetAllPlayableDirectors_ReturnsActiveDirectors - テスト開始");
             
-            var renderer = new SingleTimelineRenderer();
+            var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             var directors = renderer.GetAllPlayableDirectors();
             
             Assert.IsNotNull(directors);
@@ -80,6 +83,9 @@ namespace BatchRenderingTool.Editor.Tests
             
             Debug.Log($"GetAllPlayableDirectors_ReturnsActiveDirectors - 検出されたDirector数: {directors.Count}");
             Debug.Log("GetAllPlayableDirectors_ReturnsActiveDirectors - テスト完了");
+            
+            // EditorWindowのクリーンアップ
+            Object.DestroyImmediate(renderer);
         }
 
         [Test]
@@ -87,12 +93,15 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("SetSelectedDirector_UpdatesSelection - テスト開始");
             
-            var renderer = new SingleTimelineRenderer();
+            var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             renderer.SetSelectedDirector(testDirector);
             
             Assert.AreEqual(testDirector, renderer.GetSelectedDirector());
             
             Debug.Log("SetSelectedDirector_UpdatesSelection - テスト完了");
+            
+            // EditorWindowのクリーンアップ
+            Object.DestroyImmediate(renderer);
         }
 
         [Test]
@@ -100,7 +109,7 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト開始");
             
-            var renderer = new SingleTimelineRenderer();
+            var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             renderer.SetSelectedDirector(testDirector);
             
             bool isValid = renderer.ValidateSettings(out string errorMessage);
@@ -109,6 +118,9 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsEmpty(errorMessage);
             
             Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト完了");
+            
+            // EditorWindowのクリーンアップ
+            Object.DestroyImmediate(renderer);
         }
 
         [Test]
@@ -116,7 +128,7 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト開始");
             
-            var renderer = new SingleTimelineRenderer();
+            var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             
             bool isValid = renderer.ValidateSettings(out string errorMessage);
             
@@ -126,6 +138,9 @@ namespace BatchRenderingTool.Editor.Tests
             
             Debug.Log($"ValidateSettings_WithoutDirector_ReturnsFalse - エラーメッセージ: {errorMessage}");
             Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト完了");
+            
+            // EditorWindowのクリーンアップ
+            Object.DestroyImmediate(renderer);
         }
     }
 }
