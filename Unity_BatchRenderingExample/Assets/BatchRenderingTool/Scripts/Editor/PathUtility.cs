@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace BatchRenderingTool
@@ -82,7 +83,30 @@ namespace BatchRenderingTool
         /// </summary>
         public static string CombineAndNormalize(params string[] parts)
         {
-            string combined = Path.Combine(parts);
+            // Check if any part contains wildcards (< or > characters)
+            bool hasWildcards = false;
+            foreach (var part in parts)
+            {
+                if (!string.IsNullOrEmpty(part) && (part.Contains('<') || part.Contains('>')))
+                {
+                    hasWildcards = true;
+                    break;
+                }
+            }
+            
+            string combined;
+            if (hasWildcards)
+            {
+                // Use simple string concatenation for paths with wildcards
+                // Path.Combine would throw exception on < and > characters
+                combined = string.Join("/", parts.Where(p => !string.IsNullOrEmpty(p)));
+            }
+            else
+            {
+                // Use Path.Combine for regular paths
+                combined = Path.Combine(parts);
+            }
+            
             return combined.Replace('\\', '/');
         }
     }
