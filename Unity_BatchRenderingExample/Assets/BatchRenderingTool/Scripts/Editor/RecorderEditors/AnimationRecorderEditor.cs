@@ -49,24 +49,20 @@ namespace BatchRenderingTool.RecorderEditors
                 
                 if (host.useAnimationPreset)
                 {
-                    host.animationPreset = (AnimationRecordingPreset)EditorGUILayout.EnumPopup("Preset", host.animationPreset);
+                    host.animationPreset = (AnimationExportPreset)EditorGUILayout.EnumPopup("Preset", host.animationPreset);
                     
-                    if (host.animationPreset != AnimationRecordingPreset.Custom)
+                    if (host.animationPreset != AnimationExportPreset.Custom)
                     {
                         var config = AnimationRecorderSettingsConfig.GetPreset(host.animationPreset);
                         
                         // Apply preset values
-                        host.animationRecordingType = config.recordingType;
-                        host.animationIncludeChildren = config.includeChildren;
-                        host.animationClampedTangents = config.clampedTangents;
-                        host.animationRecordBlendShapes = config.recordBlendShapes;
+                        host.animationRecordingScope = config.recordingScope;
                         
                         // Show preset info
                         EditorGUI.indentLevel++;
                         using (new EditorGUI.DisabledScope(true))
                         {
-                            EditorGUILayout.EnumPopup("Recording Type", config.recordingType);
-                            EditorGUILayout.Toggle("Include Children", config.includeChildren);
+                            EditorGUILayout.EnumPopup("Recording Scope", config.recordingScope);
                         }
                         EditorGUI.indentLevel--;
                     }
@@ -81,24 +77,27 @@ namespace BatchRenderingTool.RecorderEditors
             // Recording options
             EditorGUILayout.LabelField("Recording Options", EditorStyles.boldLabel);
             
-            if (!host.useAnimationPreset || host.animationPreset == AnimationRecordingPreset.Custom)
+            if (!host.useAnimationPreset || host.animationPreset == AnimationExportPreset.Custom)
             {
-                host.animationRecordingType = (AnimationRecordingType)EditorGUILayout.EnumPopup(
-                    "Recording Type", 
-                    host.animationRecordingType
+                host.animationRecordingScope = (AnimationRecordingScope)EditorGUILayout.EnumPopup(
+                    "Recording Scope", 
+                    host.animationRecordingScope
                 );
                 
-                // Type-specific help
-                switch (host.animationRecordingType)
+                // Scope-specific help
+                switch (host.animationRecordingScope)
                 {
-                    case AnimationRecordingType.TransformOnly:
-                        EditorGUILayout.HelpBox("Records position, rotation, and scale only", MessageType.Info);
+                    case AnimationRecordingScope.SingleGameObject:
+                        EditorGUILayout.HelpBox("Records the selected GameObject only", MessageType.Info);
                         break;
-                    case AnimationRecordingType.AllProperties:
-                        EditorGUILayout.HelpBox("Records all animated properties including materials and components", MessageType.Info);
+                    case AnimationRecordingScope.GameObjectAndChildren:
+                        EditorGUILayout.HelpBox("Records the selected GameObject and all its children", MessageType.Info);
                         break;
-                    case AnimationRecordingType.HumanoidRig:
-                        EditorGUILayout.HelpBox("Records humanoid rig animation for retargeting", MessageType.Info);
+                    case AnimationRecordingScope.SelectedHierarchy:
+                        EditorGUILayout.HelpBox("Records the currently selected hierarchy in the scene", MessageType.Info);
+                        break;
+                    case AnimationRecordingScope.CustomSelection:
+                        EditorGUILayout.HelpBox("Records a custom selection of GameObjects", MessageType.Info);
                         break;
                 }
                 
@@ -117,11 +116,10 @@ namespace BatchRenderingTool.RecorderEditors
             
             host.animationClampedTangents = EditorGUILayout.Toggle("Clamped Tangents", host.animationClampedTangents);
             
-            if (host.animationRecordingType == AnimationRecordingType.AllProperties)
-            {
-                host.animationRecordBlendShapes = EditorGUILayout.Toggle("Record Blend Shapes", host.animationRecordBlendShapes);
-                
-                if (host.animationRecordBlendShapes && host.animationTargetGameObject != null)
+            // Always show blend shapes option
+            host.animationRecordBlendShapes = EditorGUILayout.Toggle("Record Blend Shapes", host.animationRecordBlendShapes);
+            
+            if (host.animationRecordBlendShapes && host.animationTargetGameObject != null)
                 {
                     var skinnedMeshRenderers = host.animationTargetGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
                     int blendShapeCount = 0;
@@ -138,18 +136,15 @@ namespace BatchRenderingTool.RecorderEditors
                         EditorGUILayout.HelpBox($"Found {blendShapeCount} blend shapes to record", MessageType.Info);
                     }
                 }
-            }
             
             // Compression settings
             EditorGUILayout.Space(5);
             EditorGUILayout.LabelField("Compression", EditorStyles.boldLabel);
             
-            host.animationCompression = (AnimationCompression)EditorGUILayout.EnumPopup(
-                "Compression", 
-                host.animationCompression
-            );
+            // Note: The interface doesn't have animationCompression field, it uses compression settings via error tolerances
+            EditorGUILayout.HelpBox("Compression is controlled by error tolerance values below", MessageType.Info);
             
-            if (host.animationCompression != AnimationCompression.Off)
+            // Always show error tolerance fields as they control compression
             {
                 host.animationPositionError = EditorGUILayout.FloatField("Position Error", host.animationPositionError);
                 host.animationRotationError = EditorGUILayout.FloatField("Rotation Error", host.animationRotationError);
@@ -199,8 +194,7 @@ namespace BatchRenderingTool.RecorderEditors
             
             // Preview
             EditorGUILayout.Space(5);
-            var processor = new WildcardProcessor();
-            var previewPath = processor.ProcessWildcards(
+            var previewPath = WildcardProcessor.ProcessWildcards(
                 host.fileName + ".anim",
                 host.selectedDirector?.name ?? "Timeline",
                 null,
@@ -236,7 +230,9 @@ namespace BatchRenderingTool.RecorderEditors
                 return false;
             }
             
-            if (host.animationRecordingType == AnimationRecordingType.HumanoidRig)
+            // Check if recording scope requires GameObject validation
+            if (host.animationRecordingScope == AnimationRecordingScope.SingleGameObject || 
+                host.animationRecordingScope == AnimationRecordingScope.GameObjectAndChildren)
             {
                 var animator = host.animationTargetGameObject.GetComponent<Animator>();
                 if (animator == null || !animator.isHuman)

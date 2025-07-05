@@ -62,10 +62,9 @@ namespace BatchRenderingTool.RecorderEditors
                     // Apply preset values
                     host.alembicExportTargets = config.exportTargets;
                     host.alembicFrameRate = config.frameRate;
-                    host.alembicTimeSamplingType = config.timeSamplingType;
-                    host.alembicWorldScale = config.worldScale;
+                    host.alembicTimeSamplingType = (AlembicTimeSamplingType)config.timeSamplingMode;
+                    host.alembicWorldScale = config.scaleFactor;
                     host.alembicHandedness = config.handedness;
-                    host.alembicIncludeChildren = config.includeChildren;
                     host.alembicFlattenHierarchy = config.flattenHierarchy;
                     
                     // Show preset info
@@ -73,7 +72,7 @@ namespace BatchRenderingTool.RecorderEditors
                     using (new EditorGUI.DisabledScope(true))
                     {
                         EditorGUILayout.FloatField("Frame Rate", config.frameRate);
-                        EditorGUILayout.EnumPopup("Time Sampling", config.timeSamplingType);
+                        EditorGUILayout.EnumPopup("Time Sampling", config.timeSamplingMode);
                     }
                     EditorGUI.indentLevel--;
                 }
@@ -91,7 +90,7 @@ namespace BatchRenderingTool.RecorderEditors
             
             // Individual target toggles
             var targets = System.Enum.GetValues(typeof(AlembicExportTargets)).Cast<AlembicExportTargets>()
-                .Where(t => t != AlembicExportTargets.None && t != AlembicExportTargets.All);
+                .Where(t => t != AlembicExportTargets.None);
             
             foreach (var target in targets)
             {
@@ -195,8 +194,7 @@ namespace BatchRenderingTool.RecorderEditors
             
             // Preview
             EditorGUILayout.Space(5);
-            var processor = new WildcardProcessor();
-            var previewPath = processor.ProcessWildcards(
+            var previewPath = WildcardProcessor.ProcessWildcards(
                 host.fileName + ".abc",
                 host.selectedDirector?.name ?? "Timeline",
                 null,

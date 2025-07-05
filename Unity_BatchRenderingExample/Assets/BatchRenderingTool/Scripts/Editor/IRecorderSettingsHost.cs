@@ -22,7 +22,7 @@ namespace BatchRenderingTool
         ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat { get; set; }
         bool imageCaptureAlpha { get; set; }
         int jpegQuality { get; set; }
-        ImageRecorderSettings.EXRCompressionType exrCompression { get; set; }
+        CompressionUtility.EXRCompressionType exrCompression { get; set; }
         
         // Movie settings
         MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat { get; set; }
@@ -55,15 +55,15 @@ namespace BatchRenderingTool
         
         // Animation settings
         GameObject animationTargetGameObject { get; set; }
-        AnimationRecordingType animationRecordingType { get; set; }
+        AnimationRecordingScope animationRecordingScope { get; set; }
         bool animationIncludeChildren { get; set; }
         bool animationClampedTangents { get; set; }
         bool animationRecordBlendShapes { get; set; }
-        AnimationCompression animationCompression { get; set; }
+        // AnimationCompression is handled by AnimationCompressionLevel
         float animationPositionError { get; set; }
         float animationRotationError { get; set; }
         float animationScaleError { get; set; }
-        AnimationRecordingPreset animationPreset { get; set; }
+        AnimationExportPreset animationPreset { get; set; }
         bool useAnimationPreset { get; set; }
         
         // For SingleTimelineRenderer

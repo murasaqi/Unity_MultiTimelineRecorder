@@ -60,7 +60,7 @@ namespace BatchRenderingTool
         public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
         public bool imageCaptureAlpha = false;
         public int jpegQuality = 75;
-        public ImageRecorderSettings.EXRCompressionType exrCompression = ImageRecorderSettings.EXRCompressionType.None;
+        public CompressionUtility.EXRCompressionType exrCompression = CompressionUtility.EXRCompressionType.None;
         
         // Movie recorder settings
         public MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
@@ -94,19 +94,18 @@ namespace BatchRenderingTool
         
         // Animation recorder settings
         public AnimationRecordingProperties animationRecordingProperties = AnimationRecordingProperties.TransformOnly;
-        public AnimationRecordingScope animationRecordingScope = AnimationRecordingScope.SingleGameObject;
         public GameObject animationTargetGameObject = null;
+        public AnimationRecordingScope animationRecordingScope = AnimationRecordingScope.SingleGameObject;
         public AnimationInterpolationMode animationInterpolationMode = AnimationInterpolationMode.Linear;
         public AnimationCompressionLevel animationCompressionLevel = AnimationCompressionLevel.Medium;
-        public AnimationRecordingType animationRecordingType = AnimationRecordingType.TransformOnly;
         public bool animationIncludeChildren = true;
         public bool animationClampedTangents = true;
         public bool animationRecordBlendShapes = false;
-        public AnimationCompression animationCompression = AnimationCompression.Off;
+        // AnimationCompression is handled by AnimationCompressionLevel
         public float animationPositionError = 0.5f;
         public float animationRotationError = 0.5f;
         public float animationScaleError = 0.5f;
-        public AnimationRecordingPreset animationPreset = AnimationRecordingPreset.TransformHierarchy;
+        public AnimationExportPreset animationPreset = AnimationExportPreset.SimpleTransform;
         public bool useAnimationPreset = false;
         
         // Rendering objects
@@ -124,6 +123,50 @@ namespace BatchRenderingTool
             availableDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count 
             ? availableDirectors[selectedDirectorIndex] 
             : null;
+        
+        // IRecorderSettingsHost interface implementation properties
+        int IRecorderSettingsHost.frameRate { get => frameRate; set => frameRate = value; }
+        int IRecorderSettingsHost.width { get => width; set => width = value; }
+        int IRecorderSettingsHost.height { get => height; set => height = value; }
+        string IRecorderSettingsHost.fileName { get => fileName; set => fileName = value; }
+        int IRecorderSettingsHost.takeNumber { get => takeNumber; set => takeNumber = value; }
+        ImageRecorderSettings.ImageRecorderOutputFormat IRecorderSettingsHost.imageOutputFormat { get => imageOutputFormat; set => imageOutputFormat = value; }
+        bool IRecorderSettingsHost.imageCaptureAlpha { get => imageCaptureAlpha; set => imageCaptureAlpha = value; }
+        int IRecorderSettingsHost.jpegQuality { get => jpegQuality; set => jpegQuality = value; }
+        CompressionUtility.EXRCompressionType IRecorderSettingsHost.exrCompression { get => exrCompression; set => exrCompression = value; }
+        MovieRecorderSettings.VideoRecorderOutputFormat IRecorderSettingsHost.movieOutputFormat { get => movieOutputFormat; set => movieOutputFormat = value; }
+        VideoBitrateMode IRecorderSettingsHost.movieQuality { get => movieQuality; set => movieQuality = value; }
+        bool IRecorderSettingsHost.movieCaptureAudio { get => movieCaptureAudio; set => movieCaptureAudio = value; }
+        bool IRecorderSettingsHost.movieCaptureAlpha { get => movieCaptureAlpha; set => movieCaptureAlpha = value; }
+        int IRecorderSettingsHost.movieBitrate { get => movieBitrate; set => movieBitrate = value; }
+        AudioBitRateMode IRecorderSettingsHost.audioBitrate { get => audioBitrate; set => audioBitrate = value; }
+        MovieRecorderPreset IRecorderSettingsHost.moviePreset { get => moviePreset; set => moviePreset = value; }
+        bool IRecorderSettingsHost.useMoviePreset { get => useMoviePreset; set => useMoviePreset = value; }
+        AOVType IRecorderSettingsHost.selectedAOVTypes { get => selectedAOVTypes; set => selectedAOVTypes = value; }
+        AOVOutputFormat IRecorderSettingsHost.aovOutputFormat { get => aovOutputFormat; set => aovOutputFormat = value; }
+        AOVPreset IRecorderSettingsHost.aovPreset { get => aovPreset; set => aovPreset = value; }
+        bool IRecorderSettingsHost.useAOVPreset { get => useAOVPreset; set => useAOVPreset = value; }
+        AlembicExportTargets IRecorderSettingsHost.alembicExportTargets { get => alembicExportTargets; set => alembicExportTargets = value; }
+        AlembicExportScope IRecorderSettingsHost.alembicExportScope { get => alembicExportScope; set => alembicExportScope = value; }
+        GameObject IRecorderSettingsHost.alembicTargetGameObject { get => alembicTargetGameObject; set => alembicTargetGameObject = value; }
+        AlembicHandedness IRecorderSettingsHost.alembicHandedness { get => alembicHandedness; set => alembicHandedness = value; }
+        float IRecorderSettingsHost.alembicWorldScale { get => alembicWorldScale; set => alembicWorldScale = value; }
+        float IRecorderSettingsHost.alembicFrameRate { get => alembicFrameRate; set => alembicFrameRate = value; }
+        AlembicTimeSamplingType IRecorderSettingsHost.alembicTimeSamplingType { get => alembicTimeSamplingType; set => alembicTimeSamplingType = value; }
+        bool IRecorderSettingsHost.alembicIncludeChildren { get => alembicIncludeChildren; set => alembicIncludeChildren = value; }
+        bool IRecorderSettingsHost.alembicFlattenHierarchy { get => alembicFlattenHierarchy; set => alembicFlattenHierarchy = value; }
+        AlembicExportPreset IRecorderSettingsHost.alembicPreset { get => alembicPreset; set => alembicPreset = value; }
+        bool IRecorderSettingsHost.useAlembicPreset { get => useAlembicPreset; set => useAlembicPreset = value; }
+        GameObject IRecorderSettingsHost.animationTargetGameObject { get => animationTargetGameObject; set => animationTargetGameObject = value; }
+        AnimationRecordingScope IRecorderSettingsHost.animationRecordingScope { get => animationRecordingScope; set => animationRecordingScope = value; }
+        bool IRecorderSettingsHost.animationIncludeChildren { get => animationIncludeChildren; set => animationIncludeChildren = value; }
+        bool IRecorderSettingsHost.animationClampedTangents { get => animationClampedTangents; set => animationClampedTangents = value; }
+        bool IRecorderSettingsHost.animationRecordBlendShapes { get => animationRecordBlendShapes; set => animationRecordBlendShapes = value; }
+        float IRecorderSettingsHost.animationPositionError { get => animationPositionError; set => animationPositionError = value; }
+        float IRecorderSettingsHost.animationRotationError { get => animationRotationError; set => animationRotationError = value; }
+        float IRecorderSettingsHost.animationScaleError { get => animationScaleError; set => animationScaleError = value; }
+        AnimationExportPreset IRecorderSettingsHost.animationPreset { get => animationPreset; set => animationPreset = value; }
+        bool IRecorderSettingsHost.useAnimationPreset { get => useAnimationPreset; set => useAnimationPreset = value; }
         
         [MenuItem("Window/Batch Rendering Tool/Single Timeline Renderer")]
         public static SingleTimelineRenderer ShowWindow()
@@ -349,6 +392,7 @@ namespace BatchRenderingTool
             if (currentRecorderEditor != null)
             {
                 currentRecorderEditor.DrawRecorderSettings();
+            }
         }
         
         private void UpdateRecorderEditor()
@@ -1094,7 +1138,7 @@ namespace BatchRenderingTool
                     EditorPrefs.SetBool("STR_IsRendering", false);
                     
                     // このEditorWindowでは進行状況の監視のみ行う
-                    renderCoroutine = EditorCoroutineUtility.StartCoroutine(MonitorRenderingProgress(), this);
+                    MonitorRenderingProgress();
                 }
                 else
                 {
@@ -1145,18 +1189,22 @@ namespace BatchRenderingTool
             }
         }
         
-        private IEnumerator MonitorRenderingProgress()
+        private void MonitorRenderingProgress()
         {
             Debug.Log("[SingleTimelineRenderer] Starting rendering progress monitoring");
             
-            while (EditorApplication.isPlaying)
+            // EditorWindowではコルーチンは使用できないため、
+            // EditorApplication.updateを使用して進行状況を監視
+            EditorApplication.update += OnRenderingProgressUpdate;
+        }
+        
+        private void OnRenderingProgressUpdate()
+        {
+            if (!EditorApplication.isPlaying)
             {
-                // TimelineRendererの進行状況を監視する場合はここに実装
-                // 現在はPlay Modeが終了するまで待つのみ
-                yield return new WaitForSeconds(0.5f);
+                Debug.Log("[SingleTimelineRenderer] Rendering progress monitoring ended");
+                EditorApplication.update -= OnRenderingProgressUpdate;
             }
-            
-            Debug.Log("[SingleTimelineRenderer] Rendering progress monitoring ended");
         }
         
         public void UpdateRenderProgress(float progress, string message)

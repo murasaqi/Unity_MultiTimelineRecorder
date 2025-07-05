@@ -226,8 +226,7 @@ namespace BatchRenderingTool.RecorderEditors
             
             foreach (var aovType in selectedTypes)
             {
-                var processor = new WildcardProcessor();
-                var previewPath = processor.ProcessAOVWildcards(
+                var previewPath = WildcardProcessor.ProcessAOVWildcards(
                     host.fileName + "." + GetFileExtension(),
                     host.selectedDirector?.name ?? "Timeline",
                     "0001",

@@ -63,9 +63,17 @@ namespace BatchRenderingTool
             // Check multiple possible Alembic types to ensure package is available
             var alembicTypes = new string[]
             {
+                // Unity Recorder's AlembicRecorderSettings (primary check)
+                "UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor",
+                
+                // Unity Alembic package types
                 "UnityEngine.Formats.Alembic.Importer.AlembicStreamPlayer, Unity.Formats.Alembic.Runtime",
                 "UnityEditor.Formats.Alembic.Recorder.AlembicRecorderSettings, Unity.Formats.Alembic.Editor",
-                "UnityEditor.Formats.Alembic.Exporter.AlembicExporter, Unity.Formats.Alembic.Editor"
+                "UnityEditor.Recorder.Formats.Alembic.AlembicRecorderSettings, Unity.Recorder.Editor",
+                "UnityEditor.Formats.Alembic.Exporter.AlembicExporter, Unity.Formats.Alembic.Editor",
+                
+                // Alternative type names
+                "AlembicRecorderSettings, Unity.Formats.Alembic.Editor"
             };
             
             foreach (var typeName in alembicTypes)
@@ -73,6 +81,7 @@ namespace BatchRenderingTool
                 var type = System.Type.GetType(typeName);
                 if (type != null)
                 {
+                    Debug.Log($"[AlembicExportInfo] Found Alembic type: {typeName}");
                     return true;
                 }
             }

@@ -106,10 +106,8 @@ namespace BatchRenderingTool.RecorderEditors
             EditorGUILayout.Space(5);
             host.movieQuality = (VideoBitrateMode)EditorGUILayout.EnumPopup("Quality", host.movieQuality);
             
-            if (host.movieQuality == VideoBitrateMode.Custom)
-            {
-                host.movieBitrate = EditorGUILayout.IntField("Bitrate (Mbps)", host.movieBitrate);
-            }
+            // Always show bitrate field for manual control
+            host.movieBitrate = EditorGUILayout.IntField("Bitrate (Mbps)", host.movieBitrate);
             
             // Audio settings
             EditorGUILayout.Space(5);
@@ -168,8 +166,7 @@ namespace BatchRenderingTool.RecorderEditors
             
             // Preview
             EditorGUILayout.Space(5);
-            var processor = new WildcardProcessor();
-            var previewPath = processor.ProcessWildcards(
+            var previewPath = WildcardProcessor.ProcessWildcards(
                 host.fileName + "." + GetFileExtension(),
                 host.selectedDirector?.name ?? "Timeline",
                 null,

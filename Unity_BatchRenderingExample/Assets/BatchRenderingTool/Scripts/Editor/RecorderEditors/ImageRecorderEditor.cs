@@ -68,7 +68,7 @@ namespace BatchRenderingTool.RecorderEditors
                     break;
                     
                 case ImageRecorderSettings.ImageRecorderOutputFormat.EXR:
-                    host.exrCompression = (ImageRecorderSettings.EXRCompressionType)
+                    host.exrCompression = (CompressionUtility.EXRCompressionType)
                         EditorGUILayout.EnumPopup("Compression", host.exrCompression);
                     break;
             }
@@ -119,8 +119,7 @@ namespace BatchRenderingTool.RecorderEditors
             
             // Preview
             EditorGUILayout.Space(5);
-            var processor = new WildcardProcessor();
-            var previewPath = processor.ProcessWildcards(
+            var previewPath = WildcardProcessor.ProcessWildcards(
                 host.fileName + "." + GetFileExtension(),
                 host.selectedDirector?.name ?? "Timeline",
                 "0001",
