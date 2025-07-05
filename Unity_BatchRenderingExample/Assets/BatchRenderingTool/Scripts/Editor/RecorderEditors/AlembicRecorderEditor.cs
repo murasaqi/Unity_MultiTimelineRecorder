@@ -19,11 +19,10 @@ namespace BatchRenderingTool.RecorderEditors
             base.DrawInputSettings();
             
             // Alembic package check
-            #if !ALEMBIC_INSTALLED
-            EditorGUILayout.HelpBox("Alembic package is not installed. Please install it via Package Manager.", MessageType.Error);
-            #else
-            EditorGUILayout.HelpBox("Alembic export is available", MessageType.Info);
-            #endif
+            if (!AlembicExportInfo.IsAlembicPackageAvailable())
+            {
+                EditorGUILayout.HelpBox("Alembic package is not installed. Please install it via Package Manager.", MessageType.Error);
+            }
             
             // Export scope
             EditorGUILayout.Space(5);
@@ -212,10 +211,11 @@ namespace BatchRenderingTool.RecorderEditors
         
         public override bool ValidateSettings(out string errorMessage)
         {
-            #if !ALEMBIC_INSTALLED
-            errorMessage = "Alembic package is not installed";
-            return false;
-            #endif
+            if (!AlembicExportInfo.IsAlembicPackageAvailable())
+            {
+                errorMessage = "Alembic package is not installed";
+                return false;
+            }
             
             if (host.alembicExportTargets == AlembicExportTargets.None)
             {
