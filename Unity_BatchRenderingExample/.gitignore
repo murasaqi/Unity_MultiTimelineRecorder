@@ -75,3 +75,7 @@ _Build
 !Assets/Models/240514_test/DOMESET_dome_v004.abc
 !Assets/Models/240514_test/DOMESET_stage_v004.abc
 
+# Test output folders
+/Assets/TestRec/
+/Assets/BatchRenderingTool/Temp/
+
