@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Recorder;
@@ -168,6 +169,9 @@ namespace BatchRenderingTool
             // Apply Alembic-specific settings using reflection
             ApplyAlembicSettings(settings);
             
+            // Try to create and set AlembicInputSettings if needed
+            SetupAlembicInputSettings(settings);
+            
             BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Export targets: {exportTargets}");
             BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Frame rate: {frameRate}, Samples per frame: {samplesPerFrame}");
             BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Scale: {scaleFactor}, Handedness: {handedness}");
@@ -188,8 +192,71 @@ namespace BatchRenderingTool
             // Log all available properties first for debugging
             LogAvailableProperties(settingsType);
             
-            // Set scope - According to Unity Alembic documentation, Scope determines export range
+            // For Unity Alembic, settings might be stored in fields instead of properties
+            // Check all fields for Alembic-specific settings
             bool scopeSet = false;
+            var fields = settingsType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+            foreach (var field in fields)
+            {
+                BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Field: {field.Name} (Type: {field.FieldType.Name})");
+                
+                // Look for fields related to scope or target
+                if (field.Name.ToLower().Contains("scope") || 
+                    field.Name.ToLower().Contains("capturemode") ||
+                    field.Name.ToLower().Contains("exportscope"))
+                {
+                    // Try to set the scope
+                    if (field.FieldType.IsEnum)
+                    {
+                        try
+                        {
+                            // Get enum values and find matching one
+                            var enumValues = System.Enum.GetValues(field.FieldType);
+                            foreach (var enumValue in enumValues)
+                            {
+                                string enumName = enumValue.ToString().ToLower();
+                                if (exportScope == AlembicExportScope.TargetGameObject && 
+                                    (enumName.Contains("target") || enumName.Contains("branch") || enumName.Contains("gameobject")))
+                                {
+                                    field.SetValue(settings, enumValue);
+                                    scopeSet = true;
+                                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Set field {field.Name} to {enumValue}");
+                                    break;
+                                }
+                                else if (exportScope == AlembicExportScope.EntireScene && 
+                                         (enumName.Contains("entire") || enumName.Contains("scene") || enumName.Contains("all")))
+                                {
+                                    field.SetValue(settings, enumValue);
+                                    scopeSet = true;
+                                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Set field {field.Name} to {enumValue}");
+                                    break;
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            BatchRenderingToolLogger.LogWarning($"[AlembicRecorderSettingsConfig] Failed to set field {field.Name}: {e.Message}");
+                        }
+                    }
+                }
+                else if (field.Name.ToLower().Contains("target") || 
+                         field.Name.ToLower().Contains("gameobject") ||
+                         field.Name.ToLower().Contains("branch"))
+                {
+                    // Try to set target GameObject
+                    if (field.FieldType == typeof(GameObject) && targetGameObject != null)
+                    {
+                        field.SetValue(settings, targetGameObject);
+                        BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Set field {field.Name} to {targetGameObject.name}");
+                    }
+                }
+            }
+            
+            // If we didn't find scope in fields, try properties as before
+            if (!scopeSet)
+            {
+                BatchRenderingToolLogger.LogWarning("[AlembicRecorderSettingsConfig] Scope not found in fields, trying properties...");
+            }
             
             // Map our enum values to Unity Alembic's expected values
             // Based on documentation: Scope determines export range (entire Scene or selected branch)
@@ -254,7 +321,14 @@ namespace BatchRenderingTool
             if (!scopeSet)
             {
                 BatchRenderingToolLogger.LogError($"[AlembicRecorderSettingsConfig] === FAILED to set scope property ===");
-                LogAvailableProperties(settingsType);
+                
+                // Log all fields for debugging
+                BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Available fields on {settingsType.Name}: ===");
+                var allFields = settingsType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+                foreach (var field in allFields)
+                {
+                    BatchRenderingToolLogger.Log($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
+                }
             }
             
             // Set TargetBranch if applicable (According to Unity Alembic documentation, the property is TargetBranch, not GameObject)
@@ -454,6 +528,103 @@ namespace BatchRenderingTool
             {
                 var scopeValue = scopeProp.GetValue(settings);
                 BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === VERIFIED: Scope = {scopeValue} ===");
+            }
+        }
+        
+        /// <summary>
+        /// Setup AlembicInputSettings for the recorder
+        /// </summary>
+        private void SetupAlembicInputSettings(RecorderSettings settings)
+        {
+            try
+            {
+                var settingsType = settings.GetType();
+                
+                // Try to create AlembicInputSettings
+                System.Type alembicInputSettingsType = null;
+                string[] possibleTypeNames = new string[]
+                {
+                    "UnityEditor.Recorder.Input.AlembicInputSettings, Unity.Recorder.Editor",
+                    "UnityEditor.Formats.Alembic.Importer.AlembicInputSettings, Unity.Formats.Alembic.Editor",
+                    "Unity.Formats.Alembic.Runtime.AlembicInputSettings, Unity.Formats.Alembic.Runtime"
+                };
+                
+                foreach (var typeName in possibleTypeNames)
+                {
+                    alembicInputSettingsType = System.Type.GetType(typeName);
+                    if (alembicInputSettingsType != null)
+                    {
+                        BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Found AlembicInputSettings type: {typeName}");
+                        break;
+                    }
+                }
+                
+                if (alembicInputSettingsType == null)
+                {
+                    // Try to get input settings type from the recorder settings
+                    var inputSettingsProperty = settingsType.GetProperty("InputSettings");
+                    if (inputSettingsProperty != null)
+                    {
+                        var defaultInputSettings = inputSettingsProperty.GetValue(settings);
+                        if (defaultInputSettings != null)
+                        {
+                            alembicInputSettingsType = defaultInputSettings.GetType();
+                            BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Found InputSettings type from settings: {alembicInputSettingsType.FullName}");
+                        }
+                    }
+                }
+                
+                if (alembicInputSettingsType != null)
+                {
+                    // Create instance of input settings
+                    var inputSettings = ScriptableObject.CreateInstance(alembicInputSettingsType);
+                    if (inputSettings != null)
+                    {
+                        BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Created AlembicInputSettings instance");
+                        
+                        // Set properties on input settings
+                        var inputType = inputSettings.GetType();
+                        
+                        // Try to set GameObject
+                        if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
+                        {
+                            SetPropertyValue(inputSettings, inputType, "GameObject", targetGameObject);
+                            SetPropertyValue(inputSettings, inputType, "gameObject", targetGameObject);
+                            SetPropertyValue(inputSettings, inputType, "TargetGameObject", targetGameObject);
+                            SetPropertyValue(inputSettings, inputType, "targetGameObject", targetGameObject);
+                            SetPropertyValue(inputSettings, inputType, "TargetBranch", targetGameObject);
+                            SetPropertyValue(inputSettings, inputType, "targetBranch", targetGameObject);
+                        }
+                        
+                        // Try to set scope
+                        SetPropertyValue(inputSettings, inputType, "CaptureScope", exportScope);
+                        SetPropertyValue(inputSettings, inputType, "captureScope", exportScope);
+                        SetPropertyValue(inputSettings, inputType, "Scope", exportScope);
+                        SetPropertyValue(inputSettings, inputType, "scope", exportScope);
+                        
+                        // Set the input settings on the recorder settings
+                        var inputSettingsProperty = settingsType.GetProperty("InputSettings");
+                        if (inputSettingsProperty != null && inputSettingsProperty.CanWrite)
+                        {
+                            inputSettingsProperty.SetValue(settings, inputSettings);
+                            BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Set InputSettings on recorder settings");
+                        }
+                        else
+                        {
+                            // Try to set via method
+                            var setInputMethod = settingsType.GetMethod("SetInputSettings", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (setInputMethod != null)
+                            {
+                                setInputMethod.Invoke(settings, new object[] { inputSettings });
+                                BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Set InputSettings via method");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                BatchRenderingToolLogger.LogWarning($"[AlembicRecorderSettingsConfig] Failed to setup AlembicInputSettings: {e.Message}");
             }
         }
         

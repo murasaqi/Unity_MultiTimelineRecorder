@@ -192,10 +192,69 @@ namespace BatchRenderingTool
             // Use reflection to ensure the recorder type is properly initialized
             EnsureRecorderTypeIsSet(recorderClip, settings);
             
+            // For Alembic, try to set additional fields via reflection
+            ApplyAlembicSpecificSettings(recorderClip, settings);
+            
             // Force the clip to recognize the settings type
             EditorUtility.SetDirty(recorderClip);
             
             return recorderClip;
+        }
+        
+        /// <summary>
+        /// Apply Alembic-specific settings to RecorderClip
+        /// </summary>
+        private static void ApplyAlembicSpecificSettings(RecorderClip clip, RecorderSettings settings)
+        {
+            try
+            {
+                var clipType = clip.GetType();
+                var settingsType = settings.GetType();
+                
+                // Log available fields on RecorderClip
+                BatchRenderingToolLogger.LogVerbose("[RecorderClipUtility] RecorderClip fields:");
+                var clipFields = clipType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+                foreach (var field in clipFields)
+                {
+                    BatchRenderingToolLogger.LogVerbose($"  - {field.Name} ({field.FieldType.Name})");
+                }
+                
+                // Check if settings has any GameObject reference
+                var settingsFields = settingsType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+                GameObject targetGameObject = null;
+                foreach (var field in settingsFields)
+                {
+                    if (field.FieldType == typeof(GameObject))
+                    {
+                        var value = field.GetValue(settings) as GameObject;
+                        if (value != null)
+                        {
+                            targetGameObject = value;
+                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Found GameObject in settings field {field.Name}: {targetGameObject.name}");
+                            break;
+                        }
+                    }
+                }
+                
+                // If we found a target GameObject, try to set it on the clip
+                if (targetGameObject != null)
+                {
+                    foreach (var field in clipFields)
+                    {
+                        if (field.FieldType == typeof(GameObject) || 
+                            field.Name.ToLower().Contains("target") || 
+                            field.Name.ToLower().Contains("gameobject"))
+                        {
+                            field.SetValue(clip, targetGameObject);
+                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Set RecorderClip field {field.Name} to {targetGameObject.name}");
+                        }
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to apply Alembic-specific settings: {e.Message}");
+            }
         }
     }
 }
