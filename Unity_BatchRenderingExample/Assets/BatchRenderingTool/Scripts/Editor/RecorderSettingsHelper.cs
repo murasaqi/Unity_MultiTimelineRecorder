@@ -92,10 +92,27 @@ namespace BatchRenderingTool
                     
                 case RecorderSettingsType.Alembic:
                     // Alembic uses a single .abc file
-                    // Placeholder: actual AlembicRecorderSettings would have its own output property
-                    if (settings is ImageRecorderSettings alembicPlaceholder)
+                    // Try to set output file using reflection since AlembicRecorderSettings is not directly accessible
+                    var alembicType = settings.GetType();
+                    var outputFileProperty = alembicType.GetProperty("OutputFile");
+                    if (outputFileProperty != null && outputFileProperty.CanWrite)
                     {
-                        alembicPlaceholder.OutputFile = outputFile;
+                        outputFileProperty.SetValue(settings, outputFile);
+                        Debug.Log($"[RecorderSettingsHelper] Set Alembic OutputFile property to: {outputFile}");
+                    }
+                    else
+                    {
+                        // Try alternative property names
+                        var fileNameProperty = alembicType.GetProperty("FileName");
+                        if (fileNameProperty != null && fileNameProperty.CanWrite)
+                        {
+                            fileNameProperty.SetValue(settings, outputFile);
+                            Debug.Log($"[RecorderSettingsHelper] Set Alembic FileName property to: {outputFile}");
+                        }
+                        else
+                        {
+                            Debug.LogError($"[RecorderSettingsHelper] Could not find output file property on AlembicRecorderSettings");
+                        }
                     }
                     break;
                     

@@ -616,6 +616,37 @@ namespace BatchRenderingTool
                 EditorPrefs.SetBool("MTR_UseMoviePreset", useMoviePreset);
                 EditorPrefs.SetString("MTR_ErrorHandling", errorHandling.ToString());
                 
+                // Store AOV settings
+                EditorPrefs.SetInt("MTR_SelectedAOVTypes", (int)selectedAOVTypes);
+                EditorPrefs.SetString("MTR_AOVOutputFormat", aovOutputFormat.ToString());
+                EditorPrefs.SetString("MTR_AOVPreset", aovPreset.ToString());
+                EditorPrefs.SetBool("MTR_UseAOVPreset", useAOVPreset);
+                
+                // Store Alembic settings
+                EditorPrefs.SetInt("MTR_AlembicExportTargets", (int)alembicExportTargets);
+                EditorPrefs.SetString("MTR_AlembicExportScope", alembicExportScope.ToString());
+                EditorPrefs.SetString("MTR_AlembicHandedness", alembicHandedness.ToString());
+                EditorPrefs.SetFloat("MTR_AlembicScaleFactor", alembicScaleFactor);
+                EditorPrefs.SetFloat("MTR_AlembicFrameRate", alembicFrameRate);
+                EditorPrefs.SetBool("MTR_AlembicFlattenHierarchy", alembicFlattenHierarchy);
+                EditorPrefs.SetString("MTR_AlembicPreset", alembicPreset.ToString());
+                EditorPrefs.SetBool("MTR_UseAlembicPreset", useAlembicPreset);
+                
+                // Store Animation settings
+                EditorPrefs.SetString("MTR_AnimationRecordingProperties", animationRecordingProperties.ToString());
+                EditorPrefs.SetString("MTR_AnimationRecordingScope", animationRecordingScope.ToString());
+                EditorPrefs.SetString("MTR_AnimationInterpolationMode", animationInterpolationMode.ToString());
+                EditorPrefs.SetString("MTR_AnimationCompressionLevel", animationCompressionLevel.ToString());
+                EditorPrefs.SetBool("MTR_AnimationIncludeChildren", animationIncludeChildren);
+                EditorPrefs.SetBool("MTR_AnimationClampedTangents", animationClampedTangents);
+                EditorPrefs.SetBool("MTR_AnimationRecordBlendShapes", animationRecordBlendShapes);
+                EditorPrefs.SetString("MTR_AnimationPreset", animationPreset.ToString());
+                EditorPrefs.SetBool("MTR_UseAnimationPreset", useAnimationPreset);
+                
+                // Store file name with wildcards
+                EditorPrefs.SetString("MTR_FileName", fileName);
+                EditorPrefs.SetInt("MTR_TakeNumber", takeNumber);
+                
                 // Store selected items
                 for (int i = 0; i < selectedItems.Count; i++)
                 {
@@ -693,6 +724,47 @@ namespace BatchRenderingTool
             
             string errorHandlingString = EditorPrefs.GetString("MTR_ErrorHandling", "StopOnError");
             System.Enum.TryParse<ErrorHandling>(errorHandlingString, out var storedErrorHandling);
+            
+            // Restore AOV settings
+            selectedAOVTypes = (AOVType)EditorPrefs.GetInt("MTR_SelectedAOVTypes", (int)(AOVType.Depth | AOVType.Normal | AOVType.Albedo));
+            string aovOutputFormatString = EditorPrefs.GetString("MTR_AOVOutputFormat", "EXR16");
+            System.Enum.TryParse<AOVOutputFormat>(aovOutputFormatString, out aovOutputFormat);
+            string aovPresetString = EditorPrefs.GetString("MTR_AOVPreset", "Compositing");
+            System.Enum.TryParse<AOVPreset>(aovPresetString, out aovPreset);
+            useAOVPreset = EditorPrefs.GetBool("MTR_UseAOVPreset", false);
+            
+            // Restore Alembic settings
+            alembicExportTargets = (AlembicExportTargets)EditorPrefs.GetInt("MTR_AlembicExportTargets", (int)(AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform));
+            string alembicExportScopeString = EditorPrefs.GetString("MTR_AlembicExportScope", "EntireScene");
+            System.Enum.TryParse<AlembicExportScope>(alembicExportScopeString, out alembicExportScope);
+            string alembicHandednessString = EditorPrefs.GetString("MTR_AlembicHandedness", "Left");
+            System.Enum.TryParse<AlembicHandedness>(alembicHandednessString, out alembicHandedness);
+            alembicScaleFactor = EditorPrefs.GetFloat("MTR_AlembicScaleFactor", 1f);
+            alembicFrameRate = EditorPrefs.GetFloat("MTR_AlembicFrameRate", 24f);
+            alembicFlattenHierarchy = EditorPrefs.GetBool("MTR_AlembicFlattenHierarchy", false);
+            string alembicPresetString = EditorPrefs.GetString("MTR_AlembicPreset", "AnimationExport");
+            System.Enum.TryParse<AlembicExportPreset>(alembicPresetString, out alembicPreset);
+            useAlembicPreset = EditorPrefs.GetBool("MTR_UseAlembicPreset", false);
+            
+            // Restore Animation settings
+            string animationRecordingPropertiesString = EditorPrefs.GetString("MTR_AnimationRecordingProperties", "TransformOnly");
+            System.Enum.TryParse<AnimationRecordingProperties>(animationRecordingPropertiesString, out animationRecordingProperties);
+            string animationRecordingScopeString = EditorPrefs.GetString("MTR_AnimationRecordingScope", "SingleGameObject");
+            System.Enum.TryParse<AnimationRecordingScope>(animationRecordingScopeString, out animationRecordingScope);
+            string animationInterpolationModeString = EditorPrefs.GetString("MTR_AnimationInterpolationMode", "Linear");
+            System.Enum.TryParse<AnimationInterpolationMode>(animationInterpolationModeString, out animationInterpolationMode);
+            string animationCompressionLevelString = EditorPrefs.GetString("MTR_AnimationCompressionLevel", "Medium");
+            System.Enum.TryParse<AnimationCompressionLevel>(animationCompressionLevelString, out animationCompressionLevel);
+            animationIncludeChildren = EditorPrefs.GetBool("MTR_AnimationIncludeChildren", true);
+            animationClampedTangents = EditorPrefs.GetBool("MTR_AnimationClampedTangents", true);
+            animationRecordBlendShapes = EditorPrefs.GetBool("MTR_AnimationRecordBlendShapes", false);
+            string animationPresetString = EditorPrefs.GetString("MTR_AnimationPreset", "TransformHierarchy");
+            System.Enum.TryParse<AnimationRecordingPreset>(animationPresetString, out animationPreset);
+            useAnimationPreset = EditorPrefs.GetBool("MTR_UseAnimationPreset", false);
+            
+            // Restore file name with wildcards
+            fileName = EditorPrefs.GetString("MTR_FileName", "Recordings/<Scene>_<Take>");
+            takeNumber = EditorPrefs.GetInt("MTR_TakeNumber", 1);
             
             // Wait for Play Mode to fully initialize
             yield return null;
@@ -957,6 +1029,14 @@ namespace BatchRenderingTool
                     // For AOV, we need to handle multiple recorder settings (one per AOV type)
                     // For now, we'll create a placeholder and handle the multi-AOV case later
                     recorderSettings = CreateAOVRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
+                    break;
+                    
+                case RecorderSettingsType.Alembic:
+                    recorderSettings = CreateAlembicRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
+                    break;
+                    
+                case RecorderSettingsType.Animation:
+                    recorderSettings = CreateAnimationRecorderSettingsForBatch(outputFolderName, fps, resWidth, resHeight);
                     break;
                     
                 default:
@@ -1256,6 +1336,132 @@ namespace BatchRenderingTool
                     .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
                     
                 Debug.Log($"[MultiTimelineRenderer] AOV settings created: {width}x{height}@{fps}fps, Format: {aovOutputFormat}, {aovCount} AOV types selected");
+            }
+            
+            return settings;
+        }
+        
+        private RecorderSettings CreateAlembicRecorderSettingsForBatch(string name, int fps, int width, int height)
+        {
+            Debug.Log($"[MultiTimelineRenderer] Creating Alembic recorder settings: {name}");
+            
+            // Check if Alembic is available
+            if (!RecorderSettingsFactory.IsRecorderTypeSupported(RecorderSettingsType.Alembic))
+            {
+                Debug.LogError("[MultiTimelineRenderer] Alembic Recorder requires Unity Alembic package");
+                return null;
+            }
+            
+            // Create Alembic configuration
+            var config = new AlembicRecorderSettingsConfig
+            {
+                exportTargets = alembicExportTargets,
+                exportScope = alembicExportScope,
+                targetGameObject = alembicTargetGameObject,
+                frameRate = alembicFrameRate,
+                scaleFactor = alembicScaleFactor,
+                handedness = alembicHandedness,
+                timeSamplingMode = AlembicTimeSamplingMode.Uniform,
+                samplesPerFrame = 1,
+                swapYZ = false,
+                flipFaces = false,
+                exportUVs = true,
+                exportNormals = true,
+                exportVertexColors = true,
+                exportVisibility = true,
+                assumeUnchangedTopology = true,
+                flattenHierarchy = alembicFlattenHierarchy,
+                includeInactiveMeshes = false
+            };
+            
+            if (useAlembicPreset && alembicPreset != AlembicExportPreset.Custom)
+            {
+                Debug.Log($"[MultiTimelineRenderer] Using Alembic preset: {alembicPreset}");
+                
+                // Get preset configuration
+                config = AlembicRecorderSettingsConfig.GetPreset(alembicPreset);
+                
+                // Override framerate with our settings
+                config.frameRate = alembicFrameRate;
+                
+                // For Multi Timeline Renderer, use entire scene by default
+                config.exportScope = AlembicExportScope.EntireScene;
+            }
+            
+            // Validate configuration
+            string errorMessage;
+            if (!config.Validate(out errorMessage))
+            {
+                Debug.LogError($"[MultiTimelineRenderer] Invalid Alembic configuration: {errorMessage}");
+                return null;
+            }
+            
+            // Create Alembic settings
+            var settings = RecorderSettingsFactory.CreateAlembicRecorderSettings($"{name}_Recorder", config);
+            
+            if (settings != null)
+            {
+                settings.Enabled = true;
+                settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+                settings.FrameRate = fps;
+                settings.FrameRatePlayback = UnityEditor.Recorder.FrameRatePlayback.Constant;
+                settings.CapFrameRate = true;
+                
+                Debug.Log($"[MultiTimelineRenderer] Alembic settings created: {fps}fps, Export: {alembicExportTargets}, Scope: {alembicExportScope}");
+            }
+            
+            return settings;
+        }
+        
+        private RecorderSettings CreateAnimationRecorderSettingsForBatch(string name, int fps, int width, int height)
+        {
+            Debug.Log($"[MultiTimelineRenderer] Creating Animation recorder settings: {name}");
+            
+            // Create Animation configuration
+            var config = new AnimationRecorderSettingsConfig
+            {
+                recordingProperties = animationRecordingProperties,
+                recordingScope = animationRecordingScope,
+                targetGameObject = animationTargetGameObject,
+                frameRate = fps,
+                compressionLevel = animationCompressionLevel,
+                interpolationMode = animationInterpolationMode,
+                includeChildren = animationIncludeChildren,
+                clampedTangents = animationClampedTangents,
+                recordBlendShapes = animationRecordBlendShapes
+            };
+            
+            if (useAnimationPreset && animationPreset != AnimationRecordingPreset.Custom)
+            {
+                Debug.Log($"[MultiTimelineRenderer] Using Animation preset: {animationPreset}");
+                
+                // Get preset configuration
+                config = AnimationRecorderSettingsConfig.GetPreset(animationPreset);
+                
+                // Override framerate with our settings
+                config.frameRate = fps;
+            }
+            
+            // Validate configuration
+            string errorMessage;
+            if (!config.Validate(out errorMessage))
+            {
+                Debug.LogError($"[MultiTimelineRenderer] Invalid Animation configuration: {errorMessage}");
+                return null;
+            }
+            
+            // Create Animation settings
+            var settings = RecorderSettingsFactory.CreateAnimationRecorderSettings($"{name}_Recorder", config);
+            
+            if (settings != null)
+            {
+                settings.Enabled = true;
+                settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+                settings.FrameRate = fps;
+                settings.FrameRatePlayback = UnityEditor.Recorder.FrameRatePlayback.Constant;
+                settings.CapFrameRate = true;
+                
+                Debug.Log($"[MultiTimelineRenderer] Animation settings created: {fps}fps, Properties: {animationRecordingProperties}, Scope: {animationRecordingScope}");
             }
             
             return settings;

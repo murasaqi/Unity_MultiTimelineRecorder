@@ -176,13 +176,56 @@ namespace BatchRenderingTool
         {
             var settingsType = settings.GetType();
             
-            // Set scope
-            SetPropertyValue(settings, settingsType, "Scope", (int)exportScope);
+            Debug.Log($"[AlembicRecorderSettingsConfig] Applying settings to type: {settingsType.FullName}");
+            Debug.Log($"[AlembicRecorderSettingsConfig] Export scope: {exportScope}, Target GameObject: {targetGameObject?.name ?? "null"}");
+            
+            // Set scope - try both int and enum
+            if (!SetPropertyValue(settings, settingsType, "Scope", exportScope))
+            {
+                SetPropertyValue(settings, settingsType, "Scope", (int)exportScope);
+            }
+            
+            // Try to set input settings if it exists
+            var inputSettingsProperty = settingsType.GetProperty("InputSettings");
+            if (inputSettingsProperty != null)
+            {
+                var inputSettings = inputSettingsProperty.GetValue(settings);
+                if (inputSettings != null)
+                {
+                    Debug.Log($"[AlembicRecorderSettingsConfig] Found InputSettings of type: {inputSettings.GetType().Name}");
+                    
+                    // Try to set GameObject on InputSettings
+                    if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
+                    {
+                        var inputType = inputSettings.GetType();
+                        if (!SetPropertyValue(inputSettings, inputType, "GameObject", targetGameObject))
+                        {
+                            SetPropertyValue(inputSettings, inputType, "gameObject", targetGameObject);
+                        }
+                    }
+                }
+            }
             
             // Set target GameObject if applicable
             if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
             {
-                SetPropertyValue(settings, settingsType, "TargetGameObject", targetGameObject);
+                Debug.Log($"[AlembicRecorderSettingsConfig] Setting TargetGameObject to: {targetGameObject.name}");
+                
+                // Try different property names that might be used in AlembicRecorderSettings
+                if (!SetPropertyValue(settings, settingsType, "TargetGameObject", targetGameObject))
+                {
+                    if (!SetPropertyValue(settings, settingsType, "targetGameObject", targetGameObject))
+                    {
+                        if (!SetPropertyValue(settings, settingsType, "GameObject", targetGameObject))
+                        {
+                            if (!SetPropertyValue(settings, settingsType, "gameObject", targetGameObject))
+                            {
+                                Debug.LogError($"[AlembicRecorderSettingsConfig] Failed to set target GameObject on AlembicRecorderSettings");
+                                LogAvailableProperties(settingsType);
+                            }
+                        }
+                    }
+                }
             }
             
             // Set scale factor
@@ -215,7 +258,7 @@ namespace BatchRenderingTool
         /// <summary>
         /// Set property value using reflection
         /// </summary>
-        private void SetPropertyValue(object obj, System.Type type, string propertyName, object value)
+        private bool SetPropertyValue(object obj, System.Type type, string propertyName, object value)
         {
             try
             {
@@ -223,6 +266,8 @@ namespace BatchRenderingTool
                 if (property != null && property.CanWrite)
                 {
                     property.SetValue(obj, value);
+                    Debug.Log($"[AlembicRecorderSettingsConfig] Successfully set property {propertyName} to {value}");
+                    return true;
                 }
                 else
                 {
@@ -231,12 +276,39 @@ namespace BatchRenderingTool
                     if (field != null)
                     {
                         field.SetValue(obj, value);
+                        Debug.Log($"[AlembicRecorderSettingsConfig] Successfully set field {propertyName} to {value}");
+                        return true;
                     }
                 }
+                
+                // Property/field not found
+                Debug.LogWarning($"[AlembicRecorderSettingsConfig] Property/field {propertyName} not found on type {type.Name}");
+                return false;
             }
             catch (System.Exception e)
             {
                 Debug.LogWarning($"[AlembicRecorderSettingsConfig] Failed to set {propertyName}: {e.Message}");
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Log available properties and fields for debugging
+        /// </summary>
+        private void LogAvailableProperties(System.Type type)
+        {
+            Debug.Log($"[AlembicRecorderSettingsConfig] Available properties on {type.Name}:");
+            
+            var properties = type.GetProperties();
+            foreach (var prop in properties)
+            {
+                Debug.Log($"  - Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
+            }
+            
+            var fields = type.GetFields();
+            foreach (var field in fields)
+            {
+                Debug.Log($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
             }
         }
         

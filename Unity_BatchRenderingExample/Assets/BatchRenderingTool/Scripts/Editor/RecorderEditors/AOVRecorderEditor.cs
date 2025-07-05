@@ -21,11 +21,14 @@ namespace BatchRenderingTool.RecorderEditors
             base.DrawInputSettings();
             
             // HDRP check
-            #if !HDRP_ENABLED
-            EditorGUILayout.HelpBox("AOV Recording requires HDRP (High Definition Render Pipeline)", MessageType.Error);
-            #else
-            EditorGUILayout.HelpBox("AOV Recording is available for HDRP projects", MessageType.Info);
-            #endif
+            if (!AOVTypeInfo.IsHDRPAvailable())
+            {
+                EditorGUILayout.HelpBox("AOV Recording requires HDRP (High Definition Render Pipeline)", MessageType.Error);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("AOV Recording is available for HDRP projects", MessageType.Info);
+            }
             
             // Resolution settings
             EditorGUILayout.Space(5);
@@ -121,11 +124,12 @@ namespace BatchRenderingTool.RecorderEditors
                 .Where(t => t != AOVType.None).ToList();
             
             // Group AOV types by category
-            var geometryTypes = new[] { AOVType.Depth, AOVType.Normal, AOVType.MotionVectors };
-            var lightingTypes = new[] { AOVType.Diffuse, AOVType.Specular, AOVType.DirectDiffuse, 
-                                       AOVType.DirectSpecular, AOVType.IndirectDiffuse, AOVType.Emissive };
-            var materialTypes = new[] { AOVType.Albedo, AOVType.Smoothness, AOVType.AmbientOcclusion,
-                                       AOVType.Metal, AOVType.Alpha };
+            var geometryTypes = new[] { AOVType.Depth, AOVType.DepthNormalized, AOVType.Normal, AOVType.MotionVectors };
+            var lightingTypes = new[] { AOVType.DirectDiffuse, AOVType.DirectSpecular, 
+                                       AOVType.IndirectDiffuse, AOVType.IndirectSpecular, 
+                                       AOVType.Emissive, AOVType.Shadow, AOVType.ContactShadows };
+            var materialTypes = new[] { AOVType.Albedo, AOVType.Specular, AOVType.Smoothness, 
+                                       AOVType.AmbientOcclusion, AOVType.Metal };
             
             EditorGUILayout.Space(5);
             
@@ -138,7 +142,7 @@ namespace BatchRenderingTool.RecorderEditors
             EditorGUILayout.Space(10);
             host.aovOutputFormat = (AOVOutputFormat)EditorGUILayout.EnumPopup("Output Format", host.aovOutputFormat);
             
-            if (host.aovOutputFormat != AOVOutputFormat.EXR)
+            if (host.aovOutputFormat != AOVOutputFormat.EXR16 && host.aovOutputFormat != AOVOutputFormat.EXR32)
             {
                 EditorGUILayout.HelpBox("EXR format is recommended for AOV outputs to preserve full dynamic range", MessageType.Info);
             }
@@ -243,8 +247,9 @@ namespace BatchRenderingTool.RecorderEditors
         {
             return host.aovOutputFormat switch
             {
-                AOVOutputFormat.PNG => "png",
-                AOVOutputFormat.EXR => "exr",
+                AOVOutputFormat.PNG16 => "png",
+                AOVOutputFormat.EXR16 => "exr",
+                AOVOutputFormat.EXR32 => "exr",
                 AOVOutputFormat.TGA => "tga",
                 _ => "exr"
             };
@@ -282,10 +287,11 @@ namespace BatchRenderingTool.RecorderEditors
                 return false;
             }
             
-            #if !HDRP_ENABLED
-            errorMessage = "AOV Recording requires HDRP";
-            return false;
-            #endif
+            if (!AOVTypeInfo.IsHDRPAvailable())
+            {
+                errorMessage = "AOV Recording requires HDRP";
+                return false;
+            }
             
             errorMessage = null;
             return true;
