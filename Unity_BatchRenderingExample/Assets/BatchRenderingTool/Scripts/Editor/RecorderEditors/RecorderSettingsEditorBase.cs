@@ -156,10 +156,28 @@ namespace BatchRenderingTool.RecorderEditors
             menu.AddItem(new GUIContent("<Product>"), false, () => InsertWildcard("<Product>"));
             menu.AddItem(new GUIContent("<Date>"), false, () => InsertWildcard("<Date>"));
             
+            // Add context-specific wildcards
+            bool addedSeparator = false;
+            
+            // Add Timeline wildcard if available
+            if (GetTimelineName() != null)
+            {
+                if (!addedSeparator)
+                {
+                    menu.AddSeparator("");
+                    addedSeparator = true;
+                }
+                menu.AddItem(new GUIContent("<Timeline>"), false, () => InsertWildcard("<Timeline>"));
+            }
+            
             // Add GameObject wildcard if available
             if (GetTargetGameObjectName() != null)
             {
-                menu.AddSeparator("");
+                if (!addedSeparator)
+                {
+                    menu.AddSeparator("");
+                    addedSeparator = true;
+                }
                 menu.AddItem(new GUIContent("<GameObject>"), false, () => InsertWildcard("<GameObject>"));
             }
             
@@ -197,7 +215,8 @@ namespace BatchRenderingTool.RecorderEditors
             var context = new WildcardContext(host.takeNumber, host.width, host.height)
             {
                 RecorderName = GetRecorderName(),
-                GameObjectName = GetTargetGameObjectName()
+                GameObjectName = GetTargetGameObjectName(),
+                TimelineName = GetTimelineName()
             };
             string processedFileName = WildcardProcessor.ProcessWildcards(host.fileName, context);
             
@@ -228,6 +247,18 @@ namespace BatchRenderingTool.RecorderEditors
         /// </summary>
         protected virtual string GetTargetGameObjectName()
         {
+            return null;
+        }
+        
+        /// <summary>
+        /// Get Timeline name for wildcard processing
+        /// </summary>
+        protected virtual string GetTimelineName()
+        {
+            if (host.selectedDirector != null && host.selectedDirector.playableAsset != null)
+            {
+                return host.selectedDirector.playableAsset.name;
+            }
             return null;
         }
         
