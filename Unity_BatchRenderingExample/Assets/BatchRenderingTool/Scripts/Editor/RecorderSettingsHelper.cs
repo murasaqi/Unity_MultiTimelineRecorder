@@ -96,13 +96,15 @@ namespace BatchRenderingTool
                     
                 case RecorderSettingsType.Alembic:
                     // Alembic uses a single .abc file
+                    BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] === Setting Alembic output file to: {outputFile} ===");
+                    
                     // Try to set output file using reflection since AlembicRecorderSettings is not directly accessible
                     var alembicType = settings.GetType();
                     var outputFileProperty = alembicType.GetProperty("OutputFile");
                     if (outputFileProperty != null && outputFileProperty.CanWrite)
                     {
                         outputFileProperty.SetValue(settings, outputFile);
-                        BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Set Alembic OutputFile property to: {outputFile}");
+                        BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] === Successfully set Alembic OutputFile property to: {outputFile} ===");
                     }
                     else
                     {
@@ -111,11 +113,11 @@ namespace BatchRenderingTool
                         if (fileNameProperty != null && fileNameProperty.CanWrite)
                         {
                             fileNameProperty.SetValue(settings, outputFile);
-                            BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Set Alembic FileName property to: {outputFile}");
+                            BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] === Successfully set Alembic FileName property to: {outputFile} ===");
                         }
                         else
                         {
-                            BatchRenderingToolLogger.LogError($"[RecorderSettingsHelper] Could not find output file property on AlembicRecorderSettings");
+                            BatchRenderingToolLogger.LogError($"[RecorderSettingsHelper] === Could not find output file property on AlembicRecorderSettings ===");
                         }
                     }
                     break;

@@ -897,6 +897,15 @@ namespace BatchRenderingTool
             
             // Create recorder settings based on type
             var context = new WildcardContext(takeNumber, width, height);
+            context.TimelineName = originalDirector.gameObject.name;
+            
+            // Set GameObject name for Alembic export
+            if (recorderType == RecorderSettingsType.Alembic && alembicExportScope == AlembicExportScope.TargetGameObject && alembicTargetGameObject != null)
+            {
+                context.GameObjectName = alembicTargetGameObject.name;
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Setting GameObject wildcard to: {alembicTargetGameObject.name} ===");
+            }
+            
             var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
             var processedFilePath = filePath; // Path doesn't need wildcard processing
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
@@ -929,6 +938,7 @@ namespace BatchRenderingTool
                     break;
                     
                 case RecorderSettingsType.Alembic:
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Creating Alembic settings with file: {processedFileName} ===");
                     var alembicSettings = CreateAlembicRecorderSettings(processedFilePath, processedFileName);
                     if (alembicSettings != null) recorderSettingsList.Add(alembicSettings);
                     break;
@@ -1526,6 +1536,8 @@ namespace BatchRenderingTool
         
         private RecorderSettings CreateAlembicRecorderSettings(string outputPath, string outputFileName)
         {
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === CreateAlembicRecorderSettings called with path: {outputPath}, fileName: {outputFileName} ===");
+            
             AlembicRecorderSettingsConfig config = null;
             
             if (useAlembicPreset && alembicPreset != AlembicExportPreset.Custom)
@@ -1547,6 +1559,8 @@ namespace BatchRenderingTool
                     exportUVs = true,
                     exportNormals = true
                 };
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Alembic config: scope={alembicExportScope}, targetGameObject={alembicTargetGameObject?.name ?? "null"} ===");
             }
             
             string errorMessage;

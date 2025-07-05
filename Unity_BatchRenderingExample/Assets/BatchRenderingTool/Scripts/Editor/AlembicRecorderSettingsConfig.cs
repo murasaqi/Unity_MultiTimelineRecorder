@@ -215,22 +215,35 @@ namespace BatchRenderingTool
             // Set target GameObject if applicable
             if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
             {
-                BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Setting TargetGameObject to: {targetGameObject.name}");
+                BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Setting TargetGameObject to: {targetGameObject.name} ===");
                 
                 // Try different property names that might be used in AlembicRecorderSettings
-                if (!SetPropertyValue(settings, settingsType, "TargetGameObject", targetGameObject))
+                bool success = false;
+                if (SetPropertyValue(settings, settingsType, "TargetGameObject", targetGameObject))
                 {
-                    if (!SetPropertyValue(settings, settingsType, "targetGameObject", targetGameObject))
-                    {
-                        if (!SetPropertyValue(settings, settingsType, "GameObject", targetGameObject))
-                        {
-                            if (!SetPropertyValue(settings, settingsType, "gameObject", targetGameObject))
-                            {
-                                BatchRenderingToolLogger.LogError($"[AlembicRecorderSettingsConfig] Failed to set target GameObject on AlembicRecorderSettings");
-                                LogAvailableProperties(settingsType);
-                            }
-                        }
-                    }
+                    success = true;
+                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Successfully set 'TargetGameObject' property ===");
+                }
+                else if (SetPropertyValue(settings, settingsType, "targetGameObject", targetGameObject))
+                {
+                    success = true;
+                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Successfully set 'targetGameObject' property ===");
+                }
+                else if (SetPropertyValue(settings, settingsType, "GameObject", targetGameObject))
+                {
+                    success = true;
+                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Successfully set 'GameObject' property ===");
+                }
+                else if (SetPropertyValue(settings, settingsType, "gameObject", targetGameObject))
+                {
+                    success = true;
+                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Successfully set 'gameObject' property ===");
+                }
+                
+                if (!success)
+                {
+                    BatchRenderingToolLogger.LogError($"[AlembicRecorderSettingsConfig] === FAILED to set target GameObject on AlembicRecorderSettings ===");
+                    LogAvailableProperties(settingsType);
                 }
             }
             
@@ -288,7 +301,7 @@ namespace BatchRenderingTool
                 }
                 
                 // Property/field not found
-                BatchRenderingToolLogger.LogWarning($"[AlembicRecorderSettingsConfig] Property/field {propertyName} not found on type {type.Name}");
+                BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Property/field {propertyName} not found on type {type.Name}");
                 return false;
             }
             catch (System.Exception e)
@@ -303,18 +316,18 @@ namespace BatchRenderingTool
         /// </summary>
         private void LogAvailableProperties(System.Type type)
         {
-            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Available properties on {type.Name}:");
+            BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Available properties on {type.Name}: ===");
             
             var properties = type.GetProperties();
             foreach (var prop in properties)
             {
-                BatchRenderingToolLogger.LogVerbose($"  - Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
+                BatchRenderingToolLogger.Log($"  - Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
             }
             
             var fields = type.GetFields();
             foreach (var field in fields)
             {
-                BatchRenderingToolLogger.LogVerbose($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
+                BatchRenderingToolLogger.Log($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
             }
         }
         
