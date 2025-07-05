@@ -71,7 +71,13 @@ namespace BatchRenderingTool.RecorderEditors
         {
             // File Name field with wildcards button
             EditorGUILayout.BeginHorizontal();
-            host.fileName = EditorGUILayout.TextField("File Name", host.fileName);
+            GUI.SetNextControlName("FileNameField");
+            string newFileName = EditorGUILayout.TextField("File Name", host.fileName);
+            if (newFileName != host.fileName)
+            {
+                host.fileName = newFileName;
+                GUI.changed = true;
+            }
             
             // Wildcards dropdown button
             if (GUILayout.Button("+ Wildcards ▼", GUILayout.Width(100)))
@@ -159,6 +165,16 @@ namespace BatchRenderingTool.RecorderEditors
         {
             // Simple append for now - in a real implementation, would insert at cursor
             host.fileName += wildcard;
+            
+            // Force GUI to update immediately
+            GUI.FocusControl(null);
+            GUI.changed = true;
+            
+            // Request repaint of the window
+            if (EditorWindow.focusedWindow != null)
+            {
+                EditorWindow.focusedWindow.Repaint();
+            }
         }
         
         /// <summary>
