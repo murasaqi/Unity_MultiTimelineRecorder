@@ -85,40 +85,38 @@ namespace BatchRenderingTool.RecorderEditors
             
             // Path dropdown
             string[] pathOptions = { "Project", "Absolute" };
-            int pathIndex = host.filePath.StartsWith(Application.dataPath) ? 1 : 0;
-            int newPathIndex = EditorGUILayout.Popup("Path", pathIndex, pathOptions, GUILayout.MaxWidth(EditorGUIUtility.labelWidth + 100));
+            int currentPathIndex = System.IO.Path.IsPathRooted(host.filePath) ? 1 : 0;
+            int newPathIndex = EditorGUILayout.Popup("Path", currentPathIndex, pathOptions, GUILayout.MaxWidth(EditorGUIUtility.labelWidth + 100));
             
-            // Path text field
-            if (newPathIndex == 0) // Project relative
+            // Convert path if dropdown selection changed
+            if (newPathIndex != currentPathIndex)
             {
-                // Ensure relative path
-                if (pathIndex == 1)
+                if (newPathIndex == 0) // Convert to project relative
                 {
                     host.filePath = PathUtility.GetProjectRelativePath(host.filePath);
                 }
-                host.filePath = EditorGUILayout.TextField(host.filePath);
-            }
-            else // Absolute path
-            {
-                if (pathIndex == 0) // Converting from relative to absolute
+                else // Convert to absolute
                 {
                     host.filePath = PathUtility.GetAbsolutePath(host.filePath);
                 }
-                host.filePath = EditorGUILayout.TextField(host.filePath);
             }
+            
+            // Path text field
+            host.filePath = EditorGUILayout.TextField(host.filePath);
             
             // Browse button
             if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                string selectedPath = EditorUtility.SaveFolderPanel("Select Output Folder", host.filePath, "");
+                string currentAbsolutePath = PathUtility.GetAbsolutePath(host.filePath);
+                string selectedPath = EditorUtility.SaveFolderPanel("Select Output Folder", currentAbsolutePath, "");
                 if (!string.IsNullOrEmpty(selectedPath))
                 {
-                    if (newPathIndex == 0)
+                    if (newPathIndex == 0) // Project relative mode
                     {
                         // Convert to project relative path
                         host.filePath = PathUtility.GetProjectRelativePath(selectedPath);
                     }
-                    else
+                    else // Absolute mode
                     {
                         host.filePath = selectedPath;
                     }
