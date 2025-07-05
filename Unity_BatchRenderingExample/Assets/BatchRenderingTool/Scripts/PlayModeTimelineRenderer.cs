@@ -231,5 +231,6 @@ namespace BatchRenderingTool
         public float duration;
         public string exposedName;
         public int frameRate;
+        public int preRollFrames;
     }
 }

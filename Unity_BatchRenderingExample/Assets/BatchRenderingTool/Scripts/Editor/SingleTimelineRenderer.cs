@@ -56,6 +56,7 @@ namespace BatchRenderingTool
         public string fileName = "<Recorder>_<Take>"; // File name with wildcard support
         public string filePath = "Recordings"; // Output path
         public int takeNumber = 1;
+        public int preRollFrames = 0; // Pre-roll frames for simulation warm-up
         
         // Image recorder settings
         public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
@@ -384,6 +385,18 @@ namespace BatchRenderingTool
             
             // Common settings
             frameRate = EditorGUILayout.IntField("Frame Rate:", frameRate);
+            
+            // Pre-roll frames for simulation warm-up
+            EditorGUILayout.Space(5);
+            preRollFrames = EditorGUILayout.IntField("Pre-roll Frames:", preRollFrames);
+            if (preRollFrames < 0) preRollFrames = 0;
+            
+            if (preRollFrames > 0)
+            {
+                float preRollSeconds = preRollFrames / (float)frameRate;
+                EditorGUILayout.HelpBox($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts. " +
+                    "This allows physics simulations (cloth, particles, etc.) to stabilize.", MessageType.Info);
+            }
             
             EditorGUILayout.EndVertical();
             
@@ -738,6 +751,7 @@ namespace BatchRenderingTool
                 EditorPrefs.SetString("STR_OutputFile", fileName);
                 EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
                 EditorPrefs.SetInt("STR_FrameRate", frameRate);
+                EditorPrefs.SetInt("STR_PreRollFrames", preRollFrames);
                 
                 // MonoBehaviourベースのレンダラーを使用するフラグ
                 EditorPrefs.SetBool("STR_UseMonoBehaviour", true);
@@ -804,21 +818,64 @@ namespace BatchRenderingTool
             }
             BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ControlTrack created successfully");
             
+            // Calculate pre-roll time
+            float preRollTime = preRollFrames > 0 ? preRollFrames / (float)frameRate : 0f;
+            string exposedName = UnityEditor.GUID.Generate().ToString();
+            
+            if (preRollFrames > 0)
+            {
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Pre-roll enabled: {preRollFrames} frames ({preRollTime:F2} seconds) ===");
+            }
+            
+            if (preRollFrames > 0)
+            {
+                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Creating pre-roll clip for {preRollFrames} frames ({preRollTime:F2} seconds)");
+                
+                // Create pre-roll clip (holds at frame 0)
+                var preRollClip = controlTrack.CreateClip<ControlPlayableAsset>();
+                if (preRollClip == null)
+                {
+                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create pre-roll ControlClip");
+                    return null;
+                }
+                
+                preRollClip.displayName = $"{originalDirector.gameObject.name} (Pre-roll)";
+                preRollClip.start = 0;
+                preRollClip.duration = preRollTime;
+                
+                var preRollAsset = preRollClip.asset as ControlPlayableAsset;
+                preRollAsset.sourceGameObject.exposedName = exposedName;
+                preRollAsset.sourceGameObject.defaultValue = originalDirector.gameObject;
+                preRollAsset.updateDirector = true;
+                preRollAsset.updateParticle = true;
+                preRollAsset.updateITimeControl = true;
+                preRollAsset.searchHierarchy = false;
+                preRollAsset.active = true;
+                preRollAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Active;
+                
+                // IMPORTANT: Set the clip to hold at frame 0
+                // The pre-roll clip will play the director at the beginning (0-0 range)
+                preRollClip.clipIn = 0;
+                preRollClip.timeScale = 0.0001; // Virtually freeze time
+                
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Pre-roll ControlClip created successfully");
+            }
+            
+            // Create main playback clip
             var controlClip = controlTrack.CreateClip<ControlPlayableAsset>();
             if (controlClip == null)
             {
-                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create ControlClip");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create main ControlClip");
                 return null;
             }
-            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ControlClip created successfully");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Main ControlClip created successfully");
             controlClip.displayName = originalDirector.gameObject.name;
-            controlClip.start = 0;
+            controlClip.start = preRollTime;
             controlClip.duration = originalTimeline.duration;
             
             var controlAsset = controlClip.asset as ControlPlayableAsset;
             
             // CRITICAL: Set up the exposed name for runtime binding
-            string exposedName = UnityEditor.GUID.Generate().ToString();
             controlAsset.sourceGameObject.exposedName = exposedName;
             
             // IMPORTANT: We need to set the source game object reference for the UI to work properly
@@ -920,7 +977,7 @@ namespace BatchRenderingTool
             BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === RecorderClip created successfully ===");
             
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
-            recorderClip.start = 0;
+            recorderClip.start = preRollTime;
             recorderClip.duration = originalTimeline.duration;
             
             var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
@@ -1108,6 +1165,7 @@ namespace BatchRenderingTool
                     float duration = EditorPrefs.GetFloat("STR_Duration", 0f);
                     string exposedName = EditorPrefs.GetString("STR_ExposedName", "");
                     int frameRate = EditorPrefs.GetInt("STR_FrameRate", 24);
+                    int preRollFrames = EditorPrefs.GetInt("STR_PreRollFrames", 0);
                     
                     // Render Timelineをロード
                     var renderTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
@@ -1127,6 +1185,7 @@ namespace BatchRenderingTool
                     renderingData.duration = duration;
                     renderingData.exposedName = exposedName;
                     renderingData.frameRate = frameRate;
+                    renderingData.preRollFrames = preRollFrames;
                     
                     // PlayModeTimelineRenderer GameObjectを作成
                     var rendererGO = new GameObject("[PlayModeTimelineRenderer]");
