@@ -53,7 +53,8 @@ namespace BatchRenderingTool
         public int width = 1920;
         public int height = 1080;
         private string outputFile = "";
-        public string fileName = "Recordings/<Scene>_<Take>"; // File name with wildcard support
+        public string fileName = "<Recorder>_<Take>"; // File name with wildcard support
+        public string filePath = "Recordings"; // Output path
         public int takeNumber = 1;
         
         // Image recorder settings
@@ -129,6 +130,7 @@ namespace BatchRenderingTool
         int IRecorderSettingsHost.width { get => width; set => width = value; }
         int IRecorderSettingsHost.height { get => height; set => height = value; }
         string IRecorderSettingsHost.fileName { get => fileName; set => fileName = value; }
+        string IRecorderSettingsHost.filePath { get => filePath; set => filePath = value; }
         int IRecorderSettingsHost.takeNumber { get => takeNumber; set => takeNumber = value; }
         ImageRecorderSettings.ImageRecorderOutputFormat IRecorderSettingsHost.imageOutputFormat { get => imageOutputFormat; set => imageOutputFormat = value; }
         bool IRecorderSettingsHost.imageCaptureAlpha { get => imageCaptureAlpha; set => imageCaptureAlpha = value; }
@@ -199,8 +201,13 @@ namespace BatchRenderingTool
             // Initialize file name with default template if empty
             if (string.IsNullOrEmpty(fileName))
             {
-                fileName = WildcardProcessor.GetDefaultTemplate(recorderType);
-                outputFile = fileName; // Keep compatibility
+                fileName = "<Recorder>_<Take>";
+            }
+            
+            // Initialize file path if empty
+            if (string.IsNullOrEmpty(filePath))
+            {
+                filePath = "Recordings";
             }
             
             // Initialize recorder editor
@@ -344,9 +351,9 @@ namespace BatchRenderingTool
                 previousRecorderType = recorderType;
                 recorderType = newRecorderType;
                 
-                // Update output file template when recorder type changes
-                fileName = WildcardProcessor.GetDefaultTemplate(recorderType);
-                outputFile = fileName; // Keep compatibility
+                // Update default file name when recorder type changes
+                // but keep the path unchanged
+                fileName = "<Recorder>_<Take>";
                 
                 // Create appropriate editor instance
                 UpdateRecorderEditor();
@@ -834,6 +841,7 @@ namespace BatchRenderingTool
             // Create recorder settings based on type
             var context = new WildcardContext(takeNumber, width, height);
             var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
+            var processedFilePath = filePath; // Path doesn't need wildcard processing
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
             
             Debug.Log($"[SingleTimelineRenderer] Creating recorder settings for type: {recorderType}");
@@ -841,7 +849,7 @@ namespace BatchRenderingTool
             {
                 case RecorderSettingsType.Image:
                     Debug.Log("[SingleTimelineRenderer] Creating ImageRecorderSettings...");
-                    var imageSettings = CreateImageRecorderSettings(processedFileName);
+                    var imageSettings = CreateImageRecorderSettings(processedFilePath, processedFileName);
                     if (imageSettings != null)
                     {
                         recorderSettingsList.Add(imageSettings);
@@ -854,22 +862,22 @@ namespace BatchRenderingTool
                     break;
                     
                 case RecorderSettingsType.Movie:
-                    var movieSettings = CreateMovieRecorderSettings(processedFileName);
+                    var movieSettings = CreateMovieRecorderSettings(processedFilePath, processedFileName);
                     if (movieSettings != null) recorderSettingsList.Add(movieSettings);
                     break;
                     
                 case RecorderSettingsType.AOV:
-                    var aovSettingsList = CreateAOVRecorderSettings(processedFileName);
+                    var aovSettingsList = CreateAOVRecorderSettings(processedFilePath, processedFileName);
                     if (aovSettingsList != null) recorderSettingsList.AddRange(aovSettingsList);
                     break;
                     
                 case RecorderSettingsType.Alembic:
-                    var alembicSettings = CreateAlembicRecorderSettings(processedFileName);
+                    var alembicSettings = CreateAlembicRecorderSettings(processedFilePath, processedFileName);
                     if (alembicSettings != null) recorderSettingsList.Add(alembicSettings);
                     break;
                     
                 case RecorderSettingsType.Animation:
-                    var animationSettings = CreateAnimationRecorderSettings(processedFileName);
+                    var animationSettings = CreateAnimationRecorderSettings(processedFilePath, processedFileName);
                     if (animationSettings != null) recorderSettingsList.Add(animationSettings);
                     break;
                     
@@ -1325,9 +1333,9 @@ namespace BatchRenderingTool
             return true;
         }
         
-        private RecorderSettings CreateImageRecorderSettings(string outputFile)
+        private RecorderSettings CreateImageRecorderSettings(string outputPath, string outputFileName)
         {
-            Debug.LogError($"[SingleTimelineRenderer] === CreateImageRecorderSettings called with outputFile: {outputFile} ===");
+            Debug.LogError($"[SingleTimelineRenderer] === CreateImageRecorderSettings called with path: {outputPath}, filename: {outputFileName} ===");
             var settings = RecorderClipUtility.CreateProperImageRecorderSettings("ImageRecorder");
             if (settings == null)
             {
@@ -1344,8 +1352,8 @@ namespace BatchRenderingTool
             settings.CapFrameRate = true;
             
             // Configure output path
-            Debug.Log($"[SingleTimelineRenderer] Configuring output path: {outputFile}");
-            RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Image);
+            Debug.Log($"[SingleTimelineRenderer] Configuring output path: {outputPath}, filename: {outputFileName}");
+            RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Image);
             Debug.Log($"[SingleTimelineRenderer] Output path configured successfully");
             
             Debug.Log($"[SingleTimelineRenderer] Setting image input settings: {width}x{height}");
@@ -1359,7 +1367,7 @@ namespace BatchRenderingTool
             return settings;
         }
         
-        private RecorderSettings CreateMovieRecorderSettings(string outputFile)
+        private RecorderSettings CreateMovieRecorderSettings(string outputPath, string outputFileName)
         {
             MovieRecorderSettings settings = null;
             
@@ -1397,12 +1405,12 @@ namespace BatchRenderingTool
             settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
             
             // Configure output path
-            RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Movie);
+            RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Movie);
             
             return settings;
         }
         
-        private List<RecorderSettings> CreateAOVRecorderSettings(string outputFile)
+        private List<RecorderSettings> CreateAOVRecorderSettings(string outputPath, string outputFileName)
         {
             AOVRecorderSettingsConfig config = null;
             
@@ -1451,13 +1459,13 @@ namespace BatchRenderingTool
             // Configure output path for each AOV setting
             foreach (var settings in settingsList)
             {
-                RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.AOV);
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.AOV);
             }
             
             return settingsList;
         }
         
-        private RecorderSettings CreateAlembicRecorderSettings(string outputFile)
+        private RecorderSettings CreateAlembicRecorderSettings(string outputPath, string outputFileName)
         {
             AlembicRecorderSettingsConfig config = null;
             
@@ -1495,13 +1503,13 @@ namespace BatchRenderingTool
             {
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-                RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Alembic);
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Alembic);
             }
             
             return settings;
         }
         
-        private RecorderSettings CreateAnimationRecorderSettings(string outputFile)
+        private RecorderSettings CreateAnimationRecorderSettings(string outputPath, string outputFileName)
         {
             AnimationRecorderSettingsConfig config = null;
             
@@ -1546,7 +1554,7 @@ namespace BatchRenderingTool
             {
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-                RecorderSettingsHelper.ConfigureOutputPath(settings, outputFile, RecorderSettingsType.Animation);
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Animation);
             }
             
             return settings;

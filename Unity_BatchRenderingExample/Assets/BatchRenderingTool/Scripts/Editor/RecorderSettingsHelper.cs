@@ -22,7 +22,17 @@ namespace BatchRenderingTool
             EXR
         }
         /// <summary>
-        /// Configure output path for any RecorderSettings
+        /// Configure output path for any RecorderSettings (with separate path and file name)
+        /// </summary>
+        public static void ConfigureOutputPath(RecorderSettings settings, string filePath, string fileName, RecorderSettingsType type)
+        {
+            // Combine path and filename
+            string outputFile = Path.Combine(filePath, fileName);
+            ConfigureOutputPath(settings, outputFile, type);
+        }
+        
+        /// <summary>
+        /// Configure output path for any RecorderSettings (legacy method)
         /// </summary>
         public static void ConfigureOutputPath(RecorderSettings settings, string outputFile, RecorderSettingsType type)
         {

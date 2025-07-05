@@ -164,49 +164,9 @@ namespace BatchRenderingTool.RecorderEditors
             }
         }
         
-        protected override void DrawOutputFileSettings()
+        protected override string GetFileExtension()
         {
-            // File name with wildcard support
-            EditorGUILayout.BeginHorizontal();
-            host.fileName = EditorGUILayout.TextField("File Name", host.fileName);
-            if (GUILayout.Button("...", GUILayout.Width(30)))
-            {
-                string path = EditorUtility.SaveFolderPanel("Select Output Folder", "Recordings", "");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    // Convert to relative path if inside project
-                    if (path.StartsWith(Application.dataPath))
-                    {
-                        path = "Assets" + path.Substring(Application.dataPath.Length);
-                    }
-                    host.fileName = path + "/" + System.IO.Path.GetFileName(host.fileName);
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-            
-            // Wildcard help
-            EditorGUILayout.HelpBox(
-                "Wildcards: <Scene>, <Take>, <Time>\n" +
-                "Example: Recordings/<Scene>_<Take>",
-                MessageType.Info
-            );
-            
-            // Preview
-            EditorGUILayout.Space(5);
-            var previewPath = WildcardProcessor.ProcessWildcards(
-                host.fileName + ".abc",
-                host.selectedDirector?.name ?? "Timeline",
-                null,
-                host.takeNumber
-            );
-            
-            EditorGUILayout.LabelField("Preview", previewPath, EditorStyles.miniLabel);
-            
-            // Export info
-            if (host.alembicExportTargets == AlembicExportTargets.None)
-            {
-                EditorGUILayout.HelpBox("Select at least one export target", MessageType.Warning);
-            }
+            return "abc";
         }
         
         public override bool ValidateSettings(out string errorMessage)

@@ -157,57 +157,19 @@ namespace BatchRenderingTool.RecorderEditors
             // Animation clips must be saved in Assets folder
             EditorGUILayout.HelpBox("Animation clips must be saved within the Assets folder", MessageType.Info);
             
-            // File name with wildcard support
-            EditorGUILayout.BeginHorizontal();
-            host.fileName = EditorGUILayout.TextField("File Name", host.fileName);
-            if (GUILayout.Button("...", GUILayout.Width(30)))
-            {
-                string path = EditorUtility.SaveFolderPanel("Select Output Folder", "Assets", "");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    // Ensure path is within Assets
-                    if (!path.StartsWith(Application.dataPath))
-                    {
-                        EditorUtility.DisplayDialog("Invalid Path", "Animation clips must be saved within the Assets folder", "OK");
-                    }
-                    else
-                    {
-                        path = "Assets" + path.Substring(Application.dataPath.Length);
-                        host.fileName = path + "/" + System.IO.Path.GetFileName(host.fileName);
-                    }
-                }
-            }
-            EditorGUILayout.EndHorizontal();
+            // Override base implementation for animations
+            base.DrawOutputFileSettings();
             
             // Ensure path starts with Assets/
-            if (!string.IsNullOrEmpty(host.fileName) && !host.fileName.StartsWith("Assets/"))
+            if (!string.IsNullOrEmpty(host.filePath) && !host.filePath.StartsWith("Assets"))
             {
-                host.fileName = "Assets/" + host.fileName;
+                host.filePath = "Assets/Animations";
             }
-            
-            // Wildcard help
-            EditorGUILayout.HelpBox(
-                "Wildcards: <Scene>, <Take>, <Time>\n" +
-                "Example: Assets/Animations/<Scene>_<Take>",
-                MessageType.Info
-            );
-            
-            // Preview
-            EditorGUILayout.Space(5);
-            var previewPath = WildcardProcessor.ProcessWildcards(
-                host.fileName + ".anim",
-                host.selectedDirector?.name ?? "Timeline",
-                null,
-                host.takeNumber
-            );
-            
-            EditorGUILayout.LabelField("Preview", previewPath, EditorStyles.miniLabel);
-            
-            // Validation
-            if (!string.IsNullOrEmpty(host.fileName) && !host.fileName.StartsWith("Assets/"))
-            {
-                EditorGUILayout.HelpBox("Path must start with 'Assets/'", MessageType.Error);
-            }
+        }
+        
+        protected override string GetFileExtension()
+        {
+            return "anim";
         }
         
         public override bool ValidateSettings(out string errorMessage)

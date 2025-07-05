@@ -90,46 +90,7 @@ namespace BatchRenderingTool.RecorderEditors
             }
         }
         
-        protected override void DrawOutputFileSettings()
-        {
-            // File name with wildcard support
-            EditorGUILayout.BeginHorizontal();
-            host.fileName = EditorGUILayout.TextField("File Name", host.fileName);
-            if (GUILayout.Button("...", GUILayout.Width(30)))
-            {
-                string path = EditorUtility.SaveFolderPanel("Select Output Folder", "Recordings", "");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    // Convert to relative path if inside project
-                    if (path.StartsWith(Application.dataPath))
-                    {
-                        path = "Assets" + path.Substring(Application.dataPath.Length);
-                    }
-                    host.fileName = path + "/" + System.IO.Path.GetFileName(host.fileName);
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-            
-            // Wildcard help
-            EditorGUILayout.HelpBox(
-                "Wildcards: <Scene>, <Take>, <Frame>, <Resolution>, <Time>\n" +
-                "Example: Recordings/<Scene>_<Take>/<Scene>_<Frame>",
-                MessageType.Info
-            );
-            
-            // Preview
-            EditorGUILayout.Space(5);
-            var previewPath = WildcardProcessor.ProcessWildcards(
-                host.fileName + "." + GetFileExtension(),
-                host.selectedDirector?.name ?? "Timeline",
-                "0001",
-                host.takeNumber
-            );
-            
-            EditorGUILayout.LabelField("Preview", previewPath, EditorStyles.miniLabel);
-        }
-        
-        private string GetFileExtension()
+        protected override string GetFileExtension()
         {
             return host.imageOutputFormat switch
             {

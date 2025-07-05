@@ -16,6 +16,7 @@ namespace BatchRenderingTool
         int width { get; set; }
         int height { get; set; }
         string fileName { get; set; }
+        string filePath { get; set; }
         int takeNumber { get; set; }
         
         // Image settings
