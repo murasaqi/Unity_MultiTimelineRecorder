@@ -64,7 +64,7 @@ namespace BatchRenderingTool
             var alembicTypes = new string[]
             {
                 "UnityEngine.Formats.Alembic.Importer.AlembicStreamPlayer, Unity.Formats.Alembic.Runtime",
-                "UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor",
+                "UnityEditor.Formats.Alembic.Recorder.AlembicRecorderSettings, Unity.Formats.Alembic.Editor",
                 "UnityEditor.Formats.Alembic.Exporter.AlembicExporter, Unity.Formats.Alembic.Editor"
             };
             

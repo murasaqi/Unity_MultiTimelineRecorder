@@ -2019,7 +2019,7 @@ MonoBehaviour:
   - {fileID: 2365555366963221369}
   - {fileID: 6801458295379371517}
   - {fileID: 1647584375914208087}
-  m_FixedDuration: 20.4
+  m_FixedDuration: 10.633333333333333
   m_EditorSettings:
     m_Framerate: 30
     m_ScenePreview: 1

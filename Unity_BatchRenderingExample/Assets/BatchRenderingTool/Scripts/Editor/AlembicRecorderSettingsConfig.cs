@@ -121,13 +121,19 @@ namespace BatchRenderingTool
             // Try to find AlembicRecorderSettings type in Unity Recorder
             System.Type alembicRecorderSettingsType = null;
             
-            // Check for the standard Unity Recorder Alembic type
-            alembicRecorderSettingsType = System.Type.GetType("UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor");
+            // Check for the correct Alembic recorder type
+            alembicRecorderSettingsType = System.Type.GetType("UnityEditor.Formats.Alembic.Recorder.AlembicRecorderSettings, Unity.Formats.Alembic.Editor");
             
             if (alembicRecorderSettingsType == null)
             {
                 // Try alternative type names
-                alembicRecorderSettingsType = System.Type.GetType("UnityEditor.Recorder.AlembicOutputSettings, Unity.Recorder.Editor");
+                alembicRecorderSettingsType = System.Type.GetType("UnityEditor.Recorder.Formats.Alembic.AlembicRecorderSettings, Unity.Recorder.Editor");
+            }
+            
+            if (alembicRecorderSettingsType == null)
+            {
+                // Try without namespace
+                alembicRecorderSettingsType = System.Type.GetType("AlembicRecorderSettings, Unity.Formats.Alembic.Editor");
             }
             
             if (alembicRecorderSettingsType == null)

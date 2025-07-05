@@ -132,7 +132,7 @@ namespace BatchRenderingTool
                     try
                     {
                         // Try to find AlembicRecorderSettings type
-                        var alembicType = System.Type.GetType("UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor");
+                        var alembicType = System.Type.GetType("UnityEditor.Formats.Alembic.Recorder.AlembicRecorderSettings, Unity.Formats.Alembic.Editor");
                         if (alembicType != null)
                         {
                             var settings = createMethod.Invoke(null, new object[] { alembicType }) as RecorderSettings;
@@ -152,7 +152,7 @@ namespace BatchRenderingTool
             }
             
             // Fallback to direct creation
-            var alembicRecorderType = System.Type.GetType("UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor");
+            var alembicRecorderType = System.Type.GetType("UnityEditor.Formats.Alembic.Recorder.AlembicRecorderSettings, Unity.Formats.Alembic.Editor");
             if (alembicRecorderType != null)
             {
                 var alembicSettings = ScriptableObject.CreateInstance(alembicRecorderType) as RecorderSettings;
