@@ -60,9 +60,33 @@ namespace BatchRenderingTool
             #if ALEMBIC_PACKAGE_AVAILABLE
             return true;
             #else
-            // Alternative: Check if Alembic types exist
-            var alembicType = System.Type.GetType("UnityEngine.Formats.Alembic.Importer.AlembicStreamPlayer, Unity.Formats.Alembic.Runtime");
-            return alembicType != null;
+            // Check multiple possible Alembic types to ensure package is available
+            var alembicTypes = new string[]
+            {
+                "UnityEngine.Formats.Alembic.Importer.AlembicStreamPlayer, Unity.Formats.Alembic.Runtime",
+                "UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor",
+                "UnityEditor.Formats.Alembic.Exporter.AlembicExporter, Unity.Formats.Alembic.Editor"
+            };
+            
+            foreach (var typeName in alembicTypes)
+            {
+                var type = System.Type.GetType(typeName);
+                if (type != null)
+                {
+                    return true;
+                }
+            }
+            
+            // Also check if the Alembic package assembly is loaded
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly.FullName.Contains("Unity.Formats.Alembic"))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
             #endif
         }
         

@@ -113,18 +113,37 @@ namespace BatchRenderingTool
         
         /// <summary>
         /// Apply configuration to AlembicRecorderSettings
-        /// Note: This is a conceptual implementation as Unity Recorder's Alembic API might differ
         /// </summary>
         public RecorderSettings CreateAlembicRecorderSettings(string name)
         {
             Debug.Log($"[AlembicRecorderSettingsConfig] Creating Alembic settings: {name}");
             
-            // Note: The actual Unity Recorder Alembic API might be different
-            // This is a placeholder implementation
+            // Try to find AlembicRecorderSettings type in Unity Recorder
+            System.Type alembicRecorderSettingsType = null;
             
-            // For now, create an ImageRecorderSettings as placeholder
-            // In actual implementation, this would use AlembicRecorderSettings
-            var settings = ScriptableObject.CreateInstance<ImageRecorderSettings>();
+            // Check for the standard Unity Recorder Alembic type
+            alembicRecorderSettingsType = System.Type.GetType("UnityEditor.Recorder.AlembicRecorderSettings, Unity.Recorder.Editor");
+            
+            if (alembicRecorderSettingsType == null)
+            {
+                // Try alternative type names
+                alembicRecorderSettingsType = System.Type.GetType("UnityEditor.Recorder.AlembicOutputSettings, Unity.Recorder.Editor");
+            }
+            
+            if (alembicRecorderSettingsType == null)
+            {
+                Debug.LogError("[AlembicRecorderSettingsConfig] AlembicRecorderSettings type not found. Make sure Unity Recorder and Alembic packages are installed.");
+                return null;
+            }
+            
+            // Create AlembicRecorderSettings instance
+            var settings = ScriptableObject.CreateInstance(alembicRecorderSettingsType) as RecorderSettings;
+            if (settings == null)
+            {
+                Debug.LogError($"[AlembicRecorderSettingsConfig] Failed to create instance of {alembicRecorderSettingsType.Name}");
+                return null;
+            }
+            
             settings.name = name;
             
             // Configure basic settings
@@ -134,19 +153,85 @@ namespace BatchRenderingTool
             settings.FrameRate = frameRate;
             settings.CapFrameRate = true;
             
-            // Note: In actual implementation, we would set Alembic-specific properties
-            // For example:
-            // settings.ExportTargets = exportTargets;
-            // settings.TimeSampling = timeSamplingMode;
-            // settings.ScaleFactor = scaleFactor;
-            // settings.Handedness = handedness;
-            // etc.
+            // Apply Alembic-specific settings using reflection
+            ApplyAlembicSettings(settings);
             
             Debug.Log($"[AlembicRecorderSettingsConfig] Export targets: {exportTargets}");
             Debug.Log($"[AlembicRecorderSettingsConfig] Frame rate: {frameRate}, Samples per frame: {samplesPerFrame}");
             Debug.Log($"[AlembicRecorderSettingsConfig] Scale: {scaleFactor}, Handedness: {handedness}");
             
             return settings;
+        }
+        
+        /// <summary>
+        /// Apply Alembic-specific settings using reflection
+        /// </summary>
+        private void ApplyAlembicSettings(RecorderSettings settings)
+        {
+            var settingsType = settings.GetType();
+            
+            // Set scope
+            SetPropertyValue(settings, settingsType, "Scope", (int)exportScope);
+            
+            // Set target GameObject if applicable
+            if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
+            {
+                SetPropertyValue(settings, settingsType, "TargetGameObject", targetGameObject);
+            }
+            
+            // Set scale factor
+            SetPropertyValue(settings, settingsType, "ScaleFactor", scaleFactor);
+            
+            // Set handedness (might be an enum or bool depending on Unity version)
+            SetPropertyValue(settings, settingsType, "SwapHandedness", handedness == AlembicHandedness.Right);
+            
+            // Set samples per frame
+            SetPropertyValue(settings, settingsType, "CaptureEveryNthFrame", 1);
+            SetPropertyValue(settings, settingsType, "MotionVectorSamples", samplesPerFrame);
+            
+            // Set geometry settings
+            SetPropertyValue(settings, settingsType, "ExportVisibility", exportVisibility);
+            SetPropertyValue(settings, settingsType, "AssumeNonSkinnedMeshesAreConstant", assumeUnchangedTopology);
+            
+            // Set what to export
+            SetPropertyValue(settings, settingsType, "MeshNormals", exportNormals);
+            SetPropertyValue(settings, settingsType, "MeshUV0", exportUVs);
+            SetPropertyValue(settings, settingsType, "MeshColors", exportVertexColors);
+            
+            // Handle export targets if property exists
+            var exportMeshes = (exportTargets & (AlembicExportTargets.MeshRenderer | AlembicExportTargets.SkinnedMeshRenderer)) != 0;
+            var exportCameras = (exportTargets & AlembicExportTargets.Camera) != 0;
+            
+            SetPropertyValue(settings, settingsType, "ExportMeshes", exportMeshes);
+            SetPropertyValue(settings, settingsType, "ExportCameras", exportCameras);
+        }
+        
+        /// <summary>
+        /// Set property value using reflection
+        /// </summary>
+        private void SetPropertyValue(object obj, System.Type type, string propertyName, object value)
+        {
+            try
+            {
+                var property = type.GetProperty(propertyName);
+                if (property != null && property.CanWrite)
+                {
+                    property.SetValue(obj, value);
+                }
+                else
+                {
+                    // Try field if property not found
+                    var field = type.GetField(propertyName);
+                    if (field != null)
+                    {
+                        field.SetValue(obj, value);
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[AlembicRecorderSettingsConfig] Failed to set {propertyName}: {e.Message}");
+            }
         }
         
         /// <summary>
