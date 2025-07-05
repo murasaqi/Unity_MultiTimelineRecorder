@@ -294,6 +294,11 @@ namespace BatchRenderingTool
                     BatchRenderingToolLogger.LogError($"[AlembicRecorderSettingsConfig] === FAILED to set target GameObject on AlembicRecorderSettings ===");
                     LogAvailableProperties(settingsType);
                 }
+                else
+                {
+                    // Verify the target was set correctly
+                    VerifyTargetGameObjectSetting(settings, settingsType);
+                }
             }
             
             // Set scale factor
@@ -418,6 +423,37 @@ namespace BatchRenderingTool
             foreach (var field in fields)
             {
                 BatchRenderingToolLogger.Log($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
+            }
+        }
+        
+        /// <summary>
+        /// Verify that the target GameObject was set correctly
+        /// </summary>
+        private void VerifyTargetGameObjectSetting(RecorderSettings settings, System.Type settingsType)
+        {
+            // Try to read back the value to verify it was set
+            var properties = new string[] { "TargetBranch", "targetBranch", "TargetGameObject", "GameObject" };
+            
+            foreach (var propName in properties)
+            {
+                var prop = settingsType.GetProperty(propName);
+                if (prop != null && prop.CanRead)
+                {
+                    var value = prop.GetValue(settings);
+                    if (value != null)
+                    {
+                        BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === VERIFIED: {propName} = {value} ===");
+                        return;
+                    }
+                }
+            }
+            
+            // Also check the Scope to ensure it's set correctly
+            var scopeProp = settingsType.GetProperty("Scope");
+            if (scopeProp != null && scopeProp.CanRead)
+            {
+                var scopeValue = scopeProp.GetValue(settings);
+                BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === VERIFIED: Scope = {scopeValue} ===");
             }
         }
         
