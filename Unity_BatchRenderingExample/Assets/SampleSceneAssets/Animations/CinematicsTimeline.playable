@@ -1302,7 +1302,7 @@ MonoBehaviour:
       swapFaces:
         v: 0
       scaleFactor: 100
-    scope: 0
+    scope: 1
     targetBranch: {fileID: 0}
     fixDeltaTime: 1
     assumeNonSkinnedMeshesAreConstant: 1
