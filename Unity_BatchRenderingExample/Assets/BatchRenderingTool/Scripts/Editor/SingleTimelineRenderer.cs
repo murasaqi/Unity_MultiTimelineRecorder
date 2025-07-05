@@ -7,16 +7,18 @@ using UnityEditor;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Input;
 using UnityEditor.Recorder.Timeline;
+using UnityEditor.Recorder.Encoder;
 using Unity.EditorCoroutines.Editor;
 using System.IO;
 using System.Linq;
+using BatchRenderingTool.RecorderEditors;
 
 namespace BatchRenderingTool
 {
     /// <summary>
     /// Single Timeline Renderer - Renders one timeline at a time with a simple UI
     /// </summary>
-    public class SingleTimelineRenderer : EditorWindow
+    public class SingleTimelineRenderer : EditorWindow, IRecorderSettingsHost
     {
         // Static instance tracking
         private static SingleTimelineRenderer instance;
@@ -47,47 +49,65 @@ namespace BatchRenderingTool
         // Common render settings
         private RecorderSettingsType recorderType = RecorderSettingsType.Image;
         private RecorderSettingsType previousRecorderType = RecorderSettingsType.Image;
-        private int frameRate = 24;
-        private int width = 1920;
-        private int height = 1080;
+        public int frameRate = 24;
+        public int width = 1920;
+        public int height = 1080;
         private string outputFile = "";
-        private int takeNumber = 1;
+        public string fileName = "Recordings/<Scene>_<Take>"; // File name with wildcard support
+        public int takeNumber = 1;
         
         // Image recorder settings
-        private ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
-        private bool imageCaptureAlpha = false;
+        public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
+        public bool imageCaptureAlpha = false;
+        public int jpegQuality = 75;
+        public ImageRecorderSettings.EXRCompressionType exrCompression = ImageRecorderSettings.EXRCompressionType.None;
         
         // Movie recorder settings
-        private MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
-        private VideoBitrateMode movieQuality = VideoBitrateMode.High;
-        private bool movieCaptureAudio = false;
-        private bool movieCaptureAlpha = false;
-        private MovieRecorderPreset moviePreset = MovieRecorderPreset.HighQuality1080p;
-        private bool useMoviePreset = false;
+        public MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
+        public VideoBitrateMode movieQuality = VideoBitrateMode.High;
+        public bool movieCaptureAudio = false;
+        public bool movieCaptureAlpha = false;
+        public int movieBitrate = 15;
+        public AudioBitRateMode audioBitrate = AudioBitRateMode.High;
+        public MovieRecorderPreset moviePreset = MovieRecorderPreset.HighQuality1080p;
+        public bool useMoviePreset = false;
         
         // AOV recorder settings
-        private AOVType selectedAOVTypes = AOVType.Depth | AOVType.Normal | AOVType.Albedo;
-        private AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;
-        private AOVPreset aovPreset = AOVPreset.Compositing;
-        private bool useAOVPreset = false;
+        public AOVType selectedAOVTypes = AOVType.Depth | AOVType.Normal | AOVType.Albedo;
+        public AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;
+        public AOVPreset aovPreset = AOVPreset.Compositing;
+        public bool useAOVPreset = false;
         
         // Alembic recorder settings
-        private AlembicExportTargets alembicExportTargets = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform;
-        private AlembicExportScope alembicExportScope = AlembicExportScope.EntireScene;
-        private GameObject alembicTargetGameObject = null;
-        private AlembicHandedness alembicHandedness = AlembicHandedness.Left;
-        private float alembicScaleFactor = 1f;
-        private AlembicExportPreset alembicPreset = AlembicExportPreset.AnimationExport;
-        private bool useAlembicPreset = false;
+        public AlembicExportTargets alembicExportTargets = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform;
+        public AlembicExportScope alembicExportScope = AlembicExportScope.EntireScene;
+        public GameObject alembicTargetGameObject = null;
+        public AlembicHandedness alembicHandedness = AlembicHandedness.Left;
+        public float alembicScaleFactor = 1f;
+        public float alembicWorldScale = 1f;
+        public float alembicFrameRate = 24f;
+        public AlembicTimeSamplingType alembicTimeSamplingType = AlembicTimeSamplingType.Uniform;
+        public bool alembicIncludeChildren = true;
+        public bool alembicFlattenHierarchy = false;
+        public AlembicExportPreset alembicPreset = AlembicExportPreset.AnimationExport;
+        public bool useAlembicPreset = false;
         
         // Animation recorder settings
-        private AnimationRecordingProperties animationRecordingProperties = AnimationRecordingProperties.TransformOnly;
-        private AnimationRecordingScope animationRecordingScope = AnimationRecordingScope.SingleGameObject;
-        private GameObject animationTargetGameObject = null;
-        private AnimationInterpolationMode animationInterpolationMode = AnimationInterpolationMode.Linear;
-        private AnimationCompressionLevel animationCompressionLevel = AnimationCompressionLevel.Medium;
-        private AnimationExportPreset animationPreset = AnimationExportPreset.CharacterAnimation;
-        private bool useAnimationPreset = false;
+        public AnimationRecordingProperties animationRecordingProperties = AnimationRecordingProperties.TransformOnly;
+        public AnimationRecordingScope animationRecordingScope = AnimationRecordingScope.SingleGameObject;
+        public GameObject animationTargetGameObject = null;
+        public AnimationInterpolationMode animationInterpolationMode = AnimationInterpolationMode.Linear;
+        public AnimationCompressionLevel animationCompressionLevel = AnimationCompressionLevel.Medium;
+        public AnimationRecordingType animationRecordingType = AnimationRecordingType.TransformOnly;
+        public bool animationIncludeChildren = true;
+        public bool animationClampedTangents = true;
+        public bool animationRecordBlendShapes = false;
+        public AnimationCompression animationCompression = AnimationCompression.Off;
+        public float animationPositionError = 0.5f;
+        public float animationRotationError = 0.5f;
+        public float animationScaleError = 0.5f;
+        public AnimationRecordingPreset animationPreset = AnimationRecordingPreset.TransformHierarchy;
+        public bool useAnimationPreset = false;
         
         // Rendering objects
         private TimelineAsset renderTimeline;
@@ -95,6 +115,15 @@ namespace BatchRenderingTool
         private PlayableDirector renderingDirector;
         private EditorCoroutine renderCoroutine;
         private string tempAssetPath;
+        
+        // UI Editor instances
+        private RecorderSettingsEditorBase currentRecorderEditor;
+        
+        // Properties for easy access
+        public PlayableDirector selectedDirector => 
+            availableDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count 
+            ? availableDirectors[selectedDirectorIndex] 
+            : null;
         
         [MenuItem("Window/Batch Rendering Tool/Single Timeline Renderer")]
         public static SingleTimelineRenderer ShowWindow()
@@ -124,10 +153,17 @@ namespace BatchRenderingTool
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             
-            // Initialize output file with default template if empty
-            if (string.IsNullOrEmpty(outputFile))
+            // Initialize file name with default template if empty
+            if (string.IsNullOrEmpty(fileName))
             {
-                outputFile = WildcardProcessor.GetDefaultTemplate(recorderType);
+                fileName = WildcardProcessor.GetDefaultTemplate(recorderType);
+                outputFile = fileName; // Keep compatibility
+            }
+            
+            // Initialize recorder editor
+            if (currentRecorderEditor == null)
+            {
+                UpdateRecorderEditor();
             }
             
             // MonoBehaviourベースの新しい実装では、Play Mode遷移時の複雑な処理は不要
@@ -173,9 +209,6 @@ namespace BatchRenderingTool
             EditorGUILayout.Space(10);
             
             DrawRenderSettings();
-            EditorGUILayout.Space(10);
-            
-            DrawOutputSettings();
             EditorGUILayout.Space(10);
             
             DrawRenderControls();
@@ -269,7 +302,11 @@ namespace BatchRenderingTool
                 recorderType = newRecorderType;
                 
                 // Update output file template when recorder type changes
-                outputFile = WildcardProcessor.GetDefaultTemplate(recorderType);
+                fileName = WildcardProcessor.GetDefaultTemplate(recorderType);
+                outputFile = fileName; // Keep compatibility
+                
+                // Create appropriate editor instance
+                UpdateRecorderEditor();
             }
             
             // Check if recorder type is supported
@@ -298,399 +335,35 @@ namespace BatchRenderingTool
             // Common settings
             frameRate = EditorGUILayout.IntField("Frame Rate:", frameRate);
             
-            // Type-specific settings
-            switch (recorderType)
-            {
-                case RecorderSettingsType.Image:
-                    DrawImageRecorderSettings();
-                    break;
-                    
-                case RecorderSettingsType.Movie:
-                    DrawMovieRecorderSettings();
-                    break;
-                    
-                case RecorderSettingsType.AOV:
-                    DrawAOVRecorderSettings();
-                    break;
-                    
-                case RecorderSettingsType.Alembic:
-                    DrawAlembicRecorderSettings();
-                    break;
-                    
-                case RecorderSettingsType.Animation:
-                    DrawAnimationRecorderSettings();
-                    break;
-                    
-                default:
-                    EditorGUILayout.HelpBox("Unknown recorder type", MessageType.Error);
-                    break;
-            }
-            
             EditorGUILayout.EndVertical();
-        }
-        
-        private void DrawImageRecorderSettings()
-        {
-            EditorGUILayout.LabelField("Image Settings", EditorStyles.miniBoldLabel);
             
-            width = EditorGUILayout.IntField("Width:", width);
-            height = EditorGUILayout.IntField("Height:", height);
-            imageOutputFormat = (ImageRecorderSettings.ImageRecorderOutputFormat)EditorGUILayout.EnumPopup("Format:", imageOutputFormat);
-            imageCaptureAlpha = EditorGUILayout.Toggle("Capture Alpha:", imageCaptureAlpha);
-            
-            if (imageCaptureAlpha && imageOutputFormat != ImageRecorderSettings.ImageRecorderOutputFormat.EXR)
+            // Use new recorder editor system
+            if (currentRecorderEditor == null)
             {
-                EditorGUILayout.HelpBox("Alpha channel is best supported with EXR format", MessageType.Info);
-            }
-        }
-        
-        private void DrawMovieRecorderSettings()
-        {
-            EditorGUILayout.LabelField("Movie Settings", EditorStyles.miniBoldLabel);
-            
-            useMoviePreset = EditorGUILayout.Toggle("Use Preset:", useMoviePreset);
-            
-            if (useMoviePreset)
-            {
-                moviePreset = (MovieRecorderPreset)EditorGUILayout.EnumPopup("Preset:", moviePreset);
-                
-                // Show preset info and apply values
-                var presetConfig = MovieRecorderSettingsConfig.GetPreset(moviePreset);
-                EditorGUILayout.HelpBox(
-                    $"Resolution: {presetConfig.width}x{presetConfig.height}\n" +
-                    $"Frame Rate: {presetConfig.frameRate} fps\n" +
-                    $"Format: {presetConfig.outputFormat}\n" +
-                    $"Quality: {presetConfig.videoBitrateMode}",
-                    MessageType.Info
-                );
-                
-                // Apply preset values
-                if (moviePreset != MovieRecorderPreset.Custom)
-                {
-                    width = presetConfig.width;
-                    height = presetConfig.height;
-                    frameRate = presetConfig.frameRate;
-                    movieOutputFormat = presetConfig.outputFormat;
-                    movieQuality = presetConfig.videoBitrateMode;
-                    movieCaptureAudio = presetConfig.captureAudio;
-                    movieCaptureAlpha = presetConfig.captureAlpha;
-                }
-            }
-            else
-            {
-                width = EditorGUILayout.IntField("Width:", width);
-                height = EditorGUILayout.IntField("Height:", height);
-                movieOutputFormat = (MovieRecorderSettings.VideoRecorderOutputFormat)EditorGUILayout.EnumPopup("Format:", movieOutputFormat);
-                movieQuality = (VideoBitrateMode)EditorGUILayout.EnumPopup("Quality:", movieQuality);
-                movieCaptureAudio = EditorGUILayout.Toggle("Capture Audio:", movieCaptureAudio);
-                movieCaptureAlpha = EditorGUILayout.Toggle("Capture Alpha:", movieCaptureAlpha);
-            }
-            
-            // Platform-specific warnings
-            if (movieOutputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.MOV)
-            {
-                #if !UNITY_EDITOR_OSX
-                EditorGUILayout.HelpBox("MOV format with ProRes is only available on macOS", MessageType.Warning);
-                #endif
-            }
-            
-            if (movieCaptureAlpha && movieOutputFormat != MovieRecorderSettings.VideoRecorderOutputFormat.MOV && 
-                movieOutputFormat != MovieRecorderSettings.VideoRecorderOutputFormat.WebM)
-            {
-                EditorGUILayout.HelpBox("Alpha channel is only supported with MOV or WebM formats", MessageType.Warning);
-            }
-        }
-        
-        private void DrawAOVRecorderSettings()
-        {
-            EditorGUILayout.LabelField("AOV Settings", EditorStyles.miniBoldLabel);
-            
-            useAOVPreset = EditorGUILayout.Toggle("Use Preset:", useAOVPreset);
-            
-            if (useAOVPreset)
-            {
-                aovPreset = (AOVPreset)EditorGUILayout.EnumPopup("Preset:", aovPreset);
-                
-                // Apply preset
-                if (aovPreset != AOVPreset.Custom)
-                {
-                    var config = AOVRecorderSettingsConfig.Presets.GetCompositing();
-                    switch (aovPreset)
-                    {
-                        case AOVPreset.GeometryOnly:
-                            config = AOVRecorderSettingsConfig.Presets.GetGeometryOnly();
-                            break;
-                        case AOVPreset.LightingOnly:
-                            config = AOVRecorderSettingsConfig.Presets.GetLightingOnly();
-                            break;
-                        case AOVPreset.MaterialProperties:
-                            config = AOVRecorderSettingsConfig.Presets.GetMaterialProperties();
-                            break;
-                    }
-                    
-                    selectedAOVTypes = config.selectedAOVs;
-                    aovOutputFormat = config.outputFormat;
-                    width = config.width;
-                    height = config.height;
-                }
+                UpdateRecorderEditor();
             }
             
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("AOV Types:", EditorStyles.miniBoldLabel);
             
-            // Display AOV checkboxes in a compact grid
-            var aovTypes = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
-                .Where(t => t != AOVType.None).ToList();
-            int columnCount = 2;
-            int currentColumn = 0;
-            
-            if (aovTypes.Count > 0)
+            // Draw recorder-specific UI using new editor system
+            if (currentRecorderEditor != null)
             {
-                EditorGUILayout.BeginHorizontal();
-                foreach (var aovType in aovTypes)
-                {
-                    if (currentColumn >= columnCount)
-                    {
-                        EditorGUILayout.EndHorizontal();
-                        EditorGUILayout.BeginHorizontal();
-                        currentColumn = 0;
-                    }
-                    
-                    bool isSelected = (selectedAOVTypes & aovType) != 0;
-                    bool newSelected = EditorGUILayout.ToggleLeft(aovType.ToString(), isSelected, GUILayout.Width(150));
-                    
-                    if (newSelected != isSelected)
-                    {
-                        if (newSelected)
-                            selectedAOVTypes |= aovType;
-                        else
-                            selectedAOVTypes &= ~aovType;
-                    }
-                    
-                    currentColumn++;
-                }
-                EditorGUILayout.EndHorizontal();
-            }
-            
-            EditorGUILayout.Space(5);
-            aovOutputFormat = (AOVOutputFormat)EditorGUILayout.EnumPopup("Output Format:", aovOutputFormat);
-            
-            if (!useAOVPreset)
-            {
-                width = EditorGUILayout.IntField("Width:", width);
-                height = EditorGUILayout.IntField("Height:", height);
-            }
+                currentRecorderEditor.DrawRecorderSettings();
         }
         
-        private void DrawAlembicRecorderSettings()
+        private void UpdateRecorderEditor()
         {
-            EditorGUILayout.LabelField("Alembic Settings", EditorStyles.miniBoldLabel);
-            
-            useAlembicPreset = EditorGUILayout.Toggle("Use Preset:", useAlembicPreset);
-            
-            if (useAlembicPreset)
+            currentRecorderEditor = recorderType switch
             {
-                alembicPreset = (AlembicExportPreset)EditorGUILayout.EnumPopup("Preset:", alembicPreset);
-                
-                // Apply preset
-                if (alembicPreset != AlembicExportPreset.Custom)
-                {
-                    var config = AlembicRecorderSettingsConfig.GetPreset(alembicPreset);
-                    alembicExportTargets = config.exportTargets;
-                    alembicExportScope = config.exportScope;
-                    alembicHandedness = config.handedness;
-                    alembicScaleFactor = config.scaleFactor;
-                }
-            }
-            
-            EditorGUILayout.Space(5);
-            alembicExportScope = (AlembicExportScope)EditorGUILayout.EnumPopup("Export Scope:", alembicExportScope);
-            
-            if (alembicExportScope == AlembicExportScope.TargetGameObject)
-            {
-                alembicTargetGameObject = (GameObject)EditorGUILayout.ObjectField("Target GameObject:", alembicTargetGameObject, typeof(GameObject), true);
-            }
-            
-            EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Export Targets:", EditorStyles.miniBoldLabel);
-            
-            // Export target checkboxes
-            var exportTargets = System.Linq.Enumerable.Cast<AlembicExportTargets>(System.Enum.GetValues(typeof(AlembicExportTargets)))
-                .Where(t => t != AlembicExportTargets.None);
-            foreach (var target in exportTargets)
-            {
-                bool isSelected = (alembicExportTargets & target) != 0;
-                bool newSelected = EditorGUILayout.ToggleLeft(target.ToString(), isSelected);
-                
-                if (newSelected != isSelected)
-                {
-                    if (newSelected)
-                        alembicExportTargets |= target;
-                    else
-                        alembicExportTargets &= ~target;
-                }
-            }
-            
-            if (!useAlembicPreset)
-            {
-                EditorGUILayout.Space(5);
-                alembicHandedness = (AlembicHandedness)EditorGUILayout.EnumPopup("Handedness:", alembicHandedness);
-                alembicScaleFactor = EditorGUILayout.FloatField("Scale Factor:", alembicScaleFactor);
-            }
+                RecorderSettingsType.Image => new ImageRecorderEditor(this),
+                RecorderSettingsType.Movie => new MovieRecorderEditor(this),
+                RecorderSettingsType.AOV => new AOVRecorderEditor(this),
+                RecorderSettingsType.Alembic => new AlembicRecorderEditor(this),
+                RecorderSettingsType.Animation => new AnimationRecorderEditor(this),
+                _ => null
+            };
         }
         
-        private void DrawAnimationRecorderSettings()
-        {
-            EditorGUILayout.LabelField("Animation Settings", EditorStyles.miniBoldLabel);
-            
-            // Animation files must be saved in Assets folder
-            EditorGUILayout.HelpBox("Animation files (.anim) must be saved within the Assets folder. The default output path has been set to 'Assets/Animations/'.", MessageType.Info);
-            
-            useAnimationPreset = EditorGUILayout.Toggle("Use Preset:", useAnimationPreset);
-            
-            if (useAnimationPreset)
-            {
-                animationPreset = (AnimationExportPreset)EditorGUILayout.EnumPopup("Preset:", animationPreset);
-                
-                // Apply preset
-                if (animationPreset != AnimationExportPreset.Custom)
-                {
-                    var config = AnimationRecorderSettingsConfig.GetPreset(animationPreset);
-                    animationRecordingProperties = config.recordingProperties;
-                    animationRecordingScope = config.recordingScope;
-                    animationInterpolationMode = config.interpolationMode;
-                    animationCompressionLevel = config.compressionLevel;
-                }
-            }
-            
-            EditorGUILayout.Space(5);
-            animationRecordingScope = (AnimationRecordingScope)EditorGUILayout.EnumPopup("Recording Scope:", animationRecordingScope);
-            
-            if (animationRecordingScope == AnimationRecordingScope.SingleGameObject ||
-                animationRecordingScope == AnimationRecordingScope.GameObjectAndChildren)
-            {
-                animationTargetGameObject = (GameObject)EditorGUILayout.ObjectField("Target GameObject:", animationTargetGameObject, typeof(GameObject), true);
-            }
-            
-            EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Recording Properties:", EditorStyles.miniBoldLabel);
-            
-            // Quick selection buttons
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Transform Only", GUILayout.Height(20)))
-            {
-                animationRecordingProperties = AnimationRecordingProperties.TransformOnly;
-            }
-            if (GUILayout.Button("All Properties", GUILayout.Height(20)))
-            {
-                animationRecordingProperties = AnimationRecordingProperties.AllProperties;
-            }
-            EditorGUILayout.EndHorizontal();
-            
-            // Property checkboxes
-            var properties = System.Linq.Enumerable.Cast<AnimationRecordingProperties>(System.Enum.GetValues(typeof(AnimationRecordingProperties)))
-                .Where(p => p != AnimationRecordingProperties.None && 
-                           p != AnimationRecordingProperties.TransformOnly && 
-                           p != AnimationRecordingProperties.TransformAndBlendShapes &&
-                           p != AnimationRecordingProperties.AllProperties);
-            
-            foreach (var prop in properties)
-            {
-                bool isSelected = (animationRecordingProperties & prop) != 0;
-                bool newSelected = EditorGUILayout.ToggleLeft(prop.ToString(), isSelected);
-                
-                if (newSelected != isSelected)
-                {
-                    if (newSelected)
-                        animationRecordingProperties |= prop;
-                    else
-                        animationRecordingProperties &= ~prop;
-                }
-            }
-            
-            if (!useAnimationPreset)
-            {
-                EditorGUILayout.Space(5);
-                animationInterpolationMode = (AnimationInterpolationMode)EditorGUILayout.EnumPopup("Interpolation:", animationInterpolationMode);
-                animationCompressionLevel = (AnimationCompressionLevel)EditorGUILayout.EnumPopup("Compression:", animationCompressionLevel);
-            }
-        }
-        
-        private void DrawOutputSettings()
-        {
-            EditorGUILayout.LabelField("Output Settings", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            
-            // File Name field (Unity Recorder standard)
-            EditorGUILayout.BeginHorizontal();
-            outputFile = EditorGUILayout.TextField("File Name:", outputFile);
-            if (GUILayout.Button("...", GUILayout.Width(30)))
-            {
-                string basePath = WildcardProcessor.ExtractBasePath(outputFile);
-                string fileName = WildcardProcessor.ExtractFileName(outputFile);
-                
-                string path = EditorUtility.SaveFolderPanel("Select Output Folder", basePath, "");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    string relativePath = Path.GetRelativePath(Application.dataPath + "/..", path);
-                    outputFile = string.IsNullOrEmpty(fileName) ? relativePath : $"{relativePath}/{fileName}";
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-            
-            // Take number field (separate for easy incrementing)
-            takeNumber = EditorGUILayout.IntField("Take:", takeNumber);
-            takeNumber = Mathf.Max(1, takeNumber);
-            
-            // Wildcards help
-            EditorGUILayout.HelpBox(
-                "Wildcards: <Take>, <Scene>, <Frame>, <Time>, <Date>, <Resolution>\n" +
-                "Example: Recordings/<Scene>_<Take>/<Scene>_<Frame>",
-                MessageType.Info
-            );
-            
-            // Preview output path with wildcards resolved
-            if (!string.IsNullOrEmpty(outputFile))
-            {
-                // Create wildcard context
-                var context = new WildcardContext(takeNumber, width, height);
-                
-                // Validate template
-                string validationError;
-                if (!WildcardProcessor.ValidateTemplate(outputFile, out validationError))
-                {
-                    EditorGUILayout.HelpBox(validationError, MessageType.Error);
-                }
-                else
-                {
-                    // Process wildcards for preview
-                    string processedPath = WildcardProcessor.ProcessWildcards(outputFile, context);
-                    
-                    // Add file extension based on recorder type
-                    string extension = GetFileExtension();
-                    if (!string.IsNullOrEmpty(extension))
-                    {
-                        processedPath += $".{extension}";
-                    }
-                    
-                    // Special handling for image sequences and AOV
-                    if (recorderType == RecorderSettingsType.Image)
-                    {
-                        processedPath = processedPath.Replace("0001", "<Frame>");
-                    }
-                    else if (recorderType == RecorderSettingsType.AOV)
-                    {
-                        int aovCount = System.Linq.Enumerable.Cast<AOVType>(System.Enum.GetValues(typeof(AOVType)))
-                            .Count(t => t != AOVType.None && (selectedAOVTypes & t) != 0);
-                        processedPath += $" ({aovCount} AOV sequences)";
-                    }
-                    
-                    EditorGUILayout.HelpBox($"Output: {processedPath}", MessageType.Info);
-                }
-            }
-            
-            EditorGUILayout.EndVertical();
-        }
         
         private void DrawRenderControls()
         {
@@ -1011,7 +684,7 @@ namespace BatchRenderingTool
                 EditorPrefs.SetFloat("STR_Duration", timelineDuration);
                 EditorPrefs.SetBool("STR_IsRendering", true);
                 EditorPrefs.SetInt("STR_TakeNumber", takeNumber);
-                EditorPrefs.SetString("STR_OutputFile", outputFile);
+                EditorPrefs.SetString("STR_OutputFile", fileName);
                 EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
                 EditorPrefs.SetInt("STR_FrameRate", frameRate);
                 
@@ -1116,7 +789,7 @@ namespace BatchRenderingTool
             
             // Create recorder settings based on type
             var context = new WildcardContext(takeNumber, width, height);
-            var processedFileName = WildcardProcessor.ProcessWildcards(outputFile, context);
+            var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
             
             Debug.Log($"[SingleTimelineRenderer] Creating recorder settings for type: {recorderType}");
@@ -1494,7 +1167,7 @@ namespace BatchRenderingTool
         }
         
         // Public properties for testing
-        public string OutputFile => outputFile;
+        public string OutputFile => fileName;
         public int OutputWidth => width;
         public int OutputHeight => height;
         public int FrameRate => frameRate;
@@ -1563,19 +1236,31 @@ namespace BatchRenderingTool
                 return false;
             }
             
-            if (width <= 0 || height <= 0)
-            {
-                errorMessage = "Invalid output resolution";
-                return false;
-            }
-            
             if (frameRate <= 0)
             {
                 errorMessage = "Invalid frame rate";
                 return false;
             }
             
-            if (string.IsNullOrEmpty(outputFile))
+            // Use recorder editor for validation
+            if (currentRecorderEditor == null)
+            {
+                UpdateRecorderEditor();
+            }
+            
+            if (currentRecorderEditor != null)
+            {
+                return currentRecorderEditor.ValidateSettings(out errorMessage);
+            }
+            
+            // Fallback validation
+            if (width <= 0 || height <= 0)
+            {
+                errorMessage = "Invalid output resolution";
+                return false;
+            }
+            
+            if (string.IsNullOrEmpty(fileName))
             {
                 errorMessage = "Output file template is empty";
                 return false;
@@ -1583,7 +1268,7 @@ namespace BatchRenderingTool
             
             // Validate file template
             string templateError;
-            if (!WildcardProcessor.ValidateTemplate(outputFile, out templateError))
+            if (!WildcardProcessor.ValidateTemplate(fileName, out templateError))
             {
                 errorMessage = templateError;
                 return false;

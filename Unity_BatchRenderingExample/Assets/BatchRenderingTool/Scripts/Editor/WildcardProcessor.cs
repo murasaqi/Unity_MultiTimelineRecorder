@@ -46,6 +46,37 @@ namespace BatchRenderingTool
         }
         
         /// <summary>
+        /// Simple version of ProcessWildcards for convenience
+        /// </summary>
+        public static string ProcessWildcards(string template, string sceneName, string frameNumber, int takeNumber)
+        {
+            var context = new WildcardContext
+            {
+                SceneName = sceneName ?? SceneManager.GetActiveScene().name,
+                FrameNumber = frameNumber != null ? int.Parse(frameNumber) : (int?)null,
+                TakeNumber = takeNumber
+            };
+            
+            return ProcessWildcards(template, context);
+        }
+        
+        /// <summary>
+        /// Process wildcards for AOV outputs
+        /// </summary>
+        public static string ProcessAOVWildcards(string template, string sceneName, string frameNumber, int takeNumber, string aovType)
+        {
+            var context = new WildcardContext
+            {
+                SceneName = sceneName ?? SceneManager.GetActiveScene().name,
+                FrameNumber = frameNumber != null ? int.Parse(frameNumber) : (int?)null,
+                TakeNumber = takeNumber,
+                AOVType = aovType
+            };
+            
+            return ProcessWildcards(template, context);
+        }
+        
+        /// <summary>
         /// Get default file name template for recorder type
         /// </summary>
         public static string GetDefaultTemplate(RecorderSettingsType type)
