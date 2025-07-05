@@ -92,9 +92,9 @@ namespace BatchRenderingTool.RecorderEditors
             if (newPathIndex == 0) // Project relative
             {
                 // Ensure relative path
-                if (pathIndex == 1 && host.filePath.StartsWith(Application.dataPath))
+                if (pathIndex == 1)
                 {
-                    host.filePath = "Assets" + host.filePath.Substring(Application.dataPath.Length);
+                    host.filePath = PathUtility.GetProjectRelativePath(host.filePath);
                 }
                 host.filePath = EditorGUILayout.TextField(host.filePath);
             }
@@ -102,7 +102,7 @@ namespace BatchRenderingTool.RecorderEditors
             {
                 if (pathIndex == 0) // Converting from relative to absolute
                 {
-                    host.filePath = System.IO.Path.Combine(Application.dataPath, "..", host.filePath);
+                    host.filePath = PathUtility.GetAbsolutePath(host.filePath);
                 }
                 host.filePath = EditorGUILayout.TextField(host.filePath);
             }
@@ -113,10 +113,10 @@ namespace BatchRenderingTool.RecorderEditors
                 string selectedPath = EditorUtility.SaveFolderPanel("Select Output Folder", host.filePath, "");
                 if (!string.IsNullOrEmpty(selectedPath))
                 {
-                    if (newPathIndex == 0 && selectedPath.StartsWith(Application.dataPath))
+                    if (newPathIndex == 0)
                     {
                         // Convert to project relative path
-                        host.filePath = "Assets" + selectedPath.Substring(Application.dataPath.Length);
+                        host.filePath = PathUtility.GetProjectRelativePath(selectedPath);
                     }
                     else
                     {
@@ -168,11 +168,8 @@ namespace BatchRenderingTool.RecorderEditors
         /// </summary>
         protected virtual string GetFullOutputPath()
         {
-            string basePath = host.filePath;
-            if (!System.IO.Path.IsPathRooted(basePath))
-            {
-                basePath = System.IO.Path.Combine(Application.dataPath, "..", basePath);
-            }
+            // Get absolute path using PathUtility
+            string absolutePath = PathUtility.GetAbsolutePath(host.filePath);
             
             // Process wildcards for preview
             var context = new WildcardContext(host.takeNumber, host.width, host.height);
@@ -185,7 +182,8 @@ namespace BatchRenderingTool.RecorderEditors
                 processedFileName += "." + extension;
             }
             
-            return System.IO.Path.Combine(basePath, processedFileName);
+            // Combine and normalize the full path
+            return PathUtility.CombineAndNormalize(absolutePath, processedFileName);
         }
         
         /// <summary>

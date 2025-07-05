@@ -36,23 +36,17 @@ namespace BatchRenderingTool
         /// </summary>
         public static void ConfigureOutputPath(RecorderSettings settings, string outputFile, RecorderSettingsType type)
         {
-            string basePath = Path.GetDirectoryName(outputFile);
-            string fileName = Path.GetFileNameWithoutExtension(outputFile);
-            
-            if (!string.IsNullOrEmpty(basePath))
+            // Normalize the output path
+            if (!string.IsNullOrEmpty(outputFile))
             {
-                string fullPath = basePath;
-                if (!Path.IsPathRooted(fullPath))
-                {
-                    fullPath = Path.Combine(Application.dataPath, "..", basePath);
-                }
+                // Get absolute path using PathUtility
+                string absolutePath = PathUtility.GetAbsolutePath(outputFile);
                 
-                fullPath = Path.GetFullPath(fullPath);
+                // Ensure directory exists
+                PathUtility.EnsureDirectoryExists(absolutePath);
                 
-                if (!Directory.Exists(fullPath))
-                {
-                    Directory.CreateDirectory(fullPath);
-                }
+                // Update outputFile to use the normalized path
+                outputFile = absolutePath;
             }
             
             // Set output file based on recorder type
