@@ -21,6 +21,7 @@ namespace BatchRenderingTool
             public const string Product = "<Product>";
             public const string AOVType = "<AOVType>";
             public const string Recorder = "<Recorder>";
+            public const string GameObject = "<GameObject>";
         }
         
         /// <summary>
@@ -43,6 +44,7 @@ namespace BatchRenderingTool
             result = result.Replace(Wildcards.Product, Application.productName);
             result = result.Replace(Wildcards.AOVType, context.AOVType ?? "AOV");
             result = result.Replace(Wildcards.Recorder, context.RecorderName ?? "Recorder");
+            result = result.Replace(Wildcards.GameObject, context.GameObjectName ?? "GameObject");
             
             return result;
         }
@@ -185,6 +187,7 @@ namespace BatchRenderingTool
         public int Height { get; set; } = 1080;
         public string AOVType { get; set; }
         public string RecorderName { get; set; }
+        public string GameObjectName { get; set; }
         
         public WildcardContext() { }
         

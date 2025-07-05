@@ -155,6 +155,14 @@ namespace BatchRenderingTool.RecorderEditors
             menu.AddItem(new GUIContent("<Resolution>"), false, () => InsertWildcard("<Resolution>"));
             menu.AddItem(new GUIContent("<Product>"), false, () => InsertWildcard("<Product>"));
             menu.AddItem(new GUIContent("<Date>"), false, () => InsertWildcard("<Date>"));
+            
+            // Add GameObject wildcard if available
+            if (GetTargetGameObjectName() != null)
+            {
+                menu.AddSeparator("");
+                menu.AddItem(new GUIContent("<GameObject>"), false, () => InsertWildcard("<GameObject>"));
+            }
+            
             menu.ShowAsContext();
         }
         
@@ -188,7 +196,8 @@ namespace BatchRenderingTool.RecorderEditors
             // Process wildcards for preview
             var context = new WildcardContext(host.takeNumber, host.width, host.height)
             {
-                RecorderName = GetRecorderName()
+                RecorderName = GetRecorderName(),
+                GameObjectName = GetTargetGameObjectName()
             };
             string processedFileName = WildcardProcessor.ProcessWildcards(host.fileName, context);
             
@@ -212,6 +221,15 @@ namespace BatchRenderingTool.RecorderEditors
         /// Get recorder name for wildcard processing
         /// </summary>
         protected abstract string GetRecorderName();
+        
+        /// <summary>
+        /// Get target GameObject name for wildcard processing
+        /// Override in recorders that have target GameObjects
+        /// </summary>
+        protected virtual string GetTargetGameObjectName()
+        {
+            return null;
+        }
         
         /// <summary>
         /// Validates the current settings

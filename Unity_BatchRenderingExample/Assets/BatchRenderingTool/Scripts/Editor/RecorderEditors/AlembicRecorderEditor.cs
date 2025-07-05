@@ -174,6 +174,11 @@ namespace BatchRenderingTool.RecorderEditors
             return "Alembic";
         }
         
+        protected override string GetTargetGameObjectName()
+        {
+            return host.alembicTargetGameObject != null ? host.alembicTargetGameObject.name : null;
+        }
+        
         public override bool ValidateSettings(out string errorMessage)
         {
             if (!AlembicExportInfo.IsAlembicPackageAvailable())
