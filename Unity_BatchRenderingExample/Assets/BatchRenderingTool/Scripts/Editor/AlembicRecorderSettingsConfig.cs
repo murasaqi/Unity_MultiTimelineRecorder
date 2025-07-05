@@ -192,6 +192,64 @@ namespace BatchRenderingTool
             // Log all available properties first for debugging
             LogAvailableProperties(settingsType);
             
+            // Access the internal AlembicRecorderSettings (UnityEngine.Formats.Alembic.Util.AlembicRecorderSettings)
+            var settingsProperty = settingsType.GetProperty("Settings");
+            if (settingsProperty != null && settingsProperty.CanRead)
+            {
+                var innerSettings = settingsProperty.GetValue(settings);
+                if (innerSettings != null)
+                {
+                    BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Found inner Settings of type: {innerSettings.GetType().FullName}");
+                    var innerType = innerSettings.GetType();
+                    
+                    // Set Scope on the inner settings
+                    var innerScopeProperty = innerType.GetProperty("Scope");
+                    if (innerScopeProperty != null && innerScopeProperty.CanWrite)
+                    {
+                        // Get ExportScope enum type
+                        var exportScopeType = innerScopeProperty.PropertyType;
+                        BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] Found Scope property of type: {exportScopeType.FullName}");
+                        
+                        // Map our scope to Unity's ExportScope
+                        object unityScope = null;
+                        if (exportScope == AlembicExportScope.EntireScene)
+                        {
+                            unityScope = Enum.Parse(exportScopeType, "EntireScene");
+                        }
+                        else if (exportScope == AlembicExportScope.TargetGameObject || 
+                                 exportScope == AlembicExportScope.SelectedHierarchy ||
+                                 exportScope == AlembicExportScope.CustomSelection)
+                        {
+                            unityScope = Enum.Parse(exportScopeType, "TargetBranch");
+                        }
+                        
+                        if (unityScope != null)
+                        {
+                            innerScopeProperty.SetValue(innerSettings, unityScope);
+                            BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Successfully set Scope to {unityScope} ===");
+                        }
+                    }
+                    
+                    // Set TargetBranch on the inner settings
+                    if ((exportScope == AlembicExportScope.TargetGameObject || 
+                         exportScope == AlembicExportScope.SelectedHierarchy ||
+                         exportScope == AlembicExportScope.CustomSelection) && 
+                        targetGameObject != null)
+                    {
+                        var targetBranchProperty = innerType.GetProperty("TargetBranch");
+                        if (targetBranchProperty != null && targetBranchProperty.CanWrite)
+                        {
+                            targetBranchProperty.SetValue(innerSettings, targetGameObject);
+                            BatchRenderingToolLogger.Log($"[AlembicRecorderSettingsConfig] === Successfully set TargetBranch to {targetGameObject.name} ===");
+                        }
+                    }
+                    
+                    // Apply other settings to the inner settings
+                    ApplySettingsToInnerObject(innerSettings, innerType);
+                    return;
+                }
+            }
+            
             // For Unity Alembic, settings might be stored in fields instead of properties
             // Check all fields for Alembic-specific settings
             bool scopeSet = false;
@@ -252,11 +310,8 @@ namespace BatchRenderingTool
                 }
             }
             
-            // If we didn't find scope in fields, try properties as before
-            if (!scopeSet)
-            {
-                BatchRenderingToolLogger.LogWarning("[AlembicRecorderSettingsConfig] Scope not found in fields, trying properties...");
-            }
+            // This code path should not be reached if inner Settings were found
+            BatchRenderingToolLogger.LogError("[AlembicRecorderSettingsConfig] Failed to access inner Settings object");
             
             // Map our enum values to Unity Alembic's expected values
             // Based on documentation: Scope determines export range (entire Scene or selected branch)
@@ -497,6 +552,46 @@ namespace BatchRenderingTool
             foreach (var field in fields)
             {
                 BatchRenderingToolLogger.Log($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
+            }
+        }
+        
+        /// <summary>
+        /// Apply settings to the inner AlembicRecorderSettings object
+        /// </summary>
+        private void ApplySettingsToInnerObject(object innerSettings, System.Type innerType)
+        {
+            // Set scale factor
+            SetPropertyValue(innerSettings, innerType, "ScaleFactor", scaleFactor);
+            
+            // Access ExportOptions if available
+            var exportOptionsProperty = innerType.GetProperty("ExportOptions");
+            if (exportOptionsProperty != null && exportOptionsProperty.CanRead)
+            {
+                var exportOptions = exportOptionsProperty.GetValue(innerSettings);
+                if (exportOptions != null)
+                {
+                    var optionsType = exportOptions.GetType();
+                    
+                    // Set handedness
+                    SetPropertyValue(exportOptions, optionsType, "SwapHandedness", handedness == AlembicHandedness.Right);
+                    
+                    // Set capture settings
+                    SetPropertyValue(exportOptions, optionsType, "CaptureEveryNthFrame", 1);
+                    SetPropertyValue(exportOptions, optionsType, "MotionVectorSamples", samplesPerFrame);
+                    
+                    // Set what to export
+                    var exportMeshes = (exportTargets & (AlembicExportTargets.MeshRenderer | AlembicExportTargets.SkinnedMeshRenderer)) != 0;
+                    var exportCameras = (exportTargets & AlembicExportTargets.Camera) != 0;
+                    
+                    SetPropertyValue(exportOptions, optionsType, "CaptureMeshRenderer", exportMeshes);
+                    SetPropertyValue(exportOptions, optionsType, "CaptureSkinnedMeshRenderer", (exportTargets & AlembicExportTargets.SkinnedMeshRenderer) != 0);
+                    SetPropertyValue(exportOptions, optionsType, "CaptureCamera", exportCameras);
+                    
+                    // Set geometry settings
+                    SetPropertyValue(exportOptions, optionsType, "MeshNormals", exportNormals);
+                    SetPropertyValue(exportOptions, optionsType, "MeshUV0", exportUVs);
+                    SetPropertyValue(exportOptions, optionsType, "MeshColors", exportVertexColors);
+                }
             }
         }
         
