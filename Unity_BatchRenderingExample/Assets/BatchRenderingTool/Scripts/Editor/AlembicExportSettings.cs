@@ -81,7 +81,7 @@ namespace BatchRenderingTool
                 var type = System.Type.GetType(typeName);
                 if (type != null)
                 {
-                    Debug.Log($"[AlembicExportInfo] Found Alembic type: {typeName}");
+                    BatchRenderingToolLogger.LogVerbose($"[AlembicExportInfo] Found Alembic type: {typeName}");
                     return true;
                 }
             }

@@ -108,7 +108,7 @@ namespace BatchRenderingTool
                     if (outputFileProperty != null && outputFileProperty.CanWrite)
                     {
                         outputFileProperty.SetValue(settings, outputFile);
-                        Debug.Log($"[RecorderSettingsHelper] Set Alembic OutputFile property to: {outputFile}");
+                        BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Set Alembic OutputFile property to: {outputFile}");
                     }
                     else
                     {
@@ -117,11 +117,11 @@ namespace BatchRenderingTool
                         if (fileNameProperty != null && fileNameProperty.CanWrite)
                         {
                             fileNameProperty.SetValue(settings, outputFile);
-                            Debug.Log($"[RecorderSettingsHelper] Set Alembic FileName property to: {outputFile}");
+                            BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Set Alembic FileName property to: {outputFile}");
                         }
                         else
                         {
-                            Debug.LogError($"[RecorderSettingsHelper] Could not find output file property on AlembicRecorderSettings");
+                            BatchRenderingToolLogger.LogError($"[RecorderSettingsHelper] Could not find output file property on AlembicRecorderSettings");
                         }
                     }
                     break;
@@ -132,7 +132,7 @@ namespace BatchRenderingTool
                     if (animationSettings != null)
                     {
                         animationSettings.OutputFile = outputFile;
-                        Debug.Log($"[RecorderSettingsHelper] Animation will be saved to: {outputFile}.anim");
+                        BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Animation will be saved to: {outputFile}.anim");
                     }
                     break;
             }

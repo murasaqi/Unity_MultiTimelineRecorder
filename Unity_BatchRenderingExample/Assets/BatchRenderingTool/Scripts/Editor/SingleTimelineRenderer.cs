@@ -182,7 +182,7 @@ namespace BatchRenderingTool
         
         private void OnEnable()
         {
-            Debug.Log("[SingleTimelineRenderer] OnEnable called");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] OnEnable called");
             instance = this;
             
             // Reset state if not in Play Mode
@@ -191,7 +191,7 @@ namespace BatchRenderingTool
                 currentState = RenderState.Idle;
                 renderCoroutine = null;
                 isRenderingInProgress = false;
-                Debug.Log("[SingleTimelineRenderer] Reset to Idle state");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Reset to Idle state");
             }
             
             ScanTimelines();
@@ -222,10 +222,10 @@ namespace BatchRenderingTool
                 // Play Mode内でTimelineRendererが処理中
                 currentState = RenderState.WaitingForPlayMode;
                 statusMessage = "Rendering in Play Mode...";
-                Debug.Log("[SingleTimelineRenderer] Detected rendering in progress in Play Mode");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Detected rendering in progress in Play Mode");
             }
             
-            Debug.Log($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}");
         }
         
         private void OnDisable()
@@ -246,7 +246,7 @@ namespace BatchRenderingTool
             {
                 if (availableDirectors == null)
                 {
-                    Debug.LogError("[SingleTimelineRenderer] availableDirectors is null!");
+                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] availableDirectors is null!");
                     availableDirectors = new List<PlayableDirector>();
                     ScanTimelines();
                 }
@@ -276,7 +276,7 @@ namespace BatchRenderingTool
             EditorGUILayout.LabelField($"Available Timelines: {availableDirectors.Count}");
             if (GUILayout.Button("Refresh", GUILayout.Width(80)))
             {
-                Debug.Log("[SingleTimelineRenderer] Manual refresh requested");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Manual refresh requested");
                 ScanTimelines();
             }
             EditorGUILayout.EndHorizontal();
@@ -287,10 +287,10 @@ namespace BatchRenderingTool
                 if (GUILayout.Button("Debug: Show all PlayableDirectors"))
                 {
                     var allDirectors = GameObject.FindObjectsOfType<PlayableDirector>();
-                    Debug.Log($"[DEBUG] Total PlayableDirectors in scene: {allDirectors.Length}");
+                    BatchRenderingToolLogger.LogVerbose($"[DEBUG] Total PlayableDirectors in scene: {allDirectors.Length}");
                     foreach (var dir in allDirectors)
                     {
-                        Debug.Log($"[DEBUG] - {dir.name}: playableAsset={dir.playableAsset?.name ?? "null"} (Type: {dir.playableAsset?.GetType().Name ?? "null"})");
+                        BatchRenderingToolLogger.LogVerbose($"[DEBUG] - {dir.name}: playableAsset={dir.playableAsset?.name ?? "null"} (Type: {dir.playableAsset?.GetType().Name ?? "null"})");
                     }
                 }
             }
@@ -431,7 +431,7 @@ namespace BatchRenderingTool
                     currentState = RenderState.Idle;
                     renderCoroutine = null;
                     statusMessage = "State reset to Idle";
-                    Debug.Log("[SingleTimelineRenderer] State manually reset to Idle");
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] State manually reset to Idle");
                 }
             }
             
@@ -495,7 +495,7 @@ namespace BatchRenderingTool
                 
                 if (GUILayout.Button("Force Reset", GUILayout.Width(100)))
                 {
-                    Debug.Log($"[SingleTimelineRenderer] Force reset from state: {currentState}");
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Force reset from state: {currentState}");
                     currentState = RenderState.Idle;
                     statusMessage = "Reset to Idle";
                     
@@ -510,7 +510,7 @@ namespace BatchRenderingTool
                 
                 if (GUILayout.Button("Clear EditorPrefs", GUILayout.Width(120)))
                 {
-                    Debug.Log("[SingleTimelineRenderer] Clearing all EditorPrefs");
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Clearing all EditorPrefs");
                     EditorPrefs.DeleteKey("STR_DirectorName");
                     EditorPrefs.DeleteKey("STR_TempAssetPath");
                     EditorPrefs.DeleteKey("STR_Duration");
@@ -529,21 +529,21 @@ namespace BatchRenderingTool
         
         private void ScanTimelines()
         {
-            Debug.Log("[SingleTimelineRenderer] ScanTimelines called");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ScanTimelines called");
             availableDirectors.Clear();
             PlayableDirector[] allDirectors = GameObject.FindObjectsOfType<PlayableDirector>();
-            Debug.Log($"[SingleTimelineRenderer] Found {allDirectors.Length} total PlayableDirectors");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Found {allDirectors.Length} total PlayableDirectors");
             
             foreach (var director in allDirectors)
             {
                 if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
                 {
                     availableDirectors.Add(director);
-                    Debug.Log($"[SingleTimelineRenderer] Added director: {director.name}");
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Added director: {director.name}");
                 }
                 else if (director != null)
                 {
-                    Debug.Log($"[SingleTimelineRenderer] Skipped director: {director.name} (asset: {director.playableAsset?.GetType().Name ?? "null"})");
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Skipped director: {director.name} (asset: {director.playableAsset?.GetType().Name ?? "null"})");
                 }
             }
             
@@ -561,24 +561,24 @@ namespace BatchRenderingTool
                 selectedDirectorIndex = 0;
             }
             
-            Debug.Log($"[SingleTimelineRenderer] ScanTimelines completed - Found {availableDirectors.Count} valid directors");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] ScanTimelines completed - Found {availableDirectors.Count} valid directors");
         }
         
         private void StartRendering()
         {
-            Debug.Log("[SingleTimelineRenderer] === StartRendering called ===");
-            Debug.Log($"[SingleTimelineRenderer] Current state: {currentState}");
-            Debug.Log($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
-            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
-            Debug.Log($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === StartRendering called ===");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Current state: {currentState}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
             
             if (renderCoroutine != null)
             {
-                Debug.Log("[SingleTimelineRenderer] Stopping existing coroutine");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping existing coroutine");
                 EditorCoroutineUtility.StopCoroutine(renderCoroutine);
             }
             
-            Debug.Log("[SingleTimelineRenderer] Starting new coroutine");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Starting new coroutine");
             renderCoroutine = EditorCoroutineUtility.StartCoroutine(RenderTimelineCoroutine(), this);
         }
         
@@ -609,9 +609,9 @@ namespace BatchRenderingTool
         
         private IEnumerator RenderTimelineCoroutine()
         {
-            Debug.Log("[SingleTimelineRenderer] RenderTimelineCoroutine started");
-            Debug.Log($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
-            Debug.Log($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] RenderTimelineCoroutine started");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
             
             currentState = RenderState.Preparing;
             statusMessage = "Preparing...";
@@ -622,7 +622,7 @@ namespace BatchRenderingTool
             {
                 currentState = RenderState.Error;
                 statusMessage = "No timelines available";
-                Debug.LogError("[SingleTimelineRenderer] No timelines available");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No timelines available");
                 yield break;
             }
             
@@ -630,30 +630,30 @@ namespace BatchRenderingTool
             {
                 currentState = RenderState.Error;
                 statusMessage = "Invalid timeline selection";
-                Debug.LogError($"[SingleTimelineRenderer] Invalid selection index: {selectedDirectorIndex} (count: {availableDirectors.Count})");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid selection index: {selectedDirectorIndex} (count: {availableDirectors.Count})");
                 yield break;
             }
             
             var selectedDirector = availableDirectors[selectedDirectorIndex];
-            Debug.Log($"[SingleTimelineRenderer] Selected director: {selectedDirector?.name ?? "null"}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected director: {selectedDirector?.name ?? "null"}");
             
             if (selectedDirector == null || selectedDirector.gameObject == null)
             {
                 currentState = RenderState.Error;
                 statusMessage = "Selected director is null or destroyed";
-                Debug.LogError("[SingleTimelineRenderer] Selected director is null or destroyed");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Selected director is null or destroyed");
                 yield break;
             }
             
             var originalTimeline = selectedDirector.playableAsset as TimelineAsset;
             
-            Debug.Log($"[SingleTimelineRenderer] Selected director: {selectedDirector?.gameObject.name}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected director: {selectedDirector?.gameObject.name}");
             
             if (originalTimeline == null)
             {
                 currentState = RenderState.Error;
                 statusMessage = "Selected asset is not a Timeline";
-                Debug.LogError("[SingleTimelineRenderer] Selected asset is not a Timeline");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Selected asset is not a Timeline");
                 yield break;
             }
             
@@ -665,7 +665,7 @@ namespace BatchRenderingTool
             string directorName = selectedDirector.gameObject.name;
             float timelineDuration = (float)originalTimeline.duration;
             
-            Debug.Log($"[SingleTimelineRenderer] Timeline duration: {timelineDuration}, PlayOnAwake was: {originalPlayOnAwake}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Timeline duration: {timelineDuration}, PlayOnAwake was: {originalPlayOnAwake}");
             
             // Create render timeline BEFORE entering Play Mode
             currentState = RenderState.PreparingAssets;
@@ -678,18 +678,18 @@ namespace BatchRenderingTool
                 {
                     currentState = RenderState.Error;
                     statusMessage = "Failed to create render timeline";
-                    Debug.LogError("[SingleTimelineRenderer] Failed to create render timeline");
+                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create render timeline");
                     selectedDirector.playOnAwake = originalPlayOnAwake;
                     yield break;
                 }
                 
-                Debug.Log($"[SingleTimelineRenderer] === Successfully created render timeline at: {tempAssetPath} ===");
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Successfully created render timeline at: {tempAssetPath} ===");
             }
             catch (System.Exception e)
             {
                 currentState = RenderState.Error;
                 statusMessage = $"Error creating timeline: {e.Message}";
-                Debug.LogError($"[SingleTimelineRenderer] Error creating timeline: {e}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Error creating timeline: {e}");
                 selectedDirector.playOnAwake = originalPlayOnAwake;
                 yield break;
             }
@@ -699,23 +699,23 @@ namespace BatchRenderingTool
             statusMessage = "Saving timeline asset...";
             yield return null; // Allow UI to update
             
-            Debug.Log("[SingleTimelineRenderer] Saving assets...");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Saving assets...");
             AssetDatabase.SaveAssets();
             AssetDatabase.ImportAsset(tempAssetPath, ImportAssetOptions.ForceUpdate);
             AssetDatabase.Refresh();
             
             // Verify asset was saved
-            Debug.Log("[SingleTimelineRenderer] Verifying saved asset...");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Verifying saved asset...");
             var verifyAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
             if (verifyAsset == null)
             {
                 currentState = RenderState.Error;
                 statusMessage = "Failed to save Timeline asset";
-                Debug.LogError($"[SingleTimelineRenderer] Failed to verify saved asset at: {tempAssetPath}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to verify saved asset at: {tempAssetPath}");
                 selectedDirector.playOnAwake = originalPlayOnAwake;
                 yield break;
             }
-            Debug.Log($"[SingleTimelineRenderer] Asset verified successfully: {verifyAsset.name}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Asset verified successfully: {verifyAsset.name}");
             
             // Wait to ensure asset is fully saved
             yield return new WaitForSeconds(0.5f);
@@ -724,11 +724,11 @@ namespace BatchRenderingTool
             currentState = RenderState.WaitingForPlayMode;
             statusMessage = "Starting Unity Play Mode...";
             
-            Debug.Log($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
             
             if (!EditorApplication.isPlaying)
             {
-                Debug.Log("[SingleTimelineRenderer] === Entering Play Mode... ===");
+                BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Entering Play Mode... ===");
                 // Store necessary data for Play Mode
                 EditorPrefs.SetString("STR_DirectorName", directorName);
                 EditorPrefs.SetString("STR_TempAssetPath", tempAssetPath);
@@ -752,7 +752,7 @@ namespace BatchRenderingTool
         
         private TimelineAsset CreateRenderTimeline(PlayableDirector originalDirector, TimelineAsset originalTimeline)
         {
-            Debug.Log($"[SingleTimelineRenderer] === CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name} ===");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === CreateRenderTimeline started - Director: {originalDirector.gameObject.name}, Timeline: {originalTimeline.name} ===");
             
             try
             {
@@ -760,57 +760,57 @@ namespace BatchRenderingTool
                 var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             if (timeline == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to create TimelineAsset instance");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create TimelineAsset instance");
                 return null;
             }
             timeline.name = $"{originalDirector.gameObject.name}_RenderTimeline";
             timeline.editorSettings.frameRate = frameRate;
-            Debug.Log($"[SingleTimelineRenderer] === Created TimelineAsset: {timeline.name}, frameRate: {frameRate} ===");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Created TimelineAsset: {timeline.name}, frameRate: {frameRate} ===");
             
             // Save as temporary asset
             string tempDir = "Assets/BatchRenderingTool/Temp";
             if (!AssetDatabase.IsValidFolder(tempDir))
             {
-                Debug.Log("[SingleTimelineRenderer] Creating temp directory...");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating temp directory...");
                 if (!AssetDatabase.IsValidFolder("Assets/BatchRenderingTool"))
                 {
                     AssetDatabase.CreateFolder("Assets", "BatchRenderingTool");
-                    Debug.Log("[SingleTimelineRenderer] Created BatchRenderingTool folder");
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Created BatchRenderingTool folder");
                 }
                 AssetDatabase.CreateFolder("Assets/BatchRenderingTool", "Temp");
-                Debug.Log("[SingleTimelineRenderer] Created Temp folder");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Created Temp folder");
             }
             
             tempAssetPath = $"{tempDir}/{timeline.name}_{System.DateTime.Now.Ticks}.playable";
-            Debug.Log($"[SingleTimelineRenderer] Creating asset at: {tempAssetPath}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Creating asset at: {tempAssetPath}");
             try
             {
                 AssetDatabase.CreateAsset(timeline, tempAssetPath);
-                Debug.Log($"[SingleTimelineRenderer] Successfully created asset at: {tempAssetPath}");
+                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Successfully created asset at: {tempAssetPath}");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[SingleTimelineRenderer] Failed to create asset: {e.Message}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create asset: {e.Message}");
                 return null;
             }
             
             // Create control track
-            Debug.Log("[SingleTimelineRenderer] Creating ControlTrack...");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating ControlTrack...");
             var controlTrack = timeline.CreateTrack<ControlTrack>(null, "Control Track");
             if (controlTrack == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to create ControlTrack");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create ControlTrack");
                 return null;
             }
-            Debug.Log("[SingleTimelineRenderer] ControlTrack created successfully");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ControlTrack created successfully");
             
             var controlClip = controlTrack.CreateClip<ControlPlayableAsset>();
             if (controlClip == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to create ControlClip");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create ControlClip");
                 return null;
             }
-            Debug.Log("[SingleTimelineRenderer] ControlClip created successfully");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ControlClip created successfully");
             controlClip.displayName = originalDirector.gameObject.name;
             controlClip.start = 0;
             controlClip.duration = originalTimeline.duration;
@@ -844,20 +844,20 @@ namespace BatchRenderingTool
             var processedFilePath = filePath; // Path doesn't need wildcard processing
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
             
-            Debug.Log($"[SingleTimelineRenderer] Creating recorder settings for type: {recorderType}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Creating recorder settings for type: {recorderType}");
             switch (recorderType)
             {
                 case RecorderSettingsType.Image:
-                    Debug.Log("[SingleTimelineRenderer] Creating ImageRecorderSettings...");
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating ImageRecorderSettings...");
                     var imageSettings = CreateImageRecorderSettings(processedFilePath, processedFileName);
                     if (imageSettings != null)
                     {
                         recorderSettingsList.Add(imageSettings);
-                        Debug.Log($"[SingleTimelineRenderer] ImageRecorderSettings created: {imageSettings.GetType().Name}");
+                        BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] ImageRecorderSettings created: {imageSettings.GetType().Name}");
                     }
                     else
                     {
-                        Debug.LogError("[SingleTimelineRenderer] CreateImageRecorderSettings returned null");
+                        BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] CreateImageRecorderSettings returned null");
                     }
                     break;
                     
@@ -882,16 +882,16 @@ namespace BatchRenderingTool
                     break;
                     
                 default:
-                    Debug.LogError($"[SingleTimelineRenderer] Unsupported recorder type: {recorderType}");
+                    BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Unsupported recorder type: {recorderType}");
                     return null;
             }
             
             if (recorderSettingsList.Count == 0)
             {
-                Debug.LogError($"[SingleTimelineRenderer] Failed to create recorder settings for type: {recorderType}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create recorder settings for type: {recorderType}");
                 return null;
             }
-            Debug.Log($"[SingleTimelineRenderer] Created {recorderSettingsList.Count} recorder settings");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Created {recorderSettingsList.Count} recorder settings");
             
             // For AOV, we might have multiple settings, but for now use the first one for the main recorder track
             RecorderSettings recorderSettings = recorderSettingsList[0];
@@ -903,21 +903,21 @@ namespace BatchRenderingTool
             }
             
             // Create recorder track and clip
-            Debug.LogError("[SingleTimelineRenderer] === Creating RecorderTrack... ===");
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Creating RecorderTrack... ===");
             var recorderTrack = timeline.CreateTrack<UnityEditor.Recorder.Timeline.RecorderTrack>(null, "Recorder Track");
             if (recorderTrack == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to create RecorderTrack");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create RecorderTrack");
                 return null;
             }
-            Debug.LogError("[SingleTimelineRenderer] === RecorderTrack created successfully ===");
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === RecorderTrack created successfully ===");
             var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
             if (recorderClip == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to create RecorderClip");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create RecorderClip");
                 return null;
             }
-            Debug.LogError("[SingleTimelineRenderer] === RecorderClip created successfully ===");
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === RecorderClip created successfully ===");
             
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
             recorderClip.start = 0;
@@ -926,13 +926,13 @@ namespace BatchRenderingTool
             var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             if (recorderAsset == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] Failed to get RecorderClip asset");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to get RecorderClip asset");
                 return null;
             }
-            Debug.Log($"[SingleTimelineRenderer] RecorderClip asset type: {recorderAsset.GetType().FullName}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] RecorderClip asset type: {recorderAsset.GetType().FullName}");
             
             recorderAsset.settings = recorderSettings;
-            Debug.Log($"[SingleTimelineRenderer] Assigned RecorderSettings of type: {recorderSettings.GetType().FullName}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Assigned RecorderSettings of type: {recorderSettings.GetType().FullName}");
             
             // Use RecorderClipUtility to ensure proper initialization
             RecorderClipUtility.EnsureRecorderTypeIsSet(recorderAsset, recorderSettings);
@@ -945,14 +945,14 @@ namespace BatchRenderingTool
             AssetDatabase.Refresh();
             
             // Log for debugging
-            Debug.Log($"[SingleTimelineRenderer] Created timeline with ControlTrack, exposed name: {exposedName}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Created timeline with ControlTrack, exposed name: {exposedName}");
             
             return timeline;
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[SingleTimelineRenderer] Exception in CreateRenderTimeline: {e.Message}");
-                Debug.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Exception in CreateRenderTimeline: {e.Message}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
                 return null;
             }
         }
@@ -1084,21 +1084,21 @@ namespace BatchRenderingTool
         
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            Debug.Log($"[SingleTimelineRenderer] Play Mode state changed: {state}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Play Mode state changed: {state}");
             
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                Debug.Log("[SingleTimelineRenderer] Entered Play Mode");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Entered Play Mode");
                 
                 // レンダリングが進行中の場合、TimelineRendererを作成
                 bool isRendering = EditorPrefs.GetBool("STR_IsRendering", false);
                 bool useMonoBehaviour = EditorPrefs.GetBool("STR_UseMonoBehaviour", false);
                 
-                Debug.Log($"[SingleTimelineRenderer] STR_IsRendering: {isRendering}, STR_UseMonoBehaviour: {useMonoBehaviour}");
+                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] STR_IsRendering: {isRendering}, STR_UseMonoBehaviour: {useMonoBehaviour}");
                 
                 if (isRendering)
                 {
-                    Debug.Log("[SingleTimelineRenderer] Creating PlayModeTimelineRenderer GameObject");
+                    BatchRenderingToolLogger.Log("[SingleTimelineRenderer] Creating PlayModeTimelineRenderer GameObject");
                     currentState = RenderState.Rendering;
                     statusMessage = "Rendering in Play Mode...";
                     
@@ -1113,7 +1113,7 @@ namespace BatchRenderingTool
                     var renderTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
                     if (renderTimeline == null)
                     {
-                        Debug.LogError($"[SingleTimelineRenderer] Failed to load timeline from: {tempAssetPath}");
+                        BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to load timeline from: {tempAssetPath}");
                         currentState = RenderState.Error;
                         statusMessage = "Failed to load render timeline";
                         return;
@@ -1135,11 +1135,11 @@ namespace BatchRenderingTool
                     // 作成確認
                     if (renderer != null)
                     {
-                        Debug.Log("[SingleTimelineRenderer] PlayModeTimelineRenderer successfully created");
+                        BatchRenderingToolLogger.Log("[SingleTimelineRenderer] PlayModeTimelineRenderer successfully created");
                     }
                     else
                     {
-                        Debug.LogError("[SingleTimelineRenderer] Failed to create PlayModeTimelineRenderer");
+                        BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create PlayModeTimelineRenderer");
                     }
                     
                     // EditorPrefsをクリア
@@ -1150,12 +1150,12 @@ namespace BatchRenderingTool
                 }
                 else
                 {
-                    Debug.LogWarning("[SingleTimelineRenderer] STR_IsRendering is false - PlayModeTimelineRenderer will not be created");
+                    BatchRenderingToolLogger.LogWarning("[SingleTimelineRenderer] STR_IsRendering is false - PlayModeTimelineRenderer will not be created");
                 }
             }
             else if (state == PlayModeStateChange.ExitingPlayMode)
             {
-                Debug.Log("[SingleTimelineRenderer] Exiting Play Mode");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Exiting Play Mode");
                 
                 // レンダリング完了を確認
                 if (EditorPrefs.GetBool("STR_RenderingComplete", false))
@@ -1199,7 +1199,7 @@ namespace BatchRenderingTool
         
         private void MonitorRenderingProgress()
         {
-            Debug.Log("[SingleTimelineRenderer] Starting rendering progress monitoring");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Starting rendering progress monitoring");
             
             // EditorWindowではコルーチンは使用できないため、
             // EditorApplication.updateを使用して進行状況を監視
@@ -1210,7 +1210,7 @@ namespace BatchRenderingTool
         {
             if (!EditorApplication.isPlaying)
             {
-                Debug.Log("[SingleTimelineRenderer] Rendering progress monitoring ended");
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Rendering progress monitoring ended");
                 EditorApplication.update -= OnRenderingProgressUpdate;
             }
         }
@@ -1335,14 +1335,14 @@ namespace BatchRenderingTool
         
         private RecorderSettings CreateImageRecorderSettings(string outputPath, string outputFileName)
         {
-            Debug.LogError($"[SingleTimelineRenderer] === CreateImageRecorderSettings called with path: {outputPath}, filename: {outputFileName} ===");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === CreateImageRecorderSettings called with path: {outputPath}, filename: {outputFileName} ===");
             var settings = RecorderClipUtility.CreateProperImageRecorderSettings("ImageRecorder");
             if (settings == null)
             {
-                Debug.LogError("[SingleTimelineRenderer] RecorderClipUtility.CreateProperImageRecorderSettings returned null");
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] RecorderClipUtility.CreateProperImageRecorderSettings returned null");
                 return null;
             }
-            Debug.LogError($"[SingleTimelineRenderer] === Created settings of type: {settings.GetType().FullName} ===");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Created settings of type: {settings.GetType().FullName} ===");
             settings.Enabled = true;
             settings.OutputFormat = imageOutputFormat;
             settings.CaptureAlpha = imageCaptureAlpha;
@@ -1352,18 +1352,18 @@ namespace BatchRenderingTool
             settings.CapFrameRate = true;
             
             // Configure output path
-            Debug.Log($"[SingleTimelineRenderer] Configuring output path: {outputPath}, filename: {outputFileName}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Configuring output path: {outputPath}, filename: {outputFileName}");
             RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Image);
-            Debug.Log($"[SingleTimelineRenderer] Output path configured successfully");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Output path configured successfully");
             
-            Debug.Log($"[SingleTimelineRenderer] Setting image input settings: {width}x{height}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Setting image input settings: {width}x{height}");
             settings.imageInputSettings = new GameViewInputSettings
             {
                 OutputWidth = width,
                 OutputHeight = height
             };
             
-            Debug.Log("[SingleTimelineRenderer] ImageRecorderSettings created successfully");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ImageRecorderSettings created successfully");
             return settings;
         }
         
@@ -1394,7 +1394,7 @@ namespace BatchRenderingTool
                 string errorMessage;
                 if (!config.Validate(out errorMessage))
                 {
-                    Debug.LogError($"[SingleTimelineRenderer] Invalid movie configuration: {errorMessage}");
+                    BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid movie configuration: {errorMessage}");
                     return null;
                 }
                 
@@ -1450,7 +1450,7 @@ namespace BatchRenderingTool
             string errorMessage;
             if (!config.Validate(out errorMessage))
             {
-                Debug.LogError($"[SingleTimelineRenderer] Invalid AOV configuration: {errorMessage}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid AOV configuration: {errorMessage}");
                 return null;
             }
             
@@ -1493,7 +1493,7 @@ namespace BatchRenderingTool
             string errorMessage;
             if (!config.Validate(out errorMessage))
             {
-                Debug.LogError($"[SingleTimelineRenderer] Invalid Alembic configuration: {errorMessage}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid Alembic configuration: {errorMessage}");
                 return null;
             }
             
@@ -1544,7 +1544,7 @@ namespace BatchRenderingTool
             string errorMessage;
             if (!config.Validate(out errorMessage))
             {
-                Debug.LogError($"[SingleTimelineRenderer] Invalid Animation configuration: {errorMessage}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid Animation configuration: {errorMessage}");
                 return null;
             }
             

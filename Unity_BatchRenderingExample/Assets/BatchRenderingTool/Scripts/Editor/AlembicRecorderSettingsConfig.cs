@@ -116,7 +116,7 @@ namespace BatchRenderingTool
         /// </summary>
         public RecorderSettings CreateAlembicRecorderSettings(string name)
         {
-            Debug.Log($"[AlembicRecorderSettingsConfig] Creating Alembic settings: {name}");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Creating Alembic settings: {name}");
             
             // Try to find AlembicRecorderSettings type in Unity Recorder
             System.Type alembicRecorderSettingsType = null;
@@ -144,7 +144,7 @@ namespace BatchRenderingTool
             
             if (alembicRecorderSettingsType == null)
             {
-                Debug.LogError("[AlembicRecorderSettingsConfig] AlembicRecorderSettings type not found. Make sure Unity Recorder and Alembic packages are installed.");
+                BatchRenderingToolLogger.LogError("[AlembicRecorderSettingsConfig] AlembicRecorderSettings type not found. Make sure Unity Recorder and Alembic packages are installed.");
                 return null;
             }
             
@@ -152,7 +152,7 @@ namespace BatchRenderingTool
             var settings = ScriptableObject.CreateInstance(alembicRecorderSettingsType) as RecorderSettings;
             if (settings == null)
             {
-                Debug.LogError($"[AlembicRecorderSettingsConfig] Failed to create instance of {alembicRecorderSettingsType.Name}");
+                BatchRenderingToolLogger.LogError($"[AlembicRecorderSettingsConfig] Failed to create instance of {alembicRecorderSettingsType.Name}");
                 return null;
             }
             
@@ -168,9 +168,9 @@ namespace BatchRenderingTool
             // Apply Alembic-specific settings using reflection
             ApplyAlembicSettings(settings);
             
-            Debug.Log($"[AlembicRecorderSettingsConfig] Export targets: {exportTargets}");
-            Debug.Log($"[AlembicRecorderSettingsConfig] Frame rate: {frameRate}, Samples per frame: {samplesPerFrame}");
-            Debug.Log($"[AlembicRecorderSettingsConfig] Scale: {scaleFactor}, Handedness: {handedness}");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Export targets: {exportTargets}");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Frame rate: {frameRate}, Samples per frame: {samplesPerFrame}");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Scale: {scaleFactor}, Handedness: {handedness}");
             
             return settings;
         }
@@ -182,8 +182,8 @@ namespace BatchRenderingTool
         {
             var settingsType = settings.GetType();
             
-            Debug.Log($"[AlembicRecorderSettingsConfig] Applying settings to type: {settingsType.FullName}");
-            Debug.Log($"[AlembicRecorderSettingsConfig] Export scope: {exportScope}, Target GameObject: {targetGameObject?.name ?? "null"}");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Applying settings to type: {settingsType.FullName}");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Export scope: {exportScope}, Target GameObject: {targetGameObject?.name ?? "null"}");
             
             // Set scope - try both int and enum
             if (!SetPropertyValue(settings, settingsType, "Scope", exportScope))
@@ -198,7 +198,7 @@ namespace BatchRenderingTool
                 var inputSettings = inputSettingsProperty.GetValue(settings);
                 if (inputSettings != null)
                 {
-                    Debug.Log($"[AlembicRecorderSettingsConfig] Found InputSettings of type: {inputSettings.GetType().Name}");
+                    BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Found InputSettings of type: {inputSettings.GetType().Name}");
                     
                     // Try to set GameObject on InputSettings
                     if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
@@ -215,7 +215,7 @@ namespace BatchRenderingTool
             // Set target GameObject if applicable
             if (exportScope == AlembicExportScope.TargetGameObject && targetGameObject != null)
             {
-                Debug.Log($"[AlembicRecorderSettingsConfig] Setting TargetGameObject to: {targetGameObject.name}");
+                BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Setting TargetGameObject to: {targetGameObject.name}");
                 
                 // Try different property names that might be used in AlembicRecorderSettings
                 if (!SetPropertyValue(settings, settingsType, "TargetGameObject", targetGameObject))
@@ -226,7 +226,7 @@ namespace BatchRenderingTool
                         {
                             if (!SetPropertyValue(settings, settingsType, "gameObject", targetGameObject))
                             {
-                                Debug.LogError($"[AlembicRecorderSettingsConfig] Failed to set target GameObject on AlembicRecorderSettings");
+                                BatchRenderingToolLogger.LogError($"[AlembicRecorderSettingsConfig] Failed to set target GameObject on AlembicRecorderSettings");
                                 LogAvailableProperties(settingsType);
                             }
                         }
@@ -272,7 +272,7 @@ namespace BatchRenderingTool
                 if (property != null && property.CanWrite)
                 {
                     property.SetValue(obj, value);
-                    Debug.Log($"[AlembicRecorderSettingsConfig] Successfully set property {propertyName} to {value}");
+                    BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Successfully set property {propertyName} to {value}");
                     return true;
                 }
                 else
@@ -282,18 +282,18 @@ namespace BatchRenderingTool
                     if (field != null)
                     {
                         field.SetValue(obj, value);
-                        Debug.Log($"[AlembicRecorderSettingsConfig] Successfully set field {propertyName} to {value}");
+                        BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Successfully set field {propertyName} to {value}");
                         return true;
                     }
                 }
                 
                 // Property/field not found
-                Debug.LogWarning($"[AlembicRecorderSettingsConfig] Property/field {propertyName} not found on type {type.Name}");
+                BatchRenderingToolLogger.LogWarning($"[AlembicRecorderSettingsConfig] Property/field {propertyName} not found on type {type.Name}");
                 return false;
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"[AlembicRecorderSettingsConfig] Failed to set {propertyName}: {e.Message}");
+                BatchRenderingToolLogger.LogWarning($"[AlembicRecorderSettingsConfig] Failed to set {propertyName}: {e.Message}");
                 return false;
             }
         }
@@ -303,18 +303,18 @@ namespace BatchRenderingTool
         /// </summary>
         private void LogAvailableProperties(System.Type type)
         {
-            Debug.Log($"[AlembicRecorderSettingsConfig] Available properties on {type.Name}:");
+            BatchRenderingToolLogger.LogVerbose($"[AlembicRecorderSettingsConfig] Available properties on {type.Name}:");
             
             var properties = type.GetProperties();
             foreach (var prop in properties)
             {
-                Debug.Log($"  - Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
+                BatchRenderingToolLogger.LogVerbose($"  - Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
             }
             
             var fields = type.GetFields();
             foreach (var field in fields)
             {
-                Debug.Log($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
+                BatchRenderingToolLogger.LogVerbose($"  - Field: {field.Name} (Type: {field.FieldType.Name})");
             }
         }
         

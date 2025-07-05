@@ -58,13 +58,13 @@ namespace BatchRenderingTool
                     if (currentType != expectedType)
                     {
                         s_SetRecorderTypeMethod.Invoke(clip, new object[] { expectedType });
-                        Debug.Log($"[RecorderClipUtility] Set recorder type from {currentType} to {expectedType}");
+                        BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Set recorder type from {currentType} to {expectedType}");
                     }
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"[RecorderClipUtility] Failed to set recorder type via reflection: {e.Message}");
+                BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to set recorder type via reflection: {e.Message}");
             }
         }
         
@@ -86,13 +86,13 @@ namespace BatchRenderingTool
                         if (settings != null)
                         {
                             settings.name = name;
-                            Debug.Log("[RecorderClipUtility] Created ImageRecorderSettings using RecordersInventory");
+                            BatchRenderingToolLogger.LogVerbose("[RecorderClipUtility] Created ImageRecorderSettings using RecordersInventory");
                             return settings;
                         }
                     }
                     catch (System.Exception e)
                     {
-                        Debug.LogWarning($"[RecorderClipUtility] Failed to use RecordersInventory: {e.Message}");
+                        BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to use RecordersInventory: {e.Message}");
                     }
                 }
             }
@@ -113,7 +113,7 @@ namespace BatchRenderingTool
             
             EditorUtility.SetDirty(imageSettings);
             
-            Debug.Log($"[RecorderClipUtility] Created ImageRecorderSettings directly: {imageSettings.GetType().FullName}");
+            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created ImageRecorderSettings directly: {imageSettings.GetType().FullName}");
             return imageSettings;
         }
         
@@ -139,14 +139,14 @@ namespace BatchRenderingTool
                             if (settings != null)
                             {
                                 settings.name = name;
-                                Debug.Log("[RecorderClipUtility] Created AlembicRecorderSettings using RecordersInventory");
+                                BatchRenderingToolLogger.LogVerbose("[RecorderClipUtility] Created AlembicRecorderSettings using RecordersInventory");
                                 return settings;
                             }
                         }
                     }
                     catch (System.Exception e)
                     {
-                        Debug.LogWarning($"[RecorderClipUtility] Failed to use RecordersInventory for Alembic: {e.Message}");
+                        BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to use RecordersInventory for Alembic: {e.Message}");
                     }
                 }
             }
@@ -169,12 +169,12 @@ namespace BatchRenderingTool
                     
                     EditorUtility.SetDirty(alembicSettings);
                     
-                    Debug.Log($"[RecorderClipUtility] Created AlembicRecorderSettings directly: {alembicSettings.GetType().FullName}");
+                    BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created AlembicRecorderSettings directly: {alembicSettings.GetType().FullName}");
                     return alembicSettings;
                 }
             }
             
-            Debug.LogError("[RecorderClipUtility] Failed to create AlembicRecorderSettings. Make sure Alembic package is installed.");
+            BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to create AlembicRecorderSettings. Make sure Alembic package is installed.");
             return null;
         }
         

@@ -142,7 +142,7 @@ namespace BatchRenderingTool
             // Check if HDRP is available
             if (!AOVTypeInfo.IsHDRPAvailable())
             {
-                Debug.LogError("AOV Recorder requires HDRP package to be installed");
+                BatchRenderingToolLogger.LogError("AOV Recorder requires HDRP package to be installed");
                 return null;
             }
             
@@ -175,7 +175,7 @@ namespace BatchRenderingTool
                 throw new ArgumentException($"Invalid AOV configuration: {errorMessage}");
             }
             
-            Debug.Log($"[RecorderSettingsFactory] Creating AOV recorder settings for: {name}");
+            BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Creating AOV recorder settings for: {name}");
             
             // Create recorder settings for each selected AOV
             var settingsList = config.CreateAOVRecorderSettings(name);
@@ -225,7 +225,7 @@ namespace BatchRenderingTool
             // Check if Alembic package is available
             if (!AlembicExportInfo.IsAlembicPackageAvailable())
             {
-                Debug.LogError("Alembic Recorder requires Unity Alembic package to be installed");
+                BatchRenderingToolLogger.LogError("Alembic Recorder requires Unity Alembic package to be installed");
                 return null;
             }
             
@@ -256,7 +256,7 @@ namespace BatchRenderingTool
                 throw new ArgumentException($"Invalid Alembic configuration: {errorMessage}");
             }
             
-            Debug.Log($"[RecorderSettingsFactory] Creating Alembic recorder settings for: {name}");
+            BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Creating Alembic recorder settings for: {name}");
             
             // Create recorder settings
             var settings = config.CreateAlembicRecorderSettings(name);
@@ -311,7 +311,7 @@ namespace BatchRenderingTool
                 throw new ArgumentException($"Invalid Animation configuration: {errorMessage}");
             }
             
-            Debug.Log($"[RecorderSettingsFactory] Creating Animation recorder settings for: {name}");
+            BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Creating Animation recorder settings for: {name}");
             
             // Create recorder settings
             var settings = config.CreateAnimationRecorderSettings(name);
