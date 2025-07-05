@@ -148,6 +148,11 @@ namespace BatchRenderingTool.RecorderEditors
             };
         }
         
+        protected override string GetRecorderName()
+        {
+            return "Movie";
+        }
+        
         public override bool ValidateSettings(out string errorMessage)
         {
             if (host.width <= 0 || host.height <= 0)

@@ -169,6 +169,11 @@ namespace BatchRenderingTool.RecorderEditors
             return "abc";
         }
         
+        protected override string GetRecorderName()
+        {
+            return "Alembic";
+        }
+        
         public override bool ValidateSettings(out string errorMessage)
         {
             if (!AlembicExportInfo.IsAlembicPackageAvailable())

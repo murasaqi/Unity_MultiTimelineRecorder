@@ -201,6 +201,11 @@ namespace BatchRenderingTool.RecorderEditors
             };
         }
         
+        protected override string GetRecorderName()
+        {
+            return "AOV";
+        }
+        
         private AOVRecorderSettingsConfig GetPresetConfig(AOVPreset preset)
         {
             return preset switch

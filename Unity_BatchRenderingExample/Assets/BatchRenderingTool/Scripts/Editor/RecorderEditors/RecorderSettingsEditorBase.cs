@@ -170,7 +170,10 @@ namespace BatchRenderingTool.RecorderEditors
             string absolutePath = PathUtility.GetAbsolutePath(host.filePath);
             
             // Process wildcards for preview
-            var context = new WildcardContext(host.takeNumber, host.width, host.height);
+            var context = new WildcardContext(host.takeNumber, host.width, host.height)
+            {
+                RecorderName = GetRecorderName()
+            };
             string processedFileName = WildcardProcessor.ProcessWildcards(host.fileName, context);
             
             // Add file extension based on recorder type
@@ -188,6 +191,11 @@ namespace BatchRenderingTool.RecorderEditors
         /// Get file extension for the current recorder type
         /// </summary>
         protected abstract string GetFileExtension();
+        
+        /// <summary>
+        /// Get recorder name for wildcard processing
+        /// </summary>
+        protected abstract string GetRecorderName();
         
         /// <summary>
         /// Validates the current settings

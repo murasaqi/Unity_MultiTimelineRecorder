@@ -101,6 +101,11 @@ namespace BatchRenderingTool.RecorderEditors
             };
         }
         
+        protected override string GetRecorderName()
+        {
+            return "Image";
+        }
+        
         public override bool ValidateSettings(out string errorMessage)
         {
             if (host.width <= 0 || host.height <= 0)

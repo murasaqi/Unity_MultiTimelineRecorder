@@ -172,6 +172,11 @@ namespace BatchRenderingTool.RecorderEditors
             return "anim";
         }
         
+        protected override string GetRecorderName()
+        {
+            return "Animation";
+        }
+        
         public override bool ValidateSettings(out string errorMessage)
         {
             if (host.animationTargetGameObject == null)
