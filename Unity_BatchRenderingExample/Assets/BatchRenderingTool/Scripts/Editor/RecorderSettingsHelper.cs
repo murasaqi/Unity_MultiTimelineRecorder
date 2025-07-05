@@ -131,6 +131,34 @@ namespace BatchRenderingTool
                         BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Animation will be saved to: {outputFile}.anim");
                     }
                     break;
+                    
+                case RecorderSettingsType.FBX:
+                    // FBX uses a single .fbx file
+                    BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] === Setting FBX output file to: {outputFile} ===");
+                    
+                    // Try to set output file using reflection since FbxRecorderSettings is not directly accessible
+                    var fbxType = settings.GetType();
+                    var fbxOutputFileProperty = fbxType.GetProperty("OutputFile");
+                    if (fbxOutputFileProperty != null && fbxOutputFileProperty.CanWrite)
+                    {
+                        fbxOutputFileProperty.SetValue(settings, outputFile);
+                        BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] === Successfully set FBX OutputFile property to: {outputFile} ===");
+                    }
+                    else
+                    {
+                        // Try alternative property names
+                        var fbxFileNameProperty = fbxType.GetProperty("FileName");
+                        if (fbxFileNameProperty != null && fbxFileNameProperty.CanWrite)
+                        {
+                            fbxFileNameProperty.SetValue(settings, outputFile);
+                            BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] === Successfully set FBX FileName property to: {outputFile} ===");
+                        }
+                        else
+                        {
+                            BatchRenderingToolLogger.LogError($"[RecorderSettingsHelper] === Could not find output file property on FbxRecorderSettings ===");
+                        }
+                    }
+                    break;
             }
         }
         
@@ -173,6 +201,10 @@ namespace BatchRenderingTool
             else if (IsAnimationRecorderSettings(settings))
             {
                 return ValidateAnimationRecorderSettings(settings, out errorMessage);
+            }
+            else if (IsFBXRecorderSettings(settings))
+            {
+                return ValidateFBXRecorderSettings(settings, out errorMessage);
             }
             
             return true;
@@ -301,6 +333,10 @@ namespace BatchRenderingTool
             {
                 return "anim";
             }
+            else if (IsFBXRecorderSettings(settings))
+            {
+                return "fbx";
+            }
             
             return "";
         }
@@ -412,6 +448,36 @@ namespace BatchRenderingTool
                 return false;
             }
             
+            return true;
+        }
+        
+        /// <summary>
+        /// Check if settings is an FBX recorder (placeholder check)
+        /// </summary>
+        public static bool IsFBXRecorderSettings(RecorderSettings settings)
+        {
+            // Since Unity Recorder's FBX API might not be directly accessible,
+            // we check by name pattern or type name
+            return settings != null && 
+                   (settings.name.Contains("FBX") || 
+                    settings.GetType().Name.Contains("Fbx"));
+        }
+        
+        /// <summary>
+        /// Validate FBXRecorderSettings
+        /// </summary>
+        private static bool ValidateFBXRecorderSettings(RecorderSettings settings, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            
+            // Check if FBX package is available
+            if (!FBXExportInfo.IsFBXPackageAvailable())
+            {
+                errorMessage = "FBX Recorder requires Unity FBX package";
+                return false;
+            }
+            
+            // Basic validation similar to other recorders
             return true;
         }
         

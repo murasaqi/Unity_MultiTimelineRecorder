@@ -11,6 +11,7 @@ namespace BatchRenderingTool
         Movie,
         Animation,
         Alembic,
-        AOV
+        AOV,
+        FBX
     }
 }

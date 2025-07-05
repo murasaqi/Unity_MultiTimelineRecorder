@@ -41,6 +41,10 @@ namespace BatchRenderingTool
                     settings = CreateAOVRecorderSettings(name);
                     break;
                     
+                case RecorderSettingsType.FBX:
+                    settings = CreateFBXRecorderSettings(name);
+                    break;
+                    
                 default:
                     throw new ArgumentException($"Unknown recorder type: {type}");
             }
@@ -335,6 +339,65 @@ namespace BatchRenderingTool
         }
         
         /// <summary>
+        /// Create FBXRecorderSettings with default configuration
+        /// </summary>
+        public static RecorderSettings CreateFBXRecorderSettings(string name)
+        {
+            // Check if FBX package is available
+            if (!FBXExportInfo.IsFBXPackageAvailable())
+            {
+                BatchRenderingToolLogger.LogError("FBX Recorder requires Unity FBX package to be installed");
+                return null;
+            }
+            
+            // Create default FBX configuration
+            var config = new FBXRecorderSettingsConfig
+            {
+                exportGeometry = true,
+                frameRate = 24f
+            };
+            
+            return CreateFBXRecorderSettings(name, config);
+        }
+        
+        /// <summary>
+        /// Create FBXRecorderSettings with specific configuration
+        /// </summary>
+        public static RecorderSettings CreateFBXRecorderSettings(string name, FBXRecorderSettingsConfig config)
+        {
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+            
+            string errorMessage;
+            if (!config.Validate(out errorMessage))
+            {
+                throw new ArgumentException($"Invalid FBX configuration: {errorMessage}");
+            }
+            
+            BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Creating FBX recorder settings for: {name}");
+            
+            // Create recorder settings
+            var settings = config.CreateFBXRecorderSettings(name);
+            
+            // Apply common settings
+            if (settings != null)
+            {
+                ConfigureCommonSettings(settings);
+            }
+            
+            return settings;
+        }
+        
+        /// <summary>
+        /// Create FBXRecorderSettings with a preset configuration
+        /// </summary>
+        public static RecorderSettings CreateFBXRecorderSettings(string name, FBXExportPreset preset)
+        {
+            var config = FBXRecorderSettingsConfig.GetPreset(preset);
+            return CreateFBXRecorderSettings(name, config);
+        }
+        
+        /// <summary>
         /// Configure common settings for all recorder types
         /// </summary>
         private static void ConfigureCommonSettings(RecorderSettings settings)
@@ -361,6 +424,8 @@ namespace BatchRenderingTool
                 return RecorderSettingsType.Alembic;
             else if (settings.GetType().Name == "AOVRecorderSettings")
                 return RecorderSettingsType.AOV;
+            else if (settings.GetType().Name == "FbxRecorderSettings")
+                return RecorderSettingsType.FBX;
             else
                 throw new NotSupportedException($"Unknown recorder settings type: {settings.GetType().Name}");
         }
@@ -387,6 +452,10 @@ namespace BatchRenderingTool
                 case RecorderSettingsType.Animation:
                     return true;
                     
+                case RecorderSettingsType.FBX:
+                    // FBX is supported only if FBX package is available
+                    return FBXExportInfo.IsFBXPackageAvailable();
+                    
                 default:
                     return false;
             }
@@ -409,6 +478,8 @@ namespace BatchRenderingTool
                     return "Alembic";
                 case RecorderSettingsType.AOV:
                     return "AOV (HDRP)";
+                case RecorderSettingsType.FBX:
+                    return "FBX";
                 default:
                     return type.ToString();
             }

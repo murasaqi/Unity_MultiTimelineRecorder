@@ -256,5 +256,136 @@ namespace BatchRenderingTool
                 BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to apply Alembic-specific settings: {e.Message}");
             }
         }
+        
+        /// <summary>
+        /// Creates RecorderSettings based on type name
+        /// </summary>
+        public static RecorderSettings CreateProperRecorderSettings(string typeName)
+        {
+            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Creating recorder settings for type: {typeName}");
+            
+            // Use RecordersInventory to create default settings if available
+            var inventoryType = System.Type.GetType("UnityEditor.Recorder.RecordersInventory, Unity.Recorder.Editor");
+            if (inventoryType != null)
+            {
+                var createMethod = inventoryType.GetMethod("CreateDefaultRecorderSettings", BindingFlags.Public | BindingFlags.Static);
+                if (createMethod != null)
+                {
+                    try
+                    {
+                        // Try to find the recorder settings type
+                        System.Type settingsType = null;
+                        
+                        switch (typeName.ToLower())
+                        {
+                            case "imagerecordersettings":
+                            case "imagerecorder":
+                                settingsType = typeof(ImageRecorderSettings);
+                                break;
+                                
+                            case "movierecordersettings":
+                            case "movierecorder":
+                                settingsType = typeof(MovieRecorderSettings);
+                                break;
+                                
+                            case "animationrecordersettings":
+                            case "animationrecorder":
+                                settingsType = typeof(AnimationRecorderSettings);
+                                break;
+                                
+                            case "alembicrecordersettings":
+                            case "alembicrecorder":
+                                settingsType = System.Type.GetType("UnityEditor.Formats.Alembic.Recorder.AlembicRecorderSettings, Unity.Formats.Alembic.Editor");
+                                break;
+                                
+                            case "fbxrecordersettings":
+                            case "fbxrecorder":
+                                settingsType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor");
+                                break;
+                                
+                            case "aovrecordersettings":
+                            case "aovrecorder":
+                                // AOV is typically an ImageRecorderSettings with special configuration
+                                settingsType = typeof(ImageRecorderSettings);
+                                break;
+                        }
+                        
+                        if (settingsType != null)
+                        {
+                            var settings = createMethod.Invoke(null, new object[] { settingsType }) as RecorderSettings;
+                            if (settings != null)
+                            {
+                                settings.name = typeName;
+                                BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created {settingsType.Name} using RecordersInventory");
+                                return settings;
+                            }
+                        }
+                    }
+                    catch (System.Exception e)
+                    {
+                        BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to use RecordersInventory: {e.Message}");
+                    }
+                }
+            }
+            
+            // Fallback to direct creation
+            System.Type recorderType = null;
+            
+            switch (typeName.ToLower())
+            {
+                case "imagerecordersettings":
+                case "imagerecorder":
+                    return CreateProperImageRecorderSettings(typeName);
+                    
+                case "movierecordersettings":
+                case "movierecorder":
+                    var movieSettings = ScriptableObject.CreateInstance<MovieRecorderSettings>();
+                    movieSettings.name = typeName;
+                    return movieSettings;
+                    
+                case "animationrecordersettings":
+                case "animationrecorder":
+                    var animSettings = ScriptableObject.CreateInstance<AnimationRecorderSettings>();
+                    animSettings.name = typeName;
+                    return animSettings;
+                    
+                case "alembicrecordersettings":
+                case "alembicrecorder":
+                    return CreateProperAlembicRecorderSettings(typeName);
+                    
+                case "fbxrecordersettings":
+                case "fbxrecorder":
+                    recorderType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor");
+                    if (recorderType != null)
+                    {
+                        var fbxSettings = ScriptableObject.CreateInstance(recorderType) as RecorderSettings;
+                        if (fbxSettings != null)
+                        {
+                            fbxSettings.name = typeName;
+                            fbxSettings.hideFlags = HideFlags.None;
+                            
+                            // Initialize default values
+                            fbxSettings.RecordMode = RecordMode.Manual;
+                            fbxSettings.FrameRatePlayback = FrameRatePlayback.Constant;
+                            fbxSettings.FrameRate = 24;
+                            fbxSettings.CapFrameRate = true;
+                            
+                            EditorUtility.SetDirty(fbxSettings);
+                            
+                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created FbxRecorderSettings directly");
+                            return fbxSettings;
+                        }
+                    }
+                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to create FbxRecorderSettings. Make sure FBX package is installed.");
+                    return null;
+                    
+                case "aovrecordersettings":
+                case "aovrecorder":
+                    return CreateProperImageRecorderSettings(typeName);
+            }
+            
+            BatchRenderingToolLogger.LogError($"[RecorderClipUtility] Unknown recorder type: {typeName}");
+            return null;
+        }
     }
 }

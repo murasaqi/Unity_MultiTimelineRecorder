@@ -67,6 +67,13 @@ namespace BatchRenderingTool
         AnimationExportPreset animationPreset { get; set; }
         bool useAnimationPreset { get; set; }
         
+        // FBX settings
+        bool fbxExportGeometry { get; set; }
+        UnityEngine.Transform fbxTransferAnimationSource { get; set; }
+        UnityEngine.Transform fbxTransferAnimationDest { get; set; }
+        FBXExportPreset fbxPreset { get; set; }
+        bool useFBXPreset { get; set; }
+        
         // For SingleTimelineRenderer
         PlayableDirector selectedDirector { get; }
     }

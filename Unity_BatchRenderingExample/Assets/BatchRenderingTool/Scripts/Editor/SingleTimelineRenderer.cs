@@ -112,6 +112,13 @@ namespace BatchRenderingTool
         public AnimationExportPreset animationPreset = AnimationExportPreset.SimpleTransform;
         public bool useAnimationPreset = false;
         
+        // FBX recorder settings
+        public bool fbxExportGeometry = true;
+        public Transform fbxTransferAnimationSource = null;
+        public Transform fbxTransferAnimationDest = null;
+        public FBXExportPreset fbxPreset = FBXExportPreset.AnimationExport;
+        public bool useFBXPreset = false;
+        
         // Rendering objects
         private TimelineAsset renderTimeline;
         private GameObject renderingGameObject;
@@ -172,6 +179,11 @@ namespace BatchRenderingTool
         float IRecorderSettingsHost.animationScaleError { get => animationScaleError; set => animationScaleError = value; }
         AnimationExportPreset IRecorderSettingsHost.animationPreset { get => animationPreset; set => animationPreset = value; }
         bool IRecorderSettingsHost.useAnimationPreset { get => useAnimationPreset; set => useAnimationPreset = value; }
+        bool IRecorderSettingsHost.fbxExportGeometry { get => fbxExportGeometry; set => fbxExportGeometry = value; }
+        Transform IRecorderSettingsHost.fbxTransferAnimationSource { get => fbxTransferAnimationSource; set => fbxTransferAnimationSource = value; }
+        Transform IRecorderSettingsHost.fbxTransferAnimationDest { get => fbxTransferAnimationDest; set => fbxTransferAnimationDest = value; }
+        FBXExportPreset IRecorderSettingsHost.fbxPreset { get => fbxPreset; set => fbxPreset = value; }
+        bool IRecorderSettingsHost.useFBXPreset { get => useFBXPreset; set => useFBXPreset = value; }
         
         [MenuItem("Window/Batch Rendering Tool/Single Timeline Renderer")]
         public static SingleTimelineRenderer ShowWindow()
@@ -426,6 +438,7 @@ namespace BatchRenderingTool
                 RecorderSettingsType.AOV => new AOVRecorderEditor(this),
                 RecorderSettingsType.Alembic => new AlembicRecorderEditor(this),
                 RecorderSettingsType.Animation => new AnimationRecorderEditor(this),
+                RecorderSettingsType.FBX => new FBXRecorderEditor(this),
                 _ => null
             };
         }
@@ -950,6 +963,12 @@ namespace BatchRenderingTool
                     if (animationSettings != null) recorderSettingsList.Add(animationSettings);
                     break;
                     
+                case RecorderSettingsType.FBX:
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Creating FBX settings with file: {processedFileName} ===");
+                    var fbxSettings = CreateFBXRecorderSettings(processedFilePath, processedFileName);
+                    if (fbxSettings != null) recorderSettingsList.Add(fbxSettings);
+                    break;
+                    
                 default:
                     BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Unsupported recorder type: {recorderType}");
                     return null;
@@ -1161,6 +1180,9 @@ namespace BatchRenderingTool
                     
                 case RecorderSettingsType.Animation:
                     return "anim";
+                    
+                case RecorderSettingsType.FBX:
+                    return "fbx";
                     
                 default:
                     return "";
@@ -1750,6 +1772,49 @@ namespace BatchRenderingTool
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
                 RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Animation);
+            }
+            
+            return settings;
+        }
+        
+        private RecorderSettings CreateFBXRecorderSettings(string outputPath, string outputFileName)
+        {
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === CreateFBXRecorderSettings called with path: {outputPath}, fileName: {outputFileName} ===");
+            
+            FBXRecorderSettingsConfig config = null;
+            
+            if (useFBXPreset && fbxPreset != FBXExportPreset.Custom)
+            {
+                config = FBXRecorderSettingsConfig.GetPreset(fbxPreset);
+            }
+            else
+            {
+                // Create custom configuration
+                config = new FBXRecorderSettingsConfig
+                {
+                    exportGeometry = fbxExportGeometry,
+                    transferAnimationSource = fbxTransferAnimationSource,
+                    transferAnimationDest = fbxTransferAnimationDest,
+                    frameRate = frameRate
+                };
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === FBX config: exportGeometry={fbxExportGeometry}, transferSource={fbxTransferAnimationSource?.name ?? "null"}, transferDest={fbxTransferAnimationDest?.name ?? "null"} ===");
+            }
+            
+            string errorMessage;
+            if (!config.Validate(out errorMessage))
+            {
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid FBX configuration: {errorMessage}");
+                return null;
+            }
+            
+            var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("FBXRecorder", config);
+            
+            if (settings != null)
+            {
+                settings.Enabled = true;
+                settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+                RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.FBX);
             }
             
             return settings;

@@ -100,6 +100,91 @@ namespace BatchRenderingTool.Editor.Tests
         }
 
         [Test]
+        public void CreateFBXRecorderSettings_CreatesValidSettings()
+        {
+            Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト開始");
+            
+            // Skip test if FBX package is not available
+            if (!FBXExportInfo.IsFBXPackageAvailable())
+            {
+                Assert.Ignore("FBX package is not installed");
+                return;
+            }
+            
+            var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBXRecorder");
+            
+            Assert.IsNotNull(settings, "FBX recorder settings should not be null");
+            Assert.AreEqual("TestFBXRecorder", settings.name);
+            Assert.AreEqual(24, settings.FrameRate);
+            Assert.IsTrue(settings.Enabled);
+            Assert.AreEqual(RecordMode.Manual, settings.RecordMode);
+            
+            Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
+        }
+
+        [Test]
+        public void CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly()
+        {
+            Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト開始");
+            
+            // Skip test if FBX package is not available
+            if (!FBXExportInfo.IsFBXPackageAvailable())
+            {
+                Assert.Ignore("FBX package is not installed");
+                return;
+            }
+            
+            var config = new FBXRecorderSettingsConfig
+            {
+                exportGeometry = false,
+                frameRate = 30f
+            };
+            
+            var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBXRecorder", config);
+            
+            Assert.IsNotNull(settings, "FBX recorder settings should not be null");
+            Assert.AreEqual(30f, settings.FrameRate);
+            
+            // Use reflection to verify exportGeometry was set
+            var settingsType = settings.GetType();
+            var exportGeometryProp = settingsType.GetProperty("ExportGeometry");
+            if (exportGeometryProp != null && exportGeometryProp.CanRead)
+            {
+                var value = (bool)exportGeometryProp.GetValue(settings);
+                Assert.IsFalse(value, "ExportGeometry should be false");
+            }
+            
+            Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト完了");
+        }
+
+        [Test]
+        public void CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings()
+        {
+            Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト開始");
+            
+            // Skip test if FBX package is not available
+            if (!FBXExportInfo.IsFBXPackageAvailable())
+            {
+                Assert.Ignore("FBX package is not installed");
+                return;
+            }
+            
+            // Test AnimationExport preset
+            var animSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", FBXExportPreset.AnimationExport);
+            Assert.IsNotNull(animSettings, "Animation export settings should not be null");
+            
+            // Test ModelExport preset
+            var modelSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", FBXExportPreset.ModelExport);
+            Assert.IsNotNull(modelSettings, "Model export settings should not be null");
+            
+            // Test ModelAndAnimation preset
+            var bothSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", FBXExportPreset.ModelAndAnimation);
+            Assert.IsNotNull(bothSettings, "Model and animation export settings should not be null");
+            
+            Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト完了");
+        }
+
+        [Test]
         public void CreateImageRecorderSettings_HandlesSpecialCharactersInPath()
         {
             Debug.Log("CreateImageRecorderSettings_HandlesSpecialCharactersInPath - テスト開始");
