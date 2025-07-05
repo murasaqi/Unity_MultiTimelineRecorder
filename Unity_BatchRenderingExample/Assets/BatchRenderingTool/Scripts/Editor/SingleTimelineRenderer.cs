@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -1001,8 +1003,53 @@ namespace BatchRenderingTool
             recorderAsset.settings = recorderSettings;
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Assigned RecorderSettings of type: {recorderSettings.GetType().FullName}");
             
+            // For Alembic Recorder, ensure the UI reflects the correct settings
+            if (recorderType == RecorderSettingsType.Alembic)
+            {
+                ApplyAlembicSettingsToRecorderClip(recorderAsset, recorderSettings);
+            }
+            
             // Use RecorderClipUtility to ensure proper initialization
             RecorderClipUtility.EnsureRecorderTypeIsSet(recorderAsset, recorderSettings);
+            
+            // For Alembic, ensure the timeline asset has the correct settings before saving
+            if (recorderType == RecorderSettingsType.Alembic && recorderAsset.settings != null)
+            {
+                // Force refresh the RecorderClip's internal state
+                var settingsField = recorderAsset.GetType().GetField("m_Settings", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (settingsField != null)
+                {
+                    settingsField.SetValue(recorderAsset, recorderSettings);
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Force set m_Settings field on RecorderClip");
+                }
+                
+                // Log the actual settings to verify
+                var actualSettings = recorderAsset.settings;
+                if (actualSettings != null)
+                {
+                    var actualType = actualSettings.GetType();
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] RecorderClip settings type: {actualType.FullName}");
+                    
+                    // Check if TargetBranch is set correctly
+                    var targetBranchProp = actualType.GetProperty("TargetBranch");
+                    if (targetBranchProp != null && targetBranchProp.CanRead)
+                    {
+                        var targetValue = targetBranchProp.GetValue(actualSettings);
+                        BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] TargetBranch value in RecorderClip: {targetValue}");
+                    }
+                    
+                    // Check Scope value
+                    var scopeProp = actualType.GetProperty("Scope");
+                    if (scopeProp != null && scopeProp.CanRead)
+                    {
+                        var scopeValue = scopeProp.GetValue(actualSettings);
+                        BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Scope value in RecorderClip: {scopeValue}");
+                    }
+                }
+                
+                // Ensure the asset is marked as dirty
+                EditorUtility.SetDirty(recorderAsset.settings);
+            }
             
             // Save everything including ControlTrack settings
             EditorUtility.SetDirty(controlAsset);
@@ -1037,7 +1084,7 @@ namespace BatchRenderingTool
                 renderingGameObject = null;
             }
             
-            if (!string.IsNullOrEmpty(tempAssetPath) && AssetDatabase.LoadAssetAtPath<Object>(tempAssetPath) != null)
+            if (!string.IsNullOrEmpty(tempAssetPath) && AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(tempAssetPath) != null)
             {
                 AssetDatabase.DeleteAsset(tempAssetPath);
             }
@@ -1117,6 +1164,81 @@ namespace BatchRenderingTool
                     
                 default:
                     return "";
+            }
+        }
+        
+        /// <summary>
+        /// Apply Alembic settings to RecorderClip to ensure UI reflects correct values
+        /// </summary>
+        private void ApplyAlembicSettingsToRecorderClip(UnityEditor.Recorder.Timeline.RecorderClip recorderClip, RecorderSettings settings)
+        {
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Applying Alembic settings to RecorderClip ===");
+            
+            try
+            {
+                // Use reflection to access internal properties of RecorderClip
+                var clipType = recorderClip.GetType();
+                var settingsType = settings.GetType();
+                
+                // The RecorderClip has internal serialized fields that need to be updated
+                // These fields are used by the Timeline UI to display the settings
+                
+                // Try to find and update the internal GameObject reference field
+                if (alembicExportScope == AlembicExportScope.TargetGameObject && alembicTargetGameObject != null)
+                {
+                    // Look for fields that might store the target GameObject reference
+                    var fields = clipType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+                    foreach (var field in fields)
+                    {
+                        BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] RecorderClip field: {field.Name} ({field.FieldType})");
+                        
+                        // Try to find fields related to GameObject or target
+                        if (field.FieldType == typeof(GameObject) || 
+                            field.Name.ToLower().Contains("target") || 
+                            field.Name.ToLower().Contains("gameobject") ||
+                            field.Name.ToLower().Contains("branch"))
+                        {
+                            field.SetValue(recorderClip, alembicTargetGameObject);
+                            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Set RecorderClip field {field.Name} to {alembicTargetGameObject.name}");
+                        }
+                    }
+                    
+                    // Also check properties
+                    var properties = clipType.GetProperties(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+                    foreach (var prop in properties)
+                    {
+                        if (prop.CanWrite && (prop.PropertyType == typeof(GameObject) || 
+                            prop.Name.ToLower().Contains("target") || 
+                            prop.Name.ToLower().Contains("gameobject") ||
+                            prop.Name.ToLower().Contains("branch")))
+                        {
+                            try
+                            {
+                                prop.SetValue(recorderClip, alembicTargetGameObject);
+                                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Set RecorderClip property {prop.Name} to {alembicTargetGameObject.name}");
+                            }
+                            catch (Exception e)
+                            {
+                                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Could not set property {prop.Name}: {e.Message}");
+                            }
+                        }
+                    }
+                }
+                
+                // Force the RecorderClip to update its internal state
+                EditorUtility.SetDirty(recorderClip);
+                
+                // Try to trigger any internal update methods
+                var updateMethod = clipType.GetMethod("OnValidate", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (updateMethod != null)
+                {
+                    updateMethod.Invoke(recorderClip, null);
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Called OnValidate on RecorderClip");
+                }
+            }
+            catch (Exception e)
+            {
+                BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Failed to apply Alembic settings to RecorderClip: {e.Message}");
             }
         }
         
