@@ -79,3 +79,8 @@ _Build
 /Assets/TestRec/
 /Assets/BatchRenderingTool/Temp/
 
+# Recording output folders
+/Recordings/
+*.abc
+*.exr
+
