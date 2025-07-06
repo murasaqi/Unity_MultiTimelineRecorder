@@ -302,5 +302,10 @@ namespace BatchRenderingTool.RecorderEditors
             }
             return base.GetTargetGameObjectName();
         }
+        
+        protected override RecorderSettingsType GetRecorderType()
+        {
+            return RecorderSettingsType.FBX;
+        }
     }
 }

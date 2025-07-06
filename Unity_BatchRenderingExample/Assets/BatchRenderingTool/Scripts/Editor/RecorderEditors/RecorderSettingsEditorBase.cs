@@ -79,12 +79,30 @@ namespace BatchRenderingTool.RecorderEditors
                 GUI.changed = true;
             }
             
+            // Help button
+            if (GUILayout.Button("?", GUILayout.Width(20)))
+            {
+                WildcardHelpUtility.ShowWildcardHelp();
+            }
+            
             // Wildcards dropdown button
             if (GUILayout.Button("+ Wildcards ▼", GUILayout.Width(100)))
             {
                 ShowWildcardsMenu();
             }
             EditorGUILayout.EndHorizontal();
+            
+            // Validate filename pattern and show warning if needed
+            string validationError;
+            RecorderSettingsType recorderType = GetRecorderType();
+            if (!WildcardHelpUtility.ValidateFilenamePattern(host.fileName, recorderType, out validationError))
+            {
+                EditorGUILayout.HelpBox(validationError, MessageType.Warning);
+            }
+            
+            // Show example output
+            string example = WildcardHelpUtility.GetExampleOutput(host.fileName, recorderType);
+            EditorGUILayout.LabelField("Example:", example, EditorStyles.miniLabel);
             
             // Path field with browse button
             EditorGUILayout.BeginHorizontal();
@@ -270,5 +288,10 @@ namespace BatchRenderingTool.RecorderEditors
             errorMessage = null;
             return true;
         }
+        
+        /// <summary>
+        /// Get the recorder type for this editor
+        /// </summary>
+        protected abstract RecorderSettingsType GetRecorderType();
     }
 }

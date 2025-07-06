@@ -92,8 +92,9 @@ Unity Recorder 5.1.2でのAOV実装方法:
                     };
                     settings.imageInputSettings = inputSettings;
                     
-                    // 出力パス設定（AOVタイプごとにサブフォルダ）
-                    settings.OutputFile = $"{baseName}/AOV_{aovType}/<Frame>";
+                    // 出力パス設定（Unity Recorderの標準的な命名規則に従う）
+                    // デフォルトは: baseName_AOVType_Frame.ext の形式
+                    settings.OutputFile = $"{baseName}_<Take>_AOV_{aovType}_<Frame>";
                     
                     settingsList.Add(settings);
                     

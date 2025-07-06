@@ -55,7 +55,7 @@ namespace BatchRenderingTool
         public int width = 1920;
         public int height = 1080;
         private string outputFile = "";
-        public string fileName = "<Recorder>_<Take>"; // File name with wildcard support
+        public string fileName = "<Scene>_<Recorder>_<Take>"; // File name with wildcard support
         public string filePath = "Recordings"; // Output path
         public int takeNumber = 1;
         public int preRollFrames = 0; // Pre-roll frames for simulation warm-up

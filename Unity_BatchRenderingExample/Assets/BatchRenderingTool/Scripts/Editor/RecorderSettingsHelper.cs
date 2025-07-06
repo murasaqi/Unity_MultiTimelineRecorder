@@ -90,6 +90,19 @@ namespace BatchRenderingTool
                             aovOutputFile = aovOutputFile.Replace("<AOVType>", aovType);
                         }
                         
+                        // Ensure <Frame> wildcard is present for image sequences
+                        if (!aovOutputFile.Contains("<Frame>"))
+                        {
+                            // Add <Frame> before the file extension
+                            var extension = Path.GetExtension(aovOutputFile);
+                            var nameWithoutExt = Path.GetFileNameWithoutExtension(aovOutputFile);
+                            var directory = Path.GetDirectoryName(aovOutputFile);
+                            
+                            // Create subdirectory for AOV type
+                            var aovDirectory = Path.Combine(directory, $"AOV_{aovType}");
+                            aovOutputFile = Path.Combine(aovDirectory, $"{nameWithoutExt}_<Frame>{extension}");
+                        }
+                        
                         aovSettings.OutputFile = aovOutputFile;
                     }
                     break;

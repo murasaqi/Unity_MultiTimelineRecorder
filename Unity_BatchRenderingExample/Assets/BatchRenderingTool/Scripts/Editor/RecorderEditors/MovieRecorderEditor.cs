@@ -189,5 +189,10 @@ namespace BatchRenderingTool.RecorderEditors
             errorMessage = null;
             return true;
         }
+        
+        protected override RecorderSettingsType GetRecorderType()
+        {
+            return RecorderSettingsType.Movie;
+        }
     }
 }
