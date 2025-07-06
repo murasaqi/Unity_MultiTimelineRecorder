@@ -24,7 +24,6 @@ namespace BatchRenderingTool
     {
         // Static instance tracking
         private static SingleTimelineRenderer instance;
-        private static bool isRenderingInProgress = false;
         
         public enum RenderState
         {
@@ -54,7 +53,6 @@ namespace BatchRenderingTool
         public int frameRate = 24;
         public int width = 1920;
         public int height = 1080;
-        private string outputFile = "";
         public string fileName = "<Scene>_<Recorder>_<Take>"; // File name with wildcard support
         public string filePath = "Recordings"; // Output path
         public int takeNumber = 1;
@@ -216,7 +214,6 @@ namespace BatchRenderingTool
             {
                 currentState = RenderState.Idle;
                 renderCoroutine = null;
-                isRenderingInProgress = false;
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Reset to Idle state");
             }
             
@@ -339,7 +336,7 @@ namespace BatchRenderingTool
             {
                 if (GUILayout.Button("Debug: Show all PlayableDirectors"))
                 {
-                    var allDirectors = GameObject.FindObjectsOfType<PlayableDirector>();
+                    var allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
                     BatchRenderingToolLogger.LogVerbose($"[DEBUG] Total PlayableDirectors in scene: {allDirectors.Length}");
                     foreach (var dir in allDirectors)
                     {
@@ -613,7 +610,7 @@ namespace BatchRenderingTool
         {
             BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ScanTimelines called");
             availableDirectors.Clear();
-            PlayableDirector[] allDirectors = GameObject.FindObjectsOfType<PlayableDirector>();
+            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Found {allDirectors.Length} total PlayableDirectors");
             
             foreach (var director in allDirectors)
@@ -829,7 +826,6 @@ namespace BatchRenderingTool
                 EditorPrefs.SetBool("STR_UseMonoBehaviour", true);
                 
                 // Set static flag
-                isRenderingInProgress = true;
                 
                 EditorApplication.isPlaying = true;
                 // Play Modeに入ると、TimelineRendererが自動的に処理を引き継ぐ
@@ -1066,7 +1062,17 @@ namespace BatchRenderingTool
             
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
             recorderClip.start = preRollTime;
-            recorderClip.duration = originalTimeline.duration;
+            // FBXレコーダーの場合、最後のフレームを確実に記録するためにdurationを1フレーム分延長
+            if (recorderType == RecorderSettingsType.FBX)
+            {
+                float frameDuration = 1f / frameRate;
+                recorderClip.duration = originalTimeline.duration + frameDuration;
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX Recorder: Extended duration by {frameDuration:F4}s to ensure last frame capture");
+            }
+            else
+            {
+                recorderClip.duration = originalTimeline.duration;
+            }
             
             var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             if (recorderAsset == null)
@@ -1078,6 +1084,13 @@ namespace BatchRenderingTool
             
             recorderAsset.settings = recorderSettings;
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Assigned RecorderSettings of type: {recorderSettings.GetType().FullName}");
+            
+            // Apply FBX patch if needed
+            if (recorderType == RecorderSettingsType.FBX)
+            {
+                BatchRenderingToolLogger.Log("[SingleTimelineRenderer] Applying FBX recorder patch...");
+                Patches.FBXRecorderPatch.ValidateFBXRecorderClip(recorderClip);
+            }
             
             // For Alembic Recorder, ensure the UI reflects the correct settings
             if (recorderType == RecorderSettingsType.Alembic)
@@ -1330,7 +1343,6 @@ namespace BatchRenderingTool
             if (instance == this)
             {
                 instance = null;
-                isRenderingInProgress = false;
             }
         }
         
@@ -1393,7 +1405,21 @@ namespace BatchRenderingTool
                     var renderingData = dataGO.AddComponent<RenderingData>();
                     renderingData.directorName = directorName;
                     renderingData.renderTimeline = renderTimeline;
-                    renderingData.duration = duration;
+                    
+                    // FBXレコーダーの場合、durationを1フレーム分延長
+                    int recorderTypeValue = EditorPrefs.GetInt("STR_RecorderType", 0);
+                    RecorderSettingsType currentRecorderType = (RecorderSettingsType)recorderTypeValue;
+                    if (currentRecorderType == RecorderSettingsType.FBX)
+                    {
+                        float frameDuration = 1f / frameRate;
+                        renderingData.duration = duration + frameDuration;
+                        BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX: Extended RenderingData duration by {frameDuration:F4}s");
+                    }
+                    else
+                    {
+                        renderingData.duration = duration;
+                    }
+                    
                     renderingData.exposedName = exposedName;
                     renderingData.frameRate = frameRate;
                     renderingData.preRollFrames = preRollFrames;
@@ -1461,7 +1487,6 @@ namespace BatchRenderingTool
                 }
                 
                 CleanupRendering();
-                isRenderingInProgress = false;
                 EditorPrefs.SetBool("STR_IsRendering", false);
                 EditorPrefs.SetBool("STR_UseMonoBehaviour", false);
             }
@@ -1838,11 +1863,20 @@ namespace BatchRenderingTool
         {
             BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === CreateFBXRecorderSettings called with path: {outputPath}, fileName: {outputFileName} ===");
             
+            // FBXレコーダーにはターゲットGameObjectが必要
+            if (fbxTargetGameObject == null)
+            {
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] FBX Recorder requires a target GameObject to be set.");
+                return null;
+            }
+            
             FBXRecorderSettingsConfig config = null;
             
             if (useFBXPreset && fbxPreset != FBXExportPreset.Custom)
             {
                 config = FBXRecorderSettingsConfig.GetPreset(fbxPreset);
+                // Presetを使用する場合もtargetGameObjectを設定
+                config.targetGameObject = fbxTargetGameObject;
             }
             else
             {
@@ -1859,7 +1893,31 @@ namespace BatchRenderingTool
                     frameRate = frameRate
                 };
                 
-                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === FBX config: exportGeometry={fbxExportGeometry}, transferSource={fbxTransferAnimationSource?.name ?? "null"}, transferDest={fbxTransferAnimationDest?.name ?? "null"} ===");
+                // Safely log FBX configuration
+                string sourceStr = "null";
+                string destStr = "null";
+                
+                try 
+                {
+                    if (fbxTransferAnimationSource != null)
+                        sourceStr = fbxTransferAnimationSource.name;
+                } 
+                catch (Exception) 
+                {
+                    sourceStr = "null (invalid reference)";
+                }
+                
+                try 
+                {
+                    if (fbxTransferAnimationDest != null)
+                        destStr = fbxTransferAnimationDest.name;
+                } 
+                catch (Exception) 
+                {
+                    destStr = "null (invalid reference)";
+                }
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === FBX config: exportGeometry={fbxExportGeometry}, transferSource={sourceStr}, transferDest={destStr} ===");
             }
             
             string errorMessage;

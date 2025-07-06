@@ -418,6 +418,11 @@ namespace BatchRenderingTool
             if (settings != null)
             {
                 ConfigureCommonSettings(settings);
+                BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Created FBX recorder settings of actual type: {settings.GetType().FullName}");
+            }
+            else
+            {
+                BatchRenderingToolLogger.LogError("[RecorderSettingsFactory] Failed to create FBX recorder settings - returned null");
             }
             
             return settings;

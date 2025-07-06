@@ -4,7 +4,7 @@ using System.Diagnostics;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Recorder;
-using Debug = UnityEngine.Debug;
+// using Debug = UnityEngine.Debug; // Removed to avoid namespace conflicts
 
 namespace BatchRenderingTool.TestAutomation
 {
@@ -30,7 +30,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         public static void RunPerformanceTest(AnimationRecorderSettingsConfig config, float duration = 5f)
         {
-            Debug.Log("[AnimationPerformance] Starting performance test...");
+            UnityEngine.Debug.Log("[AnimationPerformance] Starting performance test...");
             
             var metrics = new PerformanceMetrics();
             
@@ -79,7 +79,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[AnimationPerformance] Test failed: {e.Message}");
+                UnityEngine.Debug.LogError($"[AnimationPerformance] Test failed: {e.Message}");
             }
         }
         
@@ -88,7 +88,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         public static void RunStressTest(int targetCount, float duration = 5f)
         {
-            Debug.Log($"[AnimationPerformance] Starting stress test with {targetCount} targets...");
+            UnityEngine.Debug.Log($"[AnimationPerformance] Starting stress test with {targetCount} targets...");
             
             var testObjects = new List<GameObject>();
             var configs = new List<AnimationRecorderSettingsConfig>();
@@ -135,11 +135,11 @@ namespace BatchRenderingTool.TestAutomation
                 var endMemory = GC.GetTotalMemory(false);
                 
                 // Report results
-                Debug.Log($"[AnimationPerformance] Stress test completed:");
-                Debug.Log($"  - Objects: {targetCount}");
-                Debug.Log($"  - Total Time: {stopwatch.Elapsed.TotalSeconds:F2}s");
-                Debug.Log($"  - Avg Time per Object: {stopwatch.Elapsed.TotalSeconds / targetCount:F3}s");
-                Debug.Log($"  - Memory Used: {FormatBytes(endMemory - startMemory)}");
+                UnityEngine.Debug.Log($"[AnimationPerformance] Stress test completed:");
+                UnityEngine.Debug.Log($"  - Objects: {targetCount}");
+                UnityEngine.Debug.Log($"  - Total Time: {stopwatch.Elapsed.TotalSeconds:F2}s");
+                UnityEngine.Debug.Log($"  - Avg Time per Object: {stopwatch.Elapsed.TotalSeconds / targetCount:F3}s");
+                UnityEngine.Debug.Log($"  - Memory Used: {FormatBytes(endMemory - startMemory)}");
             }
             finally
             {
@@ -156,7 +156,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         public static void TestCompressionLevels(AnimationRecorderSettingsConfig baseConfig)
         {
-            Debug.Log("[AnimationPerformance] Testing compression levels...");
+            UnityEngine.Debug.Log("[AnimationPerformance] Testing compression levels...");
             
             var compressionLevels = Enum.GetValues(typeof(AnimationCompressionLevel)) as AnimationCompressionLevel[];
             var results = new Dictionary<AnimationCompressionLevel, PerformanceMetrics>();
@@ -188,19 +188,19 @@ namespace BatchRenderingTool.TestAutomation
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[AnimationPerformance] Compression test failed for {level}: {e.Message}");
+                    UnityEngine.Debug.LogError($"[AnimationPerformance] Compression test failed for {level}: {e.Message}");
                 }
             }
             
             // Report comparison
-            Debug.Log("[AnimationPerformance] Compression Level Comparison:");
+            UnityEngine.Debug.Log("[AnimationPerformance] Compression Level Comparison:");
             foreach (var kvp in results)
             {
                 var metrics = kvp.Value;
-                Debug.Log($"  {kvp.Key}:");
-                Debug.Log($"    - Keyframes: {metrics.keyframeCount}");
-                Debug.Log($"    - Compression Ratio: {metrics.compressionRatio:F2}");
-                Debug.Log($"    - Estimated Size: {FormatBytes(metrics.fileSizeBytes)}");
+                UnityEngine.Debug.Log($"  {kvp.Key}:");
+                UnityEngine.Debug.Log($"    - Keyframes: {metrics.keyframeCount}");
+                UnityEngine.Debug.Log($"    - Compression Ratio: {metrics.compressionRatio:F2}");
+                UnityEngine.Debug.Log($"    - Estimated Size: {FormatBytes(metrics.fileSizeBytes)}");
             }
         }
         
@@ -291,24 +291,24 @@ namespace BatchRenderingTool.TestAutomation
         
         private static void ReportPerformanceResults(AnimationRecorderSettingsConfig config, PerformanceMetrics metrics, float duration)
         {
-            Debug.Log("[AnimationPerformance] Performance Test Results:");
-            Debug.Log($"  Configuration:");
-            Debug.Log($"    - Target: {(config.targetGameObject != null ? config.targetGameObject.name : "None")}");
-            Debug.Log($"    - Properties: {config.recordingProperties}");
-            Debug.Log($"    - Frame Rate: {config.frameRate} fps");
-            Debug.Log($"    - Compression: {config.compressionLevel}");
-            Debug.Log($"    - Duration: {duration}s");
+            UnityEngine.Debug.Log("[AnimationPerformance] Performance Test Results:");
+            UnityEngine.Debug.Log($"  Configuration:");
+            UnityEngine.Debug.Log($"    - Target: {(config.targetGameObject != null ? config.targetGameObject.name : "None")}");
+            UnityEngine.Debug.Log($"    - Properties: {config.recordingProperties}");
+            UnityEngine.Debug.Log($"    - Frame Rate: {config.frameRate} fps");
+            UnityEngine.Debug.Log($"    - Compression: {config.compressionLevel}");
+            UnityEngine.Debug.Log($"    - Duration: {duration}s");
             
-            Debug.Log($"  Performance:");
-            Debug.Log($"    - Recording Time: {metrics.recordingTime:F2}s");
-            Debug.Log($"    - Speed Ratio: {duration / metrics.recordingTime:F2}x realtime");
-            Debug.Log($"    - Memory Delta: {FormatBytes(metrics.memoryAfter - metrics.memoryBefore)}");
+            UnityEngine.Debug.Log($"  Performance:");
+            UnityEngine.Debug.Log($"    - Recording Time: {metrics.recordingTime:F2}s");
+            UnityEngine.Debug.Log($"    - Speed Ratio: {duration / metrics.recordingTime:F2}x realtime");
+            UnityEngine.Debug.Log($"    - Memory Delta: {FormatBytes(metrics.memoryAfter - metrics.memoryBefore)}");
             
-            Debug.Log($"  Output:");
-            Debug.Log($"    - Properties: {metrics.propertyCount}");
-            Debug.Log($"    - Keyframes: {metrics.keyframeCount}");
-            Debug.Log($"    - Compression Ratio: {metrics.compressionRatio:F2}:1");
-            Debug.Log($"    - Estimated Size: {FormatBytes(metrics.fileSizeBytes)}");
+            UnityEngine.Debug.Log($"  Output:");
+            UnityEngine.Debug.Log($"    - Properties: {metrics.propertyCount}");
+            UnityEngine.Debug.Log($"    - Keyframes: {metrics.keyframeCount}");
+            UnityEngine.Debug.Log($"    - Compression Ratio: {metrics.compressionRatio:F2}:1");
+            UnityEngine.Debug.Log($"    - Estimated Size: {FormatBytes(metrics.fileSizeBytes)}");
         }
         
         private static string FormatBytes(long bytes)

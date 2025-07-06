@@ -273,6 +273,8 @@ namespace BatchRenderingTool
                 {
                     try
                     {
+                        BatchRenderingToolLogger.Log($"[RecorderClipUtility] Using RecordersInventory to create: {typeName}");
+                        
                         // Try to find the recorder settings type
                         System.Type settingsType = null;
                         
@@ -300,14 +302,34 @@ namespace BatchRenderingTool
                                 
                             case "fbxrecordersettings":
                             case "fbxrecorder":
+                                BatchRenderingToolLogger.Log("[RecorderClipUtility] Looking for FBX recorder type...");
+                                
                                 // Try multiple possible type names for FBX recorder
-                                settingsType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor") ??
-                                               System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                               System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                               System.Type.GetType("Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime") ??
-                                               System.Type.GetType("UnityEditor.Formats.Fbx.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                               System.Type.GetType("UnityEditor.Formats.Fbx.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                               System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Recorder.Editor");
+                                var typeNames = new string[]
+                                {
+                                    "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor",
+                                    "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                                    "UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                                    "Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime",
+                                    "UnityEditor.Formats.Fbx.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                                    "UnityEditor.Formats.Fbx.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                                    "UnityEditor.Recorder.FbxRecorderSettings, Unity.Recorder.Editor"
+                                };
+                                
+                                foreach (var tn in typeNames)
+                                {
+                                    settingsType = System.Type.GetType(tn);
+                                    if (settingsType != null)
+                                    {
+                                        BatchRenderingToolLogger.Log($"[RecorderClipUtility] Found FBX type: {tn}");
+                                        break;
+                                    }
+                                }
+                                
+                                if (settingsType == null)
+                                {
+                                    BatchRenderingToolLogger.Log("[RecorderClipUtility] None of the hardcoded FBX types found, searching assemblies...");
+                                }
                                 
                                 if (settingsType == null)
                                 {
@@ -335,6 +357,10 @@ namespace BatchRenderingTool
                                 if (settingsType == null)
                                 {
                                     BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to find FbxRecorderSettings type. Make sure Unity FBX Exporter package is installed.");
+                                    
+                                    // CRITICAL: Do not fallback to AnimationRecorderSettings for FBX
+                                    // Otherwise it will create .anim files instead of .fbx files
+                                    return null;
                                 }
                                 break;
                                 
@@ -347,11 +373,22 @@ namespace BatchRenderingTool
                         
                         if (settingsType != null)
                         {
+                            BatchRenderingToolLogger.Log($"[RecorderClipUtility] About to create {settingsType.FullName} using RecordersInventory");
                             var settings = createMethod.Invoke(null, new object[] { settingsType }) as RecorderSettings;
                             if (settings != null)
                             {
                                 settings.name = typeName;
                                 BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created {settingsType.Name} using RecordersInventory");
+                                BatchRenderingToolLogger.Log($"[RecorderClipUtility] IMPORTANT: Actual created type is {settings.GetType().FullName}");
+                                
+                                // CRITICAL CHECK: If we requested FBX but got Animation, reject it
+                                if (typeName.ToLower().Contains("fbx") && settings.GetType().Name.Contains("Animation"))
+                                {
+                                    BatchRenderingToolLogger.LogError($"[RecorderClipUtility] ERROR: Requested FBX recorder but got Animation recorder! Rejecting.");
+                                    UnityEngine.Object.DestroyImmediate(settings);
+                                    return null;
+                                }
+                                
                                 return settings;
                             }
                         }
@@ -450,6 +487,9 @@ namespace BatchRenderingTool
                         }
                     }
                     BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to create FbxRecorderSettings. Make sure Unity FBX Exporter package (com.unity.formats.fbx) is installed.");
+                    
+                    // IMPORTANT: Do not fallback to AnimationRecorderSettings - return null instead
+                    // This prevents confusion where FBX export creates Animation clips instead of FBX files
                     
                     // Log available FBX-related types for debugging
                     BatchRenderingToolLogger.LogError("[RecorderClipUtility] Searching for available FBX-related types...");

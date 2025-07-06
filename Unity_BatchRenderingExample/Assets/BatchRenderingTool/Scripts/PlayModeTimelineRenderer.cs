@@ -119,11 +119,62 @@ namespace BatchRenderingTool
             float timeout = data.duration + 10f;
             float elapsedTime = 0f;
             
-            while (renderingDirector != null && renderingDirector.state == PlayState.Playing && elapsedTime < timeout)
+            // FBXレコーダーの場合は、最後のフレームまで確実に処理されるよう、
+            // DirectorのstateではなくtimeベースでMonitoringする
+            bool isFBXRecording = false;
+#if UNITY_EDITOR
+            int recorderType = UnityEditor.EditorPrefs.GetInt("STR_RecorderType", 0);
+            // FBXは5番目のenum値（Image=0, Movie=1, Animation=2, Alembic=3, AOV=4, FBX=5）
+            isFBXRecording = recorderType == 5;
+            if (isFBXRecording)
+            {
+                UnityEngine.Debug.Log("[PlayModeTimelineRenderer] FBX Recording detected - using time-based monitoring");
+            }
+#endif
+            
+            while (renderingDirector != null && elapsedTime < timeout)
             {
                 progress = (float)(renderingDirector.time / renderingDirector.duration);
                 elapsedTime += Time.deltaTime;
+                
+                // FBXレコーダーの場合はTimelineの時間で判定
+                if (isFBXRecording)
+                {
+                    // データのdurationに達したら終了（FBXの場合は延長されている）
+                    if (renderingDirector.time >= data.duration)
+                    {
+                        UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] FBX Recording: Reached target duration {data.duration:F3}s");
+                        break;
+                    }
+                }
+                else
+                {
+                    // 通常のレコーダーは従来通りPlayStateで判定
+                    if (renderingDirector.state != PlayState.Playing)
+                    {
+                        break;
+                    }
+                }
+                
                 yield return null;
+            }
+            
+            // FBXレコーダーの場合、最後のフレーム処理のため追加で待機
+            if (isFBXRecording && elapsedTime < timeout)
+            {
+                UnityEngine.Debug.Log("[PlayModeTimelineRenderer] FBX Recording: Waiting for final frame processing...");
+                // 最後のフレームの処理を確実に行うため、2フレーム分待機
+                yield return null;
+                yield return null;
+                
+                // Directorを明示的に停止してレコーダーの終了処理をトリガー
+                if (renderingDirector != null)
+                {
+                    renderingDirector.Stop();
+                    UnityEngine.Debug.Log("[PlayModeTimelineRenderer] FBX Recording: Director stopped");
+                    // 停止処理の完了を待つ
+                    yield return new WaitForSeconds(0.1f);
+                }
             }
             
             // 完了
@@ -141,6 +192,7 @@ namespace BatchRenderingTool
 #if UNITY_EDITOR
                 // 完了フラグを設定（SingleTimelineRenderer用）
                 UnityEditor.EditorPrefs.SetBool("STR_RenderingComplete", true);
+                UnityEditor.EditorPrefs.SetString("STR_RenderingStatus", statusMessage);
                 // MultiRecorderTimelineRenderer用
                 UnityEditor.EditorPrefs.SetBool("MRT_RenderingComplete", true);
 #endif
