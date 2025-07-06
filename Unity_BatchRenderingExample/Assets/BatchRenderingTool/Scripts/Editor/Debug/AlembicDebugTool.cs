@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.Recorder;
 using UnityEngine.SceneManagement;
 
-namespace BatchRenderingTool.Debug
+namespace BatchRenderingTool.DebugTools
 {
     /// <summary>
     /// Alembicレコーダーのテストとデバッグ機能を提供するツール
@@ -531,7 +531,9 @@ namespace BatchRenderingTool.Debug
                 Debug.Log($"[AlembicDebugTool] Export settings created. Output: {Path.Combine(testOutputPath, fileName)}.abc");
                 
                 // レコーダーコントローラーを作成して実行
-                var controller = new RecorderController(settings);
+                var controllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
+                controllerSettings.AddRecorderSettings(settings);
+                var controller = new RecorderController(controllerSettings);
                 controller.PrepareRecording();
                 
                 if (controller.StartRecording())

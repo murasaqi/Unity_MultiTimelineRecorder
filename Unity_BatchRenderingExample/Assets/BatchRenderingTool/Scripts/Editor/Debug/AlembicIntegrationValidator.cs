@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Recorder;
 
-namespace BatchRenderingTool.Debug
+namespace BatchRenderingTool.DebugTools
 {
     /// <summary>
     /// Alembic統合の検証ツール

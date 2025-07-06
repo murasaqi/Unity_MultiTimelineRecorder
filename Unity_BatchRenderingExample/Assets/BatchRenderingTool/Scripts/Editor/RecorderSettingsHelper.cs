@@ -537,5 +537,79 @@ namespace BatchRenderingTool
             
             return settings;
         }
+        
+        /// <summary>
+        /// Set output path for recorder settings
+        /// </summary>
+        public static void SetOutputPath(RecorderSettings settings, string outputPath, string fileName)
+        {
+            if (settings == null)
+            {
+                BatchRenderingToolLogger.LogError("RecorderSettings is null");
+                return;
+            }
+            
+            try
+            {
+                // Use reflection to set OutputFile properties
+                var settingsType = settings.GetType();
+                
+                // Try to find OutputFile property
+                var outputFileProperty = settingsType.GetProperty("OutputFile");
+                if (outputFileProperty != null)
+                {
+                    var outputFile = outputFileProperty.GetValue(settings);
+                    if (outputFile != null)
+                    {
+                        var outputFileType = outputFile.GetType();
+                        
+                        // Set Directory/Path
+                        var directoryProperty = outputFileType.GetProperty("Directory") ?? outputFileType.GetProperty("Path");
+                        if (directoryProperty != null && directoryProperty.CanWrite)
+                        {
+                            directoryProperty.SetValue(outputFile, outputPath);
+                        }
+                        
+                        // Set FileName
+                        var fileNameProperty = outputFileType.GetProperty("FileName") ?? outputFileType.GetProperty("BaseFileName");
+                        if (fileNameProperty != null && fileNameProperty.CanWrite)
+                        {
+                            fileNameProperty.SetValue(outputFile, fileName);
+                        }
+                    }
+                }
+                
+                // Alternative approach for some recorder types
+                var fileNameProp = settingsType.GetProperty("FileNameGenerator");
+                if (fileNameProp != null)
+                {
+                    var fileNameGen = fileNameProp.GetValue(settings);
+                    if (fileNameGen != null)
+                    {
+                        var genType = fileNameGen.GetType();
+                        
+                        // Set FileName
+                        var nameProp = genType.GetProperty("FileName");
+                        if (nameProp != null && nameProp.CanWrite)
+                        {
+                            nameProp.SetValue(fileNameGen, fileName);
+                        }
+                        
+                        // Set Path
+                        var pathProp = genType.GetProperty("Path");
+                        if (pathProp != null && pathProp.CanWrite)
+                        {
+                            pathProp.SetValue(fileNameGen, outputPath);
+                        }
+                    }
+                }
+                
+                BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsHelper] Set output path: {outputPath}/{fileName}");
+            }
+            catch (Exception e)
+            {
+                BatchRenderingToolLogger.LogError($"[RecorderSettingsHelper] Failed to set output path: {e.Message}");
+            }
+        }
     }
 }

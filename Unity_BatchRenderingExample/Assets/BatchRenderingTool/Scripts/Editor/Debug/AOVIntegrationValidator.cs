@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.Rendering;
 
-namespace BatchRenderingTool.Debug
+namespace BatchRenderingTool.DebugTools
 {
     /// <summary>
     /// AOV統合の検証ツール

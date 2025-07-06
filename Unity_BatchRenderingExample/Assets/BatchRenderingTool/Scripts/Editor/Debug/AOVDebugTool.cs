@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.Recorder;
 using UnityEngine.Rendering;
 
-namespace BatchRenderingTool.Debug
+namespace BatchRenderingTool.DebugTools
 {
     /// <summary>
     /// AOVレコーダーのテストとデバッグ機能を提供するツール
