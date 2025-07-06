@@ -1678,6 +1678,7 @@ MonoBehaviour:
     - 801cc6f80a995704396630d448e0d1dd
     - 6e6f6fd70113eef4a8eb21db64cab7bb
     - e5dc24a935a4ffa4faf8f81cfd661fb8
+    - 9b3709e4920814d40b5ff5cd9775c688
     m_Values:
     - {fileID: 1922889286}
     - {fileID: 1922889286}
@@ -1699,6 +1700,7 @@ MonoBehaviour:
     - {fileID: 1922889286}
     - {fileID: 1922889286}
     - {fileID: 1922889286}
+    - {fileID: 1726496849}
     - {fileID: 1726496849}
 --- !u!4 &175957172
 Transform:
@@ -13167,7 +13169,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: field of view
-      value: 33.39849
+      value: 51.28201
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_Anamorphism
@@ -13179,7 +13181,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocalLength
-      value: 31.099998
+      value: 19.4375
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_GateFitMode
@@ -13199,7 +13201,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocusDistance
-      value: 0.5
+      value: 2.9315078
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: near clip plane
@@ -13223,31 +13225,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.505271
+      value: -2.8901293
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.40976477
+      value: -1.3000002
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.5106199
+      value: 70.35468
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.5078573
+      value: -0.5537205
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.29364276
+      value: 0.0037495496
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.6568711
+      value: -0.83267534
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.47368273
+      value: -0.0056047067
       objectReference: {fileID: 0}
     - target: {fileID: 2702308875592398683, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -31526,8 +31528,8 @@ Camera:
   m_Iso: 200
   m_ShutterSpeed: 0.005
   m_Aperture: 2
-  m_FocusDistance: 12.328718
-  m_FocalLength: 13.995
+  m_FocusDistance: 2.9315078
+  m_FocalLength: 19.4375
   m_BladeCount: 9
   m_Curvature: {x: 2, y: 11}
   m_BarrelClipping: 0.25
@@ -31542,7 +31544,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 33.39849
+  field of view: 51.28201
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -31568,8 +31570,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1922889286}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5425811, y: 0.10536864, z: 0.12730749, w: -0.82358736}
-  m_LocalPosition: {x: -3.4893813, y: 3.7002354, z: -6.5052705}
+  m_LocalRotation: {x: -0.0013117939, y: -0.98032993, z: -0.0066144583, w: 0.19725087}
+  m_LocalPosition: {x: 64.354675, y: 2.81, z: 2.8901215}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

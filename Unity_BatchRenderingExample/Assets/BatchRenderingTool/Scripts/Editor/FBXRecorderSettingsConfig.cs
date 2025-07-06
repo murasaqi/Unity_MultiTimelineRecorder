@@ -7,6 +7,10 @@ namespace BatchRenderingTool
     /// </summary>
     public class FBXRecorderSettingsConfig
     {
+        public GameObject targetGameObject = null;
+        public bool recordHierarchy = true;
+        public bool clampedTangents = true;
+        public FBXAnimationCompressionLevel animationCompression = FBXAnimationCompressionLevel.Lossy;
         public bool exportGeometry = true;
         public Transform transferAnimationSource = null;
         public Transform transferAnimationDest = null;
@@ -105,6 +109,74 @@ namespace BatchRenderingTool
                 
                 // Apply configuration using reflection
                 var settingsType = settings.GetType();
+                
+                // Configure AnimationInputSettings if targetGameObject is set
+                if (targetGameObject != null)
+                {
+                    var animInputSettingsField = settingsType.GetField("m_AnimationInputSettings", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (animInputSettingsField != null)
+                    {
+                        var animInputSettings = animInputSettingsField.GetValue(settings);
+                        if (animInputSettings != null)
+                        {
+                            var animType = animInputSettings.GetType();
+                            
+                            // Set GameObject
+                            var gameObjectProp = animType.GetProperty("gameObject");
+                            if (gameObjectProp != null && gameObjectProp.CanWrite)
+                            {
+                                gameObjectProp.SetValue(animInputSettings, targetGameObject);
+                                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set target GameObject to {targetGameObject.name}");
+                            }
+                            
+                            // Set Recursive (Record Hierarchy)
+                            var recursiveProp = animType.GetProperty("Recursive");
+                            if (recursiveProp != null && recursiveProp.CanWrite)
+                            {
+                                recursiveProp.SetValue(animInputSettings, recordHierarchy);
+                                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set Recursive to {recordHierarchy}");
+                            }
+                            
+                            // Set ClampedTangents
+                            var clampedTangentsProp = animType.GetProperty("ClampedTangents");
+                            if (clampedTangentsProp != null && clampedTangentsProp.CanWrite)
+                            {
+                                clampedTangentsProp.SetValue(animInputSettings, clampedTangents);
+                                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set ClampedTangents to {clampedTangents}");
+                            }
+                            
+                            // Set SimplyCurves (Animation Compression)
+                            var simplyCurvesField = animType.GetField("m_SimplyCurves", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (simplyCurvesField != null)
+                            {
+                                // Map AnimationCompressionLevel to CurveSimplificationOptions
+                                var curveSimplificationOptionsType = simplyCurvesField.FieldType;
+                                object compressionValue = null;
+                                
+                                switch (animationCompression)
+                                {
+                                    case FBXAnimationCompressionLevel.Lossy:
+                                        compressionValue = System.Enum.Parse(curveSimplificationOptionsType, "Lossy");
+                                        break;
+                                    case FBXAnimationCompressionLevel.Lossless:
+                                        compressionValue = System.Enum.Parse(curveSimplificationOptionsType, "Lossless");
+                                        break;
+                                    case FBXAnimationCompressionLevel.Disabled:
+                                        compressionValue = System.Enum.Parse(curveSimplificationOptionsType, "Disabled");
+                                        break;
+                                }
+                                
+                                if (compressionValue != null)
+                                {
+                                    simplyCurvesField.SetValue(animInputSettings, compressionValue);
+                                    BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set SimplyCurves to {compressionValue}");
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 // Set ExportGeometry
                 var exportGeometryProp = settingsType.GetProperty("ExportGeometry");

@@ -68,6 +68,10 @@ namespace BatchRenderingTool
         bool useAnimationPreset { get; set; }
         
         // FBX settings
+        GameObject fbxTargetGameObject { get; set; }
+        bool fbxRecordHierarchy { get; set; }
+        bool fbxClampedTangents { get; set; }
+        FBXAnimationCompressionLevel fbxAnimationCompression { get; set; }
         bool fbxExportGeometry { get; set; }
         UnityEngine.Transform fbxTransferAnimationSource { get; set; }
         UnityEngine.Transform fbxTransferAnimationDest { get; set; }

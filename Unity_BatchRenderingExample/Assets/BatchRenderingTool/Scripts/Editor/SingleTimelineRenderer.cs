@@ -113,6 +113,10 @@ namespace BatchRenderingTool
         public bool useAnimationPreset = false;
         
         // FBX recorder settings
+        public GameObject fbxTargetGameObject = null;
+        public bool fbxRecordHierarchy = true;
+        public bool fbxClampedTangents = true;
+        public FBXAnimationCompressionLevel fbxAnimationCompression = FBXAnimationCompressionLevel.Lossy;
         public bool fbxExportGeometry = true;
         public Transform fbxTransferAnimationSource = null;
         public Transform fbxTransferAnimationDest = null;
@@ -179,6 +183,10 @@ namespace BatchRenderingTool
         float IRecorderSettingsHost.animationScaleError { get => animationScaleError; set => animationScaleError = value; }
         AnimationExportPreset IRecorderSettingsHost.animationPreset { get => animationPreset; set => animationPreset = value; }
         bool IRecorderSettingsHost.useAnimationPreset { get => useAnimationPreset; set => useAnimationPreset = value; }
+        GameObject IRecorderSettingsHost.fbxTargetGameObject { get => fbxTargetGameObject; set => fbxTargetGameObject = value; }
+        bool IRecorderSettingsHost.fbxRecordHierarchy { get => fbxRecordHierarchy; set => fbxRecordHierarchy = value; }
+        bool IRecorderSettingsHost.fbxClampedTangents { get => fbxClampedTangents; set => fbxClampedTangents = value; }
+        FBXAnimationCompressionLevel IRecorderSettingsHost.fbxAnimationCompression { get => fbxAnimationCompression; set => fbxAnimationCompression = value; }
         bool IRecorderSettingsHost.fbxExportGeometry { get => fbxExportGeometry; set => fbxExportGeometry = value; }
         Transform IRecorderSettingsHost.fbxTransferAnimationSource { get => fbxTransferAnimationSource; set => fbxTransferAnimationSource = value; }
         Transform IRecorderSettingsHost.fbxTransferAnimationDest { get => fbxTransferAnimationDest; set => fbxTransferAnimationDest = value; }
