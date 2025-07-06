@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Recorder;
 using System.Collections.Generic;
 
 namespace BatchRenderingTool.Editor.Tests
