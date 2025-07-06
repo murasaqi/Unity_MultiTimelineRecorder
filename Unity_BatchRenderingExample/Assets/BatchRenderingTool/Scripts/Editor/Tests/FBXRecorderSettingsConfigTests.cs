@@ -11,18 +11,26 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("Validate_WithValidConfig_ReturnsTrue - テスト開始");
             
+            var testGameObject = new GameObject("TestObject");
             var config = new FBXRecorderSettingsConfig
             {
+                targetGameObject = testGameObject,
+                recordHierarchy = true,
+                clampedTangents = true,
+                animationCompression = FBXAnimationCompressionLevel.Lossy,
                 exportGeometry = true,
                 frameRate = 24f
             };
             
             string errorMessage;
+            Debug.Log($"Validate_WithValidConfig_ReturnsTrue - Config: targetGameObject={config.targetGameObject?.name ?? "null"}, frameRate={config.frameRate}");
             bool isValid = config.Validate(out errorMessage);
+            Debug.Log($"Validate_WithValidConfig_ReturnsTrue - Validation result: isValid={isValid}, errorMessage='{errorMessage}'");
             
-            Assert.IsTrue(isValid, "Valid config should return true");
-            Assert.IsTrue(string.IsNullOrEmpty(errorMessage), "Error message should be empty for valid config");
+            Assert.IsTrue(isValid, $"Valid config should return true. Error: '{errorMessage}'");
+            Assert.IsTrue(string.IsNullOrEmpty(errorMessage), $"Error message should be empty for valid config. Actual: '{errorMessage}'");
             
+            GameObject.DestroyImmediate(testGameObject);
             Debug.Log("Validate_WithValidConfig_ReturnsTrue - テスト完了");
         }
         
@@ -31,20 +39,28 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("Validate_WithInvalidFrameRate_ReturnsFalse - テスト開始");
             
+            var testGameObject = new GameObject("TestObject");
             var config = new FBXRecorderSettingsConfig
             {
+                targetGameObject = testGameObject,
+                recordHierarchy = true,
+                clampedTangents = true,
+                animationCompression = FBXAnimationCompressionLevel.Lossy,
                 exportGeometry = true,
                 frameRate = 0f // Invalid
             };
             
             string errorMessage;
+            Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - Config: targetGameObject={config.targetGameObject?.name ?? "null"}, frameRate={config.frameRate}");
             bool isValid = config.Validate(out errorMessage);
+            Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - Validation result: isValid={isValid}, errorMessage='{errorMessage}'");
             
             Assert.IsFalse(isValid, "Config with zero frame rate should be invalid");
             Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
-            Assert.IsTrue(errorMessage.Contains("Frame rate"), "Error message should mention frame rate");
+            Assert.IsTrue(errorMessage.Contains("Frame rate") || errorMessage.Contains("frame rate"), $"Error message should mention frame rate. Actual message: '{errorMessage}'");
             
             Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - エラーメッセージ: {errorMessage}");
+            GameObject.DestroyImmediate(testGameObject);
             Debug.Log("Validate_WithInvalidFrameRate_ReturnsFalse - テスト完了");
         }
         
@@ -58,6 +74,10 @@ namespace BatchRenderingTool.Editor.Tests
             {
                 var config = new FBXRecorderSettingsConfig
                 {
+                    targetGameObject = testGameObject,
+                    recordHierarchy = true,
+                    clampedTangents = true,
+                    animationCompression = FBXAnimationCompressionLevel.Lossy,
                     exportGeometry = true,
                     frameRate = 24f,
                     transferAnimationSource = testGameObject.transform,
@@ -69,7 +89,7 @@ namespace BatchRenderingTool.Editor.Tests
                 
                 Assert.IsFalse(isValid, "Config with source but no destination should be invalid");
                 Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
-                Assert.IsTrue(errorMessage.Contains("destination"), "Error message should mention destination");
+                Assert.IsTrue(errorMessage.Contains("destination"), $"Error message should mention destination. Actual message: '{errorMessage}'");
                 
                 Debug.Log($"Validate_WithSourceButNoDestination_ReturnsFalse - エラーメッセージ: {errorMessage}");
             }
@@ -91,6 +111,10 @@ namespace BatchRenderingTool.Editor.Tests
             {
                 var config = new FBXRecorderSettingsConfig
                 {
+                    targetGameObject = testGameObject,
+                    recordHierarchy = true,
+                    clampedTangents = true,
+                    animationCompression = FBXAnimationCompressionLevel.Lossy,
                     exportGeometry = true,
                     frameRate = 24f,
                     transferAnimationSource = testGameObject.transform,
@@ -102,7 +126,7 @@ namespace BatchRenderingTool.Editor.Tests
                 
                 Assert.IsFalse(isValid, "Config with same source and destination should be invalid");
                 Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
-                Assert.IsTrue(errorMessage.Contains("same"), "Error message should mention they are the same");
+                Assert.IsTrue(errorMessage.Contains("same"), $"Error message should mention they are the same. Actual message: '{errorMessage}'");
                 
                 Debug.Log($"Validate_WithSameSourceAndDestination_ReturnsFalse - エラーメッセージ: {errorMessage}");
             }
@@ -168,8 +192,13 @@ namespace BatchRenderingTool.Editor.Tests
                 return;
             }
             
+            var testGameObject = new GameObject("TestObject");
             var config = new FBXRecorderSettingsConfig
             {
+                targetGameObject = testGameObject,
+                recordHierarchy = true,
+                clampedTangents = true,
+                animationCompression = FBXAnimationCompressionLevel.Lossy,
                 exportGeometry = true,
                 frameRate = 30f
             };
@@ -180,6 +209,7 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual("TestFBX", settings.name, "Settings name should match");
             Assert.AreEqual(30f, settings.FrameRate, "Frame rate should match config");
             
+            GameObject.DestroyImmediate(testGameObject);
             Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
         }
     }

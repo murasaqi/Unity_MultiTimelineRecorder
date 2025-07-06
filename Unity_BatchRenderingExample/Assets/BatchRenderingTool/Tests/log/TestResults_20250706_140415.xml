@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Failed(Child)" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.0548347">
+  <test-suite type="TestSuite" id="1068" name="UnityBatchRenderingTool" fullname="UnityBatchRenderingTool" runstate="Runnable" testcasecount="51" result="Failed" site="Child" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.054835" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1058" name="BatchRenderingTool.Editor.Tests.dll" fullname="D:/Works/Unity_BatchRecorderTool/Unity_BatchRenderingExample/Library/ScriptAssemblies/BatchRenderingTool.Editor.Tests.dll" runstate="Runnable" testcasecount="51" result="Failed" site="Child" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.047184" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="48696" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1059" name="BatchRenderingTool" fullname="BatchRenderingTool" runstate="Runnable" testcasecount="51" result="Failed" site="Child" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.045789" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1060" name="Editor" fullname="BatchRenderingTool.Editor" runstate="Runnable" testcasecount="51" result="Failed" site="Child" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.044269" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1061" name="Tests" fullname="BatchRenderingTool.Editor.Tests" runstate="Runnable" testcasecount="51" result="Failed" site="Child" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.043026" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1033" name="FBXRecorderSettingsConfigTests" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.041066" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1041" name="CreateFBXRecorderSettings_CreatesValidSettings" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.CreateFBXRecorderSettings_CreatesValidSettings" methodname="CreateFBXRecorderSettings_CreatesValidSettings" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="734754344" result="Passed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.018601" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[CreateFBXRecorderSettings_CreatesValidSettings - テスト開始
+CreateFBXRecorderSettings_CreatesValidSettings - テスト完了
+]]></output>
+              </test-case>
+              <test-case id="1038" name="GetPreset_AnimationExport_ReturnsCorrectConfig" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.GetPreset_AnimationExport_ReturnsCorrectConfig" methodname="GetPreset_AnimationExport_ReturnsCorrectConfig" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="731506261" result="Passed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.001285" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[GetPreset_AnimationExport_ReturnsCorrectConfig - テスト開始
+GetPreset_AnimationExport_ReturnsCorrectConfig - テスト完了
+]]></output>
+              </test-case>
+              <test-case id="1040" name="GetPreset_ModelAndAnimation_ReturnsCorrectConfig" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.GetPreset_ModelAndAnimation_ReturnsCorrectConfig" methodname="GetPreset_ModelAndAnimation_ReturnsCorrectConfig" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="198879224" result="Passed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.001039" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[GetPreset_ModelAndAnimation_ReturnsCorrectConfig - テスト開始
+GetPreset_ModelAndAnimation_ReturnsCorrectConfig - テスト完了
+]]></output>
+              </test-case>
+              <test-case id="1039" name="GetPreset_ModelExport_ReturnsCorrectConfig" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.GetPreset_ModelExport_ReturnsCorrectConfig" methodname="GetPreset_ModelExport_ReturnsCorrectConfig" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="1412172467" result="Passed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.000870" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[GetPreset_ModelExport_ReturnsCorrectConfig - テスト開始
+GetPreset_ModelExport_ReturnsCorrectConfig - テスト完了
+]]></output>
+              </test-case>
+              <test-case id="1035" name="Validate_WithInvalidFrameRate_ReturnsFalse" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithInvalidFrameRate_ReturnsFalse" methodname="Validate_WithInvalidFrameRate_ReturnsFalse" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="969838307" result="Failed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.003133" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Error message should mention frame rate
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithInvalidFrameRate_ReturnsFalse () [0x0004c] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\FBXRecorderSettingsConfigTests.cs:45
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Validate_WithInvalidFrameRate_ReturnsFalse - テスト開始
+]]></output>
+              </test-case>
+              <test-case id="1037" name="Validate_WithSameSourceAndDestination_ReturnsFalse" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithSameSourceAndDestination_ReturnsFalse" methodname="Validate_WithSameSourceAndDestination_ReturnsFalse" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="1467597087" result="Failed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.000829" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Error message should mention they are the same
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithSameSourceAndDestination_ReturnsFalse () [0x0006f] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\FBXRecorderSettingsConfigTests.cs:105
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Validate_WithSameSourceAndDestination_ReturnsFalse - テスト開始
+]]></output>
+              </test-case>
+              <test-case id="1036" name="Validate_WithSourceButNoDestination_ReturnsFalse" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithSourceButNoDestination_ReturnsFalse" methodname="Validate_WithSourceButNoDestination_ReturnsFalse" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="2116069901" result="Failed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.000729" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Error message should mention destination
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithSourceButNoDestination_ReturnsFalse () [0x0006a] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\FBXRecorderSettingsConfigTests.cs:72
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Validate_WithSourceButNoDestination_ReturnsFalse - テスト開始
+]]></output>
+              </test-case>
+              <test-case id="1034" name="Validate_WithValidConfig_ReturnsTrue" fullname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithValidConfig_ReturnsTrue" methodname="Validate_WithValidConfig_ReturnsTrue" classname="BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests" runstate="Runnable" seed="951778844" result="Failed" start-time="2025-07-06 05:04:01Z" end-time="2025-07-06 05:04:01Z" duration="0.000591" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Valid config should return true
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.FBXRecorderSettingsConfigTests.Validate_WithValidConfig_ReturnsTrue () [0x00028] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\FBXRecorderSettingsConfigTests.cs:23
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Validate_WithValidConfig_ReturnsTrue - テスト開始
+Saving results to: C:/Users/uma92/AppData/LocalLow/DefaultCompany/UnityBatchRenderingTool\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

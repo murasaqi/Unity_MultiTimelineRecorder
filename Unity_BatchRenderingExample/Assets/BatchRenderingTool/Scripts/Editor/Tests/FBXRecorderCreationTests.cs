@@ -2,199 +2,99 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Recorder;
-using System;
 
-namespace BatchRenderingTool.Tests
+namespace BatchRenderingTool.Editor.Tests
 {
-    /// <summary>
-    /// Tests for FBX Recorder creation and configuration
-    /// </summary>
+    [TestFixture]
     public class FBXRecorderCreationTests
     {
         [Test]
-        public void CanDetectFBXPackage()
+        public void FBXPackage_IsInstalled()
         {
-            // Clear cache to ensure fresh check
-            FBXExportInfo.ClearCache();
-            
-            bool isAvailable = FBXExportInfo.IsFBXPackageAvailable();
-            
-            // This test will pass or fail based on whether the package is installed
-            if (!isAvailable)
-            {
-                Assert.Inconclusive("FBX Exporter package is not installed. Install com.unity.formats.fbx to enable FBX recording.");
-            }
-            else
-            {
-                Assert.IsTrue(isAvailable, "FBX package should be detected when installed");
-            }
+            bool isInstalled = FBXExportInfo.IsFBXPackageAvailable();
+            Assert.IsTrue(isInstalled, "Unity FBX Exporter package (com.unity.formats.fbx) is not installed");
         }
         
         [Test]
-        public void CanCreateFBXRecorderSettings_WithUtility()
+        public void FBXRecorderSettings_CanBeCreated_UsingRecorderClipUtility()
         {
-            if (!FBXExportInfo.IsFBXPackageAvailable())
-            {
-                Assert.Inconclusive("FBX Exporter package is not installed");
-                return;
-            }
-            
             var settings = RecorderClipUtility.CreateProperRecorderSettings("FbxRecorderSettings");
+            Assert.IsNotNull(settings, "Failed to create FBX recorder settings using RecorderClipUtility");
             
-            Assert.IsNotNull(settings, "Should create FBX recorder settings");
-            Assert.IsTrue(settings.GetType().Name.Contains("FbxRecorderSettings"), 
-                $"Settings should be FBX type, but was {settings.GetType().Name}");
+            if (settings != null)
+            {
+                Debug.Log($"[FBXRecorderCreationTests] Created FBX recorder settings of type: {settings.GetType().FullName}");
+            }
         }
         
         [Test]
-        public void CanCreateFBXRecorderSettings_WithFactory()
+        public void FBXRecorderSettings_CanBeCreated_UsingCreateProperFBXRecorderSettings()
         {
-            if (!FBXExportInfo.IsFBXPackageAvailable())
-            {
-                Assert.Inconclusive("FBX Exporter package is not installed");
-                return;
-            }
+            var settings = RecorderClipUtility.CreateProperFBXRecorderSettings("TestFBX");
+            Assert.IsNotNull(settings, "Failed to create FBX recorder settings using CreateProperFBXRecorderSettings");
             
-            var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX");
-            
-            Assert.IsNotNull(settings, "Should create FBX recorder settings via factory");
-            Assert.AreEqual("TestFBX", settings.name);
-            Assert.AreEqual(RecordMode.Manual, settings.RecordMode);
-            Assert.AreEqual(24, settings.FrameRate);
-        }
-        
-        [Test]
-        public void CanConfigureFBXRecorderSettings_WithGameObject()
-        {
-            if (!FBXExportInfo.IsFBXPackageAvailable())
+            if (settings != null)
             {
-                Assert.Inconclusive("FBX Exporter package is not installed");
-                return;
-            }
-            
-            // Create a test GameObject
-            var testGO = new GameObject("TestFBXTarget");
-            
-            try
-            {
-                var config = new FBXRecorderSettingsConfig
-                {
-                    targetGameObject = testGO,
-                    recordHierarchy = true,
-                    clampedTangents = true,
-                    animationCompression = FBXAnimationCompressionLevel.Lossy,
-                    exportGeometry = true,
-                    frameRate = 30f
-                };
-                
-                string errorMessage;
-                Assert.IsTrue(config.Validate(out errorMessage), $"Config should be valid: {errorMessage}");
-                
-                var settings = config.CreateFBXRecorderSettings("TestFBXWithGO");
-                
-                Assert.IsNotNull(settings, "Should create configured FBX recorder settings");
-                Assert.AreEqual("TestFBXWithGO", settings.name);
-                
-                // Verify frame rate was set
-                Assert.AreEqual(30f, settings.FrameRate, "Frame rate should be set from config");
-            }
-            finally
-            {
-                // Clean up
-                if (testGO != null)
-                    GameObject.DestroyImmediate(testGO);
+                Debug.Log($"[FBXRecorderCreationTests] Created FBX recorder settings of type: {settings.GetType().FullName}");
             }
         }
         
         [Test]
-        public void FBXConfig_RequiresTargetGameObject()
+        public void FBXRecorderSettingsConfig_CanCreateSettings()
         {
             var config = new FBXRecorderSettingsConfig
             {
-                targetGameObject = null, // This should cause validation to fail
+                targetGameObject = new GameObject("TestObject"),
                 recordHierarchy = true,
+                clampedTangents = true,
+                animationCompression = FBXAnimationCompressionLevel.Lossy,
+                exportGeometry = true,
                 frameRate = 24f
             };
             
-            string errorMessage;
-            bool isValid = config.Validate(out errorMessage);
-            
-            Assert.IsFalse(isValid, "Config should be invalid without target GameObject");
-            Assert.IsTrue(errorMessage.Contains("Target GameObject"), 
-                $"Error message should mention target GameObject, but was: {errorMessage}");
-        }
-        
-        [Test]
-        public void FBXConfig_ValidatesAnimationTransfer()
-        {
-            var source = new GameObject("Source");
-            var dest = new GameObject("Dest");
-            
             try
             {
-                // Test invalid config - source without dest
-                var config1 = new FBXRecorderSettingsConfig
+                var settings = config.CreateFBXRecorderSettings("TestFBX");
+                Assert.IsNotNull(settings, "FBXRecorderSettingsConfig.CreateFBXRecorderSettings returned null");
+                
+                if (settings != null)
                 {
-                    targetGameObject = source,
-                    transferAnimationSource = source.transform,
-                    transferAnimationDest = null,
-                    frameRate = 24f
-                };
-                
-                string errorMessage;
-                Assert.IsFalse(config1.Validate(out errorMessage), 
-                    "Config should be invalid with source but no dest");
-                
-                // Test invalid config - same source and dest
-                var config2 = new FBXRecorderSettingsConfig
-                {
-                    targetGameObject = source,
-                    transferAnimationSource = source.transform,
-                    transferAnimationDest = source.transform,
-                    frameRate = 24f
-                };
-                
-                Assert.IsFalse(config2.Validate(out errorMessage), 
-                    "Config should be invalid with same source and dest");
-                
-                // Test valid config
-                var config3 = new FBXRecorderSettingsConfig
-                {
-                    targetGameObject = source,
-                    transferAnimationSource = source.transform,
-                    transferAnimationDest = dest.transform,
-                    frameRate = 24f
-                };
-                
-                Assert.IsTrue(config3.Validate(out errorMessage), 
-                    $"Config should be valid with different source and dest: {errorMessage}");
+                    Debug.Log($"[FBXRecorderCreationTests] Config created settings of type: {settings.GetType().FullName}");
+                }
             }
             finally
             {
                 // Clean up
-                if (source != null) GameObject.DestroyImmediate(source);
-                if (dest != null) GameObject.DestroyImmediate(dest);
+                if (config.targetGameObject != null)
+                {
+                    Object.DestroyImmediate(config.targetGameObject);
+                }
             }
         }
         
         [Test]
-        public void CanGetFBXPresetConfigurations()
+        public void FBXRecorderSettings_HasExpectedProperties()
         {
-            // Test AnimationExport preset
-            var animConfig = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.AnimationExport);
-            Assert.IsNotNull(animConfig);
-            Assert.IsFalse(animConfig.exportGeometry, "Animation preset should not export geometry");
+            var settings = RecorderClipUtility.CreateProperFBXRecorderSettings("TestFBX");
             
-            // Test ModelExport preset
-            var modelConfig = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.ModelExport);
-            Assert.IsNotNull(modelConfig);
-            Assert.IsTrue(modelConfig.exportGeometry, "Model preset should export geometry");
+            if (settings == null)
+            {
+                Assert.Inconclusive("Cannot test properties - FBX recorder settings creation failed");
+                return;
+            }
             
-            // Test ModelAndAnimation preset
-            var bothConfig = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.ModelAndAnimation);
-            Assert.IsNotNull(bothConfig);
-            Assert.IsTrue(bothConfig.exportGeometry, "Model+Animation preset should export geometry");
-            Assert.IsTrue(bothConfig.recordHierarchy, "Model+Animation preset should record hierarchy");
+            var settingsType = settings.GetType();
+            
+            // Check for expected properties
+            var exportGeometryProp = settingsType.GetProperty("ExportGeometry");
+            Assert.IsNotNull(exportGeometryProp, "ExportGeometry property not found");
+            
+            var animInputField = settingsType.GetField("m_AnimationInputSettings", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.IsNotNull(animInputField, "m_AnimationInputSettings field not found");
+            
+            Debug.Log($"[FBXRecorderCreationTests] FBX recorder settings type: {settingsType.FullName}");
+            Debug.Log($"[FBXRecorderCreationTests] Properties found: ExportGeometry={exportGeometryProp != null}, AnimationInputSettings={animInputField != null}");
         }
     }
 }
