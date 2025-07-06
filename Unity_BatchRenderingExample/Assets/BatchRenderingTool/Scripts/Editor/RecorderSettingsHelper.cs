@@ -98,16 +98,15 @@ namespace BatchRenderingTool
                             var nameWithoutExt = Path.GetFileNameWithoutExtension(aovOutputFile);
                             var directory = Path.GetDirectoryName(aovOutputFile);
                             
-                            // Create subdirectory for AOV type
+                            // Combine directory with filename that includes AOV type
                             if (!string.IsNullOrEmpty(directory))
                             {
-                                var aovDirectory = Path.Combine(directory, $"AOV_{aovType}");
                                 // Use platform-specific path separator and avoid Path.Combine with wildcards
-                                aovOutputFile = aovDirectory + Path.DirectorySeparatorChar + nameWithoutExt + "_<Frame>" + extension;
+                                aovOutputFile = directory + Path.DirectorySeparatorChar + nameWithoutExt + "_<Frame>" + extension;
                             }
                             else
                             {
-                                aovOutputFile = $"AOV_{aovType}/{nameWithoutExt}_<Frame>{extension}";
+                                aovOutputFile = nameWithoutExt + "_<Frame>" + extension;
                             }
                         }
                         
