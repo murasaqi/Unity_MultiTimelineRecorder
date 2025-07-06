@@ -111,15 +111,34 @@ namespace BatchRenderingTool.Editor.Tests
                 return;
             }
             
-            var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBXRecorder");
-            
-            Assert.IsNotNull(settings, "FBX recorder settings should not be null");
-            Assert.AreEqual("TestFBXRecorder", settings.name);
-            Assert.AreEqual(24, settings.FrameRate);
-            Assert.IsTrue(settings.Enabled);
-            Assert.AreEqual(RecordMode.Manual, settings.RecordMode);
-            
-            Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
+            // Create test GameObject for FBX recording
+            var testGameObject = new GameObject("TestObject");
+            try
+            {
+                // Create config with required targetGameObject
+                var config = new FBXRecorderSettingsConfig
+                {
+                    targetGameObject = testGameObject,
+                    exportGeometry = true,
+                    frameRate = 24f
+                };
+                
+                var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBXRecorder", config);
+                
+                Assert.IsNotNull(settings, "FBX recorder settings should not be null");
+                Assert.AreEqual("TestFBXRecorder", settings.name);
+                Assert.AreEqual(24, settings.FrameRate);
+                Assert.IsTrue(settings.Enabled);
+                Assert.AreEqual(RecordMode.Manual, settings.RecordMode);
+                
+                Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
+            }
+            finally
+            {
+                // Clean up
+                if (testGameObject != null)
+                    GameObject.DestroyImmediate(testGameObject);
+            }
         }
 
         [Test]
@@ -134,27 +153,39 @@ namespace BatchRenderingTool.Editor.Tests
                 return;
             }
             
-            var config = new FBXRecorderSettingsConfig
+            // Create test GameObject for FBX recording
+            var testGameObject = new GameObject("TestObject");
+            try
             {
-                exportGeometry = false,
-                frameRate = 30f
-            };
-            
-            var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBXRecorder", config);
-            
-            Assert.IsNotNull(settings, "FBX recorder settings should not be null");
-            Assert.AreEqual(30f, settings.FrameRate);
-            
-            // Use reflection to verify exportGeometry was set
-            var settingsType = settings.GetType();
-            var exportGeometryProp = settingsType.GetProperty("ExportGeometry");
-            if (exportGeometryProp != null && exportGeometryProp.CanRead)
-            {
-                var value = (bool)exportGeometryProp.GetValue(settings);
-                Assert.IsFalse(value, "ExportGeometry should be false");
+                var config = new FBXRecorderSettingsConfig
+                {
+                    targetGameObject = testGameObject,
+                    exportGeometry = false,
+                    frameRate = 30f
+                };
+                
+                var settings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBXRecorder", config);
+                
+                Assert.IsNotNull(settings, "FBX recorder settings should not be null");
+                Assert.AreEqual(30f, settings.FrameRate);
+                
+                // Use reflection to verify exportGeometry was set
+                var settingsType = settings.GetType();
+                var exportGeometryProp = settingsType.GetProperty("ExportGeometry");
+                if (exportGeometryProp != null && exportGeometryProp.CanRead)
+                {
+                    var value = (bool)exportGeometryProp.GetValue(settings);
+                    Assert.IsFalse(value, "ExportGeometry should be false");
+                }
+                
+                Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト完了");
             }
-            
-            Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト完了");
+            finally
+            {
+                // Clean up
+                if (testGameObject != null)
+                    GameObject.DestroyImmediate(testGameObject);
+            }
         }
 
         [Test]
@@ -169,19 +200,36 @@ namespace BatchRenderingTool.Editor.Tests
                 return;
             }
             
-            // Test AnimationExport preset
-            var animSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", FBXExportPreset.AnimationExport);
-            Assert.IsNotNull(animSettings, "Animation export settings should not be null");
-            
-            // Test ModelExport preset
-            var modelSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", FBXExportPreset.ModelExport);
-            Assert.IsNotNull(modelSettings, "Model export settings should not be null");
-            
-            // Test ModelAndAnimation preset
-            var bothSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", FBXExportPreset.ModelAndAnimation);
-            Assert.IsNotNull(bothSettings, "Model and animation export settings should not be null");
-            
-            Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト完了");
+            // Create test GameObject for FBX recording
+            var testGameObject = new GameObject("TestObject");
+            try
+            {
+                // Test AnimationExport preset
+                var animPreset = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.AnimationExport);
+                animPreset.targetGameObject = testGameObject;
+                var animSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", animPreset);
+                Assert.IsNotNull(animSettings, "Animation export settings should not be null");
+                
+                // Test ModelExport preset
+                var modelPreset = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.ModelExport);
+                modelPreset.targetGameObject = testGameObject;
+                var modelSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", modelPreset);
+                Assert.IsNotNull(modelSettings, "Model export settings should not be null");
+                
+                // Test ModelAndAnimation preset
+                var bothPreset = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.ModelAndAnimation);
+                bothPreset.targetGameObject = testGameObject;
+                var bothSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", bothPreset);
+                Assert.IsNotNull(bothSettings, "Model and animation export settings should not be null");
+                
+                Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト完了");
+            }
+            finally
+            {
+                // Clean up
+                if (testGameObject != null)
+                    GameObject.DestroyImmediate(testGameObject);
+            }
         }
 
         [Test]
