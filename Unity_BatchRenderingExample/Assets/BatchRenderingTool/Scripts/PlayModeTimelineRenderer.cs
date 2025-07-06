@@ -137,6 +137,13 @@ namespace BatchRenderingTool
                 statusMessage = "Rendering complete!";
                 progress = 1f;
                 Debug.Log("[PlayModeTimelineRenderer] Rendering completed successfully");
+                
+#if UNITY_EDITOR
+                // 完了フラグを設定（SingleTimelineRenderer用）
+                UnityEditor.EditorPrefs.SetBool("STR_RenderingComplete", true);
+                // MultiRecorderTimelineRenderer用
+                UnityEditor.EditorPrefs.SetBool("MRT_RenderingComplete", true);
+#endif
             }
             
             // クリーンアップ
@@ -218,6 +225,14 @@ namespace BatchRenderingTool
             // 設定を元に戻す
             Application.runInBackground = originalRunInBackground;
             Time.captureFramerate = originalCaptureFramerate;
+        }
+        
+        /// <summary>
+        /// Get the rendering director (for monitoring progress)
+        /// </summary>
+        public PlayableDirector GetRenderingDirector()
+        {
+            return renderingDirector;
         }
     }
     
