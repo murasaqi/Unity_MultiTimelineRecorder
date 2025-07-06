@@ -138,6 +138,13 @@ namespace BatchRenderingTool.Editor.Tests
         {
             Debug.Log("[AOVRecorderSettingsTests] Validate_WithInvalidResolution - テスト開始");
             
+            // Skip if HDRP is not available
+            if (!AOVTypeInfo.IsHDRPAvailable())
+            {
+                Assert.Ignore("HDRP is not installed, skipping resolution validation test");
+                return;
+            }
+            
             var config = new AOVRecorderSettingsConfig
             {
                 selectedAOVs = AOVType.Depth,
@@ -167,6 +174,13 @@ namespace BatchRenderingTool.Editor.Tests
         public void AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse()
         {
             Debug.Log("[AOVRecorderSettingsTests] Validate_WithCustomPassButNoName - テスト開始");
+            
+            // Skip if HDRP is not available
+            if (!AOVTypeInfo.IsHDRPAvailable())
+            {
+                Assert.Ignore("HDRP is not installed, skipping custom pass validation test");
+                return;
+            }
             
             var config = new AOVRecorderSettingsConfig
             {

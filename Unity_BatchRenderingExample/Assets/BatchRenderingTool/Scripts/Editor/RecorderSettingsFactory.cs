@@ -411,7 +411,8 @@ namespace BatchRenderingTool
             settings.Enabled = true;
             settings.RecordMode = RecordMode.Manual;
             settings.FrameRatePlayback = FrameRatePlayback.Constant;
-            settings.FrameRate = 24;
+            // Don't override FrameRate here - it should be set by the specific config
+            // settings.FrameRate = 24;
             settings.CapFrameRate = true;
         }
         

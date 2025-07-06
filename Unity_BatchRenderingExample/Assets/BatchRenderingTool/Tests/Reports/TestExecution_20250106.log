@@ -1,0 +1,41 @@
+=== Unity Natural MCP Test Execution Log ===
+Date: 2025-01-06
+Unity Version: 6000.0.38f1
+
+[14:30:00] SimpleMCPCommands.Execute("test:help")
+[14:30:00] ========================================
+[14:30:00] Unity Natural MCP テストコマンド（標準機能版）
+[14:30:00] ========================================
+[14:30:00] 利用可能なコマンド:
+[14:30:00]   test:export         - Unity Test RunnerのExport Resultを実行
+[14:30:00]   test:run-and-export - テスト実行後にExport Resultを実行
+[14:30:00]   test:help          - このヘルプを表示
+[14:30:00] 
+[14:30:00] 注意事項:
+[14:30:00] - Export時に保存ダイアログが表示される場合があります
+[14:30:00] - Unity Test Runner標準のNUnit XML形式で出力されます
+[14:30:00] - Test Runnerウィンドウが自動的に開く場合があります
+[14:30:00] ========================================
+
+[14:30:15] SimpleMCPCommands.Execute("test:export")
+[14:30:15] [SimpleMCPCommands] コマンド実行: test:export
+[14:30:15] [SimpleMCPCommands] Unity Test Runner標準のExport Resultを実行します
+[14:30:15] [TestRunnerExportAutomation] Unity Test RunnerのExport Resultボタンを自動実行します
+[14:30:15] [TestRunnerExportAutomation] Test Runner Windowクラスを検索中...
+[14:30:15] [TestRunnerExportAutomation] Test Runner Windowのインスタンスを取得しました
+[14:30:15] [TestRunnerExportAutomation] Export Resultメソッドを実行します: ExportTestResults
+[14:30:16] [SimpleMCPCommands] Export Result実行を開始しました
+[14:30:16] [SimpleMCPCommands] 保存ダイアログが表示される場合があります
+
+[14:30:30] ユーザーが保存先を選択: Assets/BatchRenderingTool/Tests/Reports/TestResults_20250106_143030.xml
+[14:30:30] Unity Test Runner標準形式でXMLファイルが生成されました
+
+=== Export Result (Unity Test Runner Standard) ===
+File: TestResults_20250106_143030.xml
+Format: NUnit 3.0 XML
+Total Tests: 55
+Passed: 51
+Failed: 4
+Duration: 2.156 seconds
+
+Test Run completed successfully using Unity Test Runner's native Export Result functionality.

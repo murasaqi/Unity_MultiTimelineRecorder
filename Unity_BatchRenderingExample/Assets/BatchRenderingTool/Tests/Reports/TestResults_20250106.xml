@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="55" result="Failed" total="55" passed="51" failed="4" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2025-01-06 14:25:00" end-time="2025-01-06 14:25:02" duration="2.000">
+  <command-line><![CDATA[Unity Test Runner - 6000.0.38f1]]></command-line>
+  <environment framework-version="6000.0.38f1" os-version="Microsoft Windows NT 10.0.22631.0" platform="WindowsEditor" cwd="D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample" machine-name="DESKTOP-PC" user="User" user-domain="DESKTOP-PC" />
+  <test-suite type="Assembly" id="1001" name="BatchRenderingTool.Editor.Tests.dll" fullname="BatchRenderingTool.Editor.Tests" runstate="Runnable" testcasecount="51" result="Failed" total="51" passed="48" failed="3" inconclusive="0" skipped="0" asserts="0" start-time="2025-01-06 14:25:00" end-time="2025-01-06 14:25:01" duration="1.000">
+    <test-case id="e1" name="AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse" fullname="BatchRenderingTool.Editor.Tests.AOVRecorderSettingsTests.AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse" methodname="AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse" classname="BatchRenderingTool.Editor.Tests.AOVRecorderSettingsTests" runstate="Runnable" seed="0" result="Failed" start-time="2025-01-06 14:25:00" end-time="2025-01-06 14:25:00" duration="0.006831" asserts="1">
+      <failure>
+        <message><![CDATA[  Error message should mention custom pass name. Actual: 'AOV Recorder requires HDRP (High Definition Render Pipeline) package'
+  Expected: True
+  But was:  False]]></message>
+        <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.AOVRecorderSettingsTests.AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse () [0x0005c] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\AOVRecorderSettingsTests.cs:184]]></stack-trace>
+      </failure>
+      <output><![CDATA[[AOVRecorderSettingsTests] Validate_WithCustomPassButNoName - テスト開始]]></output>
+    </test-case>
+    <test-case id="e2" name="AOVRecorderSettingsConfig_Validate_WithInvalidResolution_ReturnsFalse" fullname="BatchRenderingTool.Editor.Tests.AOVRecorderSettingsTests.AOVRecorderSettingsConfig_Validate_WithInvalidResolution_ReturnsFalse" methodname="AOVRecorderSettingsConfig_Validate_WithInvalidResolution_ReturnsFalse" classname="BatchRenderingTool.Editor.Tests.AOVRecorderSettingsTests" runstate="Runnable" seed="0" result="Failed" start-time="2025-01-06 14:25:00" end-time="2025-01-06 14:25:00" duration="0.000842" asserts="1">
+      <failure>
+        <message><![CDATA[  Error message should mention resolution. Actual: 'AOV Recorder requires HDRP (High Definition Render Pipeline) package'
+  Expected: True
+  But was:  False]]></message>
+        <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.AOVRecorderSettingsTests.AOVRecorderSettingsConfig_Validate_WithInvalidResolution_ReturnsFalse () [0x00043] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\AOVRecorderSettingsTests.cs:153]]></stack-trace>
+      </failure>
+      <output><![CDATA[[AOVRecorderSettingsTests] Validate_WithInvalidResolution - テスト開始]]></output>
+    </test-case>
+    <test-case id="e3" name="CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly" fullname="BatchRenderingTool.Editor.Tests.RecorderSettingsFactoryTests.CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly" methodname="CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly" classname="BatchRenderingTool.Editor.Tests.RecorderSettingsFactoryTests" runstate="Runnable" seed="0" result="Failed" start-time="2025-01-06 14:25:00" end-time="2025-01-06 14:25:00" duration="0.003261" asserts="1">
+      <failure>
+        <message><![CDATA[  Expected: 30.0f
+  But was:  24.0f]]></message>
+        <stack-trace><![CDATA[at BatchRenderingTool.Editor.Tests.RecorderSettingsFactoryTests.CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly () [0x00062] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Scripts\Editor\Tests\RecorderSettingsFactoryTests.cs:170]]></stack-trace>
+      </failure>
+      <output><![CDATA[CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト開始]]></output>
+    </test-case>
+  </test-suite>
+  <test-suite type="Assembly" id="1002" name="BatchRenderingTool.Runtime.Tests.dll" fullname="BatchRenderingTool.Runtime.Tests" runstate="Runnable" testcasecount="4" result="Failed" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0" start-time="2025-01-06 14:25:01" end-time="2025-01-06 14:25:02" duration="1.000">
+    <test-case id="p1" name="Timeline_TimeProgresses" fullname="BatchRenderingTool.Runtime.Tests.TimelinePlaybackTests.Timeline_TimeProgresses" methodname="Timeline_TimeProgresses" classname="BatchRenderingTool.Runtime.Tests.TimelinePlaybackTests" runstate="Runnable" seed="0" result="Failed" start-time="2025-01-06 14:25:01" end-time="2025-01-06 14:25:01" duration="0.027232" asserts="1">
+      <failure>
+        <message><![CDATA[  Expected: greater than 0.0d
+  But was:  0.0d]]></message>
+        <stack-trace><![CDATA[at BatchRenderingTool.Runtime.Tests.TimelinePlaybackTests+<Timeline_TimeProgresses>d__6.MoveNext () [0x000cc] in D:\Works\Unity_BatchRecorderTool\Unity_BatchRenderingExample\Assets\BatchRenderingTool\Tests\Runtime\TimelinePlaybackTests.cs:98
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@5ac417e07314\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44]]></stack-trace>
+      </failure>
+      <output><![CDATA[TimelinePlaybackTests - Setup開始
+TimelinePlaybackTests - Setup完了
+Timeline_TimeProgresses - テスト開始
+Timeline_TimeProgresses - 初期時間: 0
+Timeline_TimeProgresses - 現在時間: 0
+TimelinePlaybackTests - TearDown開始
+TimelinePlaybackTests - TearDown完了]]></output>
+    </test-case>
+  </test-suite>
+</test-run>

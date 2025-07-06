@@ -1,0 +1,64 @@
+=== Unity Console Logs ===
+Export Time: 2025-01-06 14:25:30
+Unity Version: 6000.0.38f1
+Platform: WindowsEditor
+
+=== Test Execution Summary ===
+Total Tests: 55 (Edit Mode: 51, Play Mode: 4)
+Passed: 51 (Edit Mode: 48, Play Mode: 3)
+Failed: 4 (Edit Mode: 3, Play Mode: 1)
+Success Rate: 92.7%
+
+=== Failed Tests Details ===
+
+[Edit Mode Failures]
+
+1. AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse
+   Duration: 0.0048s
+   Error: Error message should mention custom pass name. Actual: 'AOV Recorder requires HDRP (High Definition Render Pipeline) package'
+   Expected: True
+   But was: False
+   Location: AOVRecorderSettingsTests.cs:184
+
+2. AOVRecorderSettingsConfig_Validate_WithInvalidResolution_ReturnsFalse
+   Duration: 0.0007s
+   Error: Error message should mention resolution. Actual: 'AOV Recorder requires HDRP (High Definition Render Pipeline) package'
+   Expected: True
+   But was: False
+   Location: AOVRecorderSettingsTests.cs:153
+
+3. CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly
+   Duration: 0.0031s
+   Error: Expected: 30.0f
+   But was: 24.0f
+   Location: RecorderSettingsFactoryTests.cs:170
+
+[Play Mode Failures]
+
+1. Timeline_TimeProgresses
+   Duration: 0.0231s
+   Error: Expected: greater than 0.0d
+   But was: 0.0d
+   Location: TimelinePlaybackTests.cs:98
+   Note: Timeline time did not progress during test execution
+
+=== Test Execution Log ===
+
+[14:25:00] Test run started
+[14:25:00] Running Edit Mode tests for BatchRenderingTool.Editor.Tests
+[14:25:01] Edit Mode tests completed - Pass: 48, Fail: 3
+[14:25:01] Running Play Mode tests for BatchRenderingTool.Runtime.Tests
+[14:25:02] Play Mode tests completed - Pass: 3, Fail: 1
+[14:25:02] Test run finished - Overall result: Failed
+
+=== Analysis ===
+
+1. AOV Recorder tests are failing due to missing HDRP package dependency
+2. FBX Recorder frame rate configuration has incorrect default (24fps instead of 30fps)
+3. Timeline playback test is failing possibly due to Play Mode state or timing issues
+
+=== Recommendations ===
+
+1. Install HDRP package or update AOV tests to handle missing dependency
+2. Fix FBX Recorder default frame rate to 30fps
+3. Review Timeline_TimeProgresses test for proper Play Mode handling
