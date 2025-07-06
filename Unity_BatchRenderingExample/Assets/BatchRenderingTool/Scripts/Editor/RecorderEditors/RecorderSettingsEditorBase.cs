@@ -76,6 +76,24 @@ namespace BatchRenderingTool.RecorderEditors
             if (newFileName != host.fileName)
             {
                 host.fileName = newFileName;
+                
+                // Auto-add <Frame> for image sequence types if missing
+                RecorderSettingsType currentType = GetRecorderType();
+                if ((currentType == RecorderSettingsType.Image || currentType == RecorderSettingsType.AOV) 
+                    && !host.fileName.Contains("<Frame>"))
+                {
+                    // Add <Frame> before extension if present, otherwise at the end
+                    if (host.fileName.Contains("."))
+                    {
+                        int lastDotIndex = host.fileName.LastIndexOf('.');
+                        host.fileName = host.fileName.Substring(0, lastDotIndex) + "_<Frame>" + host.fileName.Substring(lastDotIndex);
+                    }
+                    else
+                    {
+                        host.fileName += "_<Frame>";
+                    }
+                }
+                
                 GUI.changed = true;
             }
             

@@ -227,7 +227,23 @@ namespace BatchRenderingTool
             // Initialize file name with default template if empty
             if (string.IsNullOrEmpty(fileName))
             {
-                fileName = "<Recorder>_<Take>";
+                fileName = WildcardHelpUtility.GetRecommendedPattern(recorderType);
+            }
+            
+            // Ensure <Frame> wildcard is present for image sequence types
+            if ((recorderType == RecorderSettingsType.Image || recorderType == RecorderSettingsType.AOV) 
+                && !fileName.Contains("<Frame>"))
+            {
+                // Add <Frame> before extension if present, otherwise at the end
+                if (fileName.Contains("."))
+                {
+                    int lastDotIndex = fileName.LastIndexOf('.');
+                    fileName = fileName.Substring(0, lastDotIndex) + "_<Frame>" + fileName.Substring(lastDotIndex);
+                }
+                else
+                {
+                    fileName += "_<Frame>";
+                }
             }
             
             // Initialize file path if empty
@@ -389,11 +405,27 @@ namespace BatchRenderingTool
                 recorderType = newRecorderType;
                 
                 // Update default file name when recorder type changes
-                // but keep the path unchanged
-                fileName = "<Recorder>_<Take>";
+                // Use recommended pattern for each recorder type
+                fileName = WildcardHelpUtility.GetRecommendedPattern(newRecorderType);
                 
                 // Create appropriate editor instance
                 UpdateRecorderEditor();
+            }
+            
+            // Ensure <Frame> wildcard is present for image sequence types
+            if ((recorderType == RecorderSettingsType.Image || recorderType == RecorderSettingsType.AOV) 
+                && !fileName.Contains("<Frame>"))
+            {
+                // Add <Frame> before extension if present, otherwise at the end
+                if (fileName.Contains("."))
+                {
+                    int lastDotIndex = fileName.LastIndexOf('.');
+                    fileName = fileName.Substring(0, lastDotIndex) + "_<Frame>" + fileName.Substring(lastDotIndex);
+                }
+                else
+                {
+                    fileName += "_<Frame>";
+                }
             }
             
             // Check if recorder type is supported

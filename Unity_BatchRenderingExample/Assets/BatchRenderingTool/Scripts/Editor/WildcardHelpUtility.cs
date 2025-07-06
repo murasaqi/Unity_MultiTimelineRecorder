@@ -42,7 +42,7 @@ Result: MyScene_Image_001_0001.png";
                     return "<Scene>_<Recorder>_<Take>";
                     
                 case RecorderSettingsType.AOV:
-                    return "<Scene>_<Take>"; // AOV type and frame will be added automatically
+                    return "<Scene>_<Take>_<Frame>"; // Frame wildcard is required for AOV sequences
                     
                 case RecorderSettingsType.Alembic:
                 case RecorderSettingsType.FBX:
