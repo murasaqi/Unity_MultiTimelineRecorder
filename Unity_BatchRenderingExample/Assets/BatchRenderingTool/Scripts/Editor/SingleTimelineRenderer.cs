@@ -713,8 +713,11 @@ namespace BatchRenderingTool
                 if (renderTimeline == null)
                 {
                     currentState = RenderState.Error;
-                    statusMessage = "Failed to create render timeline";
-                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create render timeline");
+                    string detailedError = recorderType == RecorderSettingsType.FBX 
+                        ? "Failed to create render timeline. Please ensure Unity FBX Exporter package is installed and FBX settings are valid."
+                        : "Failed to create render timeline. Check console for details.";
+                    statusMessage = detailedError;
+                    BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] {detailedError}");
                     selectedDirector.playOnAwake = originalPlayOnAwake;
                     yield break;
                 }

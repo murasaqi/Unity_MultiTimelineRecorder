@@ -136,7 +136,8 @@ namespace BatchRenderingTool
                 var settings = RecorderClipUtility.CreateProperRecorderSettings("FbxRecorderSettings");
                 if (settings == null)
                 {
-                    BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Failed to create FBX recorder settings");
+                    BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Failed to create FBX recorder settings - RecorderClipUtility returned null");
+                    BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Please ensure the Unity FBX Exporter package (com.unity.formats.fbx) is installed");
                     return null;
                 }
                 
@@ -153,6 +154,24 @@ namespace BatchRenderingTool
                     if (animInputSettingsField != null)
                     {
                         var animInputSettings = animInputSettingsField.GetValue(settings);
+                        
+                        // If AnimationInputSettings is null, try to create it
+                        if (animInputSettings == null)
+                        {
+                            BatchRenderingToolLogger.LogVerbose("[FBXRecorderSettingsConfig] AnimationInputSettings is null, attempting to create...");
+                            var animInputType = animInputSettingsField.FieldType;
+                            try
+                            {
+                                animInputSettings = System.Activator.CreateInstance(animInputType);
+                                animInputSettingsField.SetValue(settings, animInputSettings);
+                                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Created AnimationInputSettings of type: {animInputType.FullName}");
+                            }
+                            catch (System.Exception ex)
+                            {
+                                BatchRenderingToolLogger.LogError($"[FBXRecorderSettingsConfig] Failed to create AnimationInputSettings: {ex.Message}");
+                            }
+                        }
+                        
                         if (animInputSettings != null)
                         {
                             var animType = animInputSettings.GetType();

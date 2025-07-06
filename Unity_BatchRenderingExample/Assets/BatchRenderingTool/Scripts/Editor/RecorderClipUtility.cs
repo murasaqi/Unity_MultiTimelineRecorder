@@ -300,7 +300,15 @@ namespace BatchRenderingTool
                                 
                             case "fbxrecordersettings":
                             case "fbxrecorder":
-                                settingsType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor");
+                                // Try multiple possible type names for FBX recorder
+                                settingsType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor") ??
+                                               System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
+                                               System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
+                                               System.Type.GetType("Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime");
+                                if (settingsType == null)
+                                {
+                                    BatchRenderingToolLogger.LogWarning("[RecorderClipUtility] Failed to find FbxRecorderSettings type");
+                                }
                                 break;
                                 
                             case "aovrecordersettings":
@@ -355,7 +363,12 @@ namespace BatchRenderingTool
                     
                 case "fbxrecordersettings":
                 case "fbxrecorder":
-                    recorderType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor");
+                    // Try multiple possible type names for FBX recorder
+                    recorderType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor") ??
+                                   System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
+                                   System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
+                                   System.Type.GetType("Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime");
+                    
                     if (recorderType != null)
                     {
                         var fbxSettings = ScriptableObject.CreateInstance(recorderType) as RecorderSettings;
@@ -372,11 +385,17 @@ namespace BatchRenderingTool
                             
                             EditorUtility.SetDirty(fbxSettings);
                             
-                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created FbxRecorderSettings directly");
+                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created FbxRecorderSettings directly of type: {recorderType.FullName}");
                             return fbxSettings;
                         }
                     }
                     BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to create FbxRecorderSettings. Make sure FBX package is installed.");
+                    // Log all attempted type names for debugging
+                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] Attempted type names:");
+                    BatchRenderingToolLogger.LogError("  - UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor");
+                    BatchRenderingToolLogger.LogError("  - UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor");
+                    BatchRenderingToolLogger.LogError("  - UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor");
+                    BatchRenderingToolLogger.LogError("  - Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime");
                     return null;
                     
                 case "aovrecordersettings":

@@ -25,9 +25,17 @@ namespace BatchRenderingTool
                 
                 if (!fbxPackageAvailable.Value)
                 {
-                    // Also check if the type exists directly
-                    var fbxRecorderType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor");
+                    // Also check if the type exists directly - try multiple possible type names
+                    var fbxRecorderType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor") ??
+                                          System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
+                                          System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
+                                          System.Type.GetType("Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime");
                     fbxPackageAvailable = fbxRecorderType != null;
+                    
+                    if (fbxRecorderType != null)
+                    {
+                        BatchRenderingToolLogger.LogVerbose($"[FBXExportInfo] Found FBX recorder type: {fbxRecorderType.FullName}");
+                    }
                 }
                 
                 BatchRenderingToolLogger.LogVerbose($"[FBXExportInfo] FBX package available: {fbxPackageAvailable.Value}");
