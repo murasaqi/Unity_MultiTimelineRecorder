@@ -133,6 +133,9 @@ namespace BatchRenderingTool
         // UI Editor instances
         private RecorderSettingsEditorBase currentRecorderEditor;
         
+        // Scroll position for the UI
+        private Vector2 scrollPosition;
+        
         // Properties for easy access
         public PlayableDirector selectedDirector => 
             availableDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count 
@@ -278,16 +281,27 @@ namespace BatchRenderingTool
             EditorGUILayout.LabelField("Single Timeline Renderer", EditorStyles.boldLabel);
             EditorGUILayout.Space(10);
             
-            DrawTimelineSelection();
-            EditorGUILayout.Space(10);
+            // Start scroll view
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             
-            DrawRenderSettings();
-            EditorGUILayout.Space(10);
-            
-            DrawRenderControls();
-            EditorGUILayout.Space(10);
-            
-            DrawStatusSection();
+            try
+            {
+                DrawTimelineSelection();
+                EditorGUILayout.Space(10);
+                
+                DrawRenderSettings();
+                EditorGUILayout.Space(10);
+                
+                DrawRenderControls();
+                EditorGUILayout.Space(10);
+                
+                DrawStatusSection();
+            }
+            finally
+            {
+                // Always end scroll view even if an exception occurs
+                EditorGUILayout.EndScrollView();
+            }
         }
         
         private void DrawTimelineSelection()

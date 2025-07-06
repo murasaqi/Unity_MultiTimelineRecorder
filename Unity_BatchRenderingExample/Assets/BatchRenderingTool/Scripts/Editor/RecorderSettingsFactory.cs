@@ -181,8 +181,11 @@ namespace BatchRenderingTool
             
             BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Creating AOV recorder settings for: {name}");
             
-            // Create recorder settings for each selected AOV
-            var settingsList = config.CreateAOVRecorderSettings(name);
+            // Unity Recorder 5.1.2では専用のAOVRecorderSettingsが存在しないため、
+            // ImageRecorderSettingsを使用した暫定実装を使用
+            BatchRenderingToolLogger.LogWarning("[RecorderSettingsFactory] Using fallback AOV implementation with ImageRecorderSettings");
+            
+            var settingsList = AOVRecorderImplementation.AOVRecorderFallback.CreateAOVRecorderSettingsFallback(name, config);
             
             // Apply common settings to each
             foreach (var settings in settingsList)

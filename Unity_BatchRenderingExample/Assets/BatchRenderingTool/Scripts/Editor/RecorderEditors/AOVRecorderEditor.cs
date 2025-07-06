@@ -27,7 +27,11 @@ namespace BatchRenderingTool.RecorderEditors
             }
             else
             {
-                EditorGUILayout.HelpBox("AOV Recording is available for HDRP projects", MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    "AOV Recording (Experimental): Unity Recorder 5.1.2 does not have native AOV support. " +
+                    "This tool provides a fallback implementation using ImageRecorderSettings. " +
+                    "For full AOV functionality, consider using HDRP Custom Pass with render targets.", 
+                    MessageType.Warning);
             }
             
             // Resolution settings

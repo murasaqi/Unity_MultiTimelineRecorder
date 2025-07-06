@@ -266,9 +266,26 @@ namespace BatchRenderingTool
         /// </summary>
         public static bool IsHDRPAvailable()
         {
-            #if UNITY_PIPELINE_HDRP
+            // Unity 6では、プリプロセッサディレクティブが異なる場合があるため、
+            // より確実な方法でHDRPの存在を確認
+            
+            #if UNITY_PIPELINE_HDRP || UNITY_HDRP
             return true;
             #else
+            // HDRPアセンブリの存在を確認
+            var hdrpType = System.Type.GetType("UnityEngine.Rendering.HighDefinition.HDRenderPipeline, Unity.RenderPipelines.HighDefinition.Runtime");
+            if (hdrpType != null)
+            {
+                return true;
+            }
+            
+            // GraphicsSettingsでの確認
+            var graphicsSettings = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+            if (graphicsSettings != null && graphicsSettings.GetType().FullName.Contains("HighDefinition"))
+            {
+                return true;
+            }
+            
             return false;
             #endif
         }
