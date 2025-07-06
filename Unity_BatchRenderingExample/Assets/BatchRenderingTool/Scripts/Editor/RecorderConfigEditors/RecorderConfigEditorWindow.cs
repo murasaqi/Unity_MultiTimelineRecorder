@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Recorder;
 
 namespace BatchRenderingTool.RecorderConfigEditors
 {
@@ -185,10 +186,10 @@ namespace BatchRenderingTool.RecorderConfigEditors
         {
             EditorGUILayout.LabelField("Image Settings", EditorStyles.boldLabel);
             
-            configItem.imageFormat = (ImageRecorderSettingsConfig.ImageFormat)
+            configItem.imageFormat = (ImageRecorderSettings.ImageRecorderOutputFormat)
                 EditorGUILayout.EnumPopup("Format", configItem.imageFormat);
                 
-            if (configItem.imageFormat == ImageRecorderSettingsConfig.ImageFormat.JPEG)
+            if (configItem.imageFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
             {
                 configItem.imageQuality = EditorGUILayout.IntSlider("JPEG Quality", configItem.imageQuality, 1, 100);
             }

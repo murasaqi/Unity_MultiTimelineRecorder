@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor.Recorder;
+using UnityEditor.Recorder.Input;
 
 namespace BatchRenderingTool
 {
@@ -25,7 +27,7 @@ namespace BatchRenderingTool
             public int takeNumber = 1;
             
             // Image Recorder
-            public ImageRecorderSettingsConfig.ImageFormat imageFormat = ImageRecorderSettingsConfig.ImageFormat.PNG;
+            public ImageRecorderSettings.ImageRecorderOutputFormat imageFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
             public int imageQuality = 75;
             
             // Movie Recorder
@@ -266,7 +268,7 @@ namespace BatchRenderingTool
                 
                 // Image Sequence
                 var imageItem = CreateDefaultRecorder(RecorderSettingsType.Image);
-                imageItem.imageFormat = ImageRecorderSettingsConfig.ImageFormat.PNG;
+                imageItem.imageFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
                 config.AddRecorder(imageItem);
                 
                 return config;
@@ -306,7 +308,7 @@ namespace BatchRenderingTool
                 // Beauty Pass (EXR)
                 var beautyItem = CreateDefaultRecorder(RecorderSettingsType.Image);
                 beautyItem.name = "Beauty Pass";
-                beautyItem.imageFormat = ImageRecorderSettingsConfig.ImageFormat.EXR;
+                beautyItem.imageFormat = ImageRecorderSettings.ImageRecorderOutputFormat.EXR;
                 beautyItem.fileName = "Recordings/<Scene>_<Take>/Beauty/beauty_<Frame>";
                 config.AddRecorder(beautyItem);
                 

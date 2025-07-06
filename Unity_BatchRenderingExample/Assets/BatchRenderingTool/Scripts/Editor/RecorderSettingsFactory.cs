@@ -78,6 +78,32 @@ namespace BatchRenderingTool
         }
         
         /// <summary>
+        /// Create ImageRecorderSettings with specific configuration
+        /// </summary>
+        public static ImageRecorderSettings CreateImageRecorderSettings(string name, ImageRecorderSettingsConfig config)
+        {
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+            
+            string errorMessage;
+            if (!config.Validate(out errorMessage))
+            {
+                throw new ArgumentException($"Invalid configuration: {errorMessage}");
+            }
+            
+            var settings = ScriptableObject.CreateInstance<ImageRecorderSettings>();
+            settings.name = name;
+            
+            // Apply configuration
+            config.ApplyToSettings(settings);
+            
+            // Apply common settings
+            ConfigureCommonSettings(settings);
+            
+            return settings;
+        }
+        
+        /// <summary>
         /// Create MovieRecorderSettings with default configuration
         /// </summary>
         public static MovieRecorderSettings CreateMovieRecorderSettings(string name)
