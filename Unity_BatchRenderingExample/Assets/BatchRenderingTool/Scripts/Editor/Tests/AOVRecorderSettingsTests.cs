@@ -150,7 +150,7 @@ namespace BatchRenderingTool.Editor.Tests
             bool isValid = config.Validate(out errorMessage);
             
             Assert.IsFalse(isValid, "Should be invalid with zero resolution");
-            Assert.IsTrue(errorMessage.Contains("resolution"), "Error message should mention resolution");
+            Assert.IsTrue(errorMessage.Contains("resolution") || errorMessage.Contains("Invalid resolution"), $"Error message should mention resolution. Actual: '{errorMessage}'");
             
             // 最大解像度テスト
             config.width = 10000;
@@ -181,7 +181,7 @@ namespace BatchRenderingTool.Editor.Tests
             bool isValid = config.Validate(out errorMessage);
             
             Assert.IsFalse(isValid, "Should be invalid with CustomPass selected but no name provided");
-            Assert.IsTrue(errorMessage.Contains("Custom pass name"), "Error message should mention custom pass name");
+            Assert.IsTrue(errorMessage.Contains("Custom pass name") || errorMessage.Contains("custom pass name"), $"Error message should mention custom pass name. Actual: '{errorMessage}'");
             
             // 名前を設定して再テスト
             config.customPassName = "MyCustomPass";

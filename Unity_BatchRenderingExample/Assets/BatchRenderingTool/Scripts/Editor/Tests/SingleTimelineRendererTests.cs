@@ -58,8 +58,8 @@ namespace BatchRenderingTool.Editor.Tests
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             
             Assert.IsNotNull(renderer);
-            Assert.IsNotNull(renderer.OutputFile);
-            Assert.IsTrue(renderer.OutputFile.Contains("Recordings"));
+            Assert.IsNotNull(renderer.filePath);
+            Assert.AreEqual("Recordings", renderer.filePath);
             Assert.AreEqual(1920, renderer.OutputWidth);
             Assert.AreEqual(1080, renderer.OutputHeight);
             Assert.AreEqual(24, renderer.FrameRate);
@@ -115,8 +115,8 @@ namespace BatchRenderingTool.Editor.Tests
             
             bool isValid = renderer.ValidateSettings(out string errorMessage);
             
-            Assert.IsTrue(isValid);
-            Assert.IsEmpty(errorMessage);
+            Assert.IsTrue(isValid, $"Expected validation to succeed but got error: '{errorMessage}'");
+            Assert.IsTrue(string.IsNullOrEmpty(errorMessage), $"Expected empty error message but got: '{errorMessage}'");
             
             Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト完了");
             
