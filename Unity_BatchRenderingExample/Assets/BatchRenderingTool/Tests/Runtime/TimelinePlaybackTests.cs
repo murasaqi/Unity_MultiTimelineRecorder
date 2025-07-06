@@ -30,6 +30,13 @@ namespace BatchRenderingTool.Runtime.Tests
             // Timelineに簡単なトラックを追加
             var animationTrack = testTimeline.CreateTrack<AnimationTrack>(null, "TestAnimationTrack");
             
+            // TimelineAssetにdurationを設定（5秒）
+            testTimeline.durationMode = TimelineAsset.DurationMode.FixedLength;
+            testTimeline.fixedDuration = 5.0;
+            
+            // PlayableDirectorのtime updateモードを設定
+            testDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
+            
             Debug.Log("TimelinePlaybackTests - Setup完了");
         }
 

@@ -15,11 +15,8 @@ namespace BatchRenderingTool.Editor.Tests
             
             bool isAvailable = AOVTypeInfo.IsHDRPAvailable();
             
-            #if UNITY_PIPELINE_HDRP
-            Assert.IsTrue(isAvailable, "HDRP should be available when UNITY_PIPELINE_HDRP is defined");
-            #else
-            Assert.IsFalse(isAvailable, "HDRP should not be available when UNITY_PIPELINE_HDRP is not defined");
-            #endif
+            // このプロジェクトはHDRP 17.0.3を使用しているため、HDRPは常に利用可能
+            Assert.IsTrue(isAvailable, "HDRP should be available in this HDRP project");
             
             UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] HDRP available: {isAvailable}");
             UnityEngine.Debug.Log("[AOVRecorderSettingsTests] IsHDRPAvailable - テスト完了");
