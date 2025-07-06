@@ -959,7 +959,18 @@ namespace BatchRenderingTool
             controlAsset.updateITimeControl = true;
             controlAsset.searchHierarchy = false;
             controlAsset.active = true;
-            controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
+            
+            // FBXレコーダーの場合、postPlaybackをActiveに設定して
+            // Timeline終了時もGameObjectがアクティブなままにする
+            if (recorderType == RecorderSettingsType.FBX)
+            {
+                controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Active;
+                BatchRenderingToolLogger.Log("[SingleTimelineRenderer] FBX: Set ControlClip postPlayback to Active");
+            }
+            else
+            {
+                controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
+            }
             
             // Important: We'll set the bindings on the PlayableDirector after creating it
             
@@ -1061,16 +1072,21 @@ namespace BatchRenderingTool
             BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === RecorderClip created successfully ===");
             
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
-            recorderClip.start = preRollTime;
-            // FBXレコーダーの場合、最後のフレームを確実に記録するためにdurationを1フレーム分延長
+            
+            // FBXレコーダーの場合、特別なタイミング調整
             if (recorderType == RecorderSettingsType.FBX)
             {
-                float frameDuration = 1f / frameRate;
-                recorderClip.duration = originalTimeline.duration + frameDuration;
-                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX Recorder: Extended duration by {frameDuration:F4}s to ensure last frame capture");
+                // FBXレコーダーは開始時に初期化時間が必要なため
+                // ControlClipより少し後に開始し、少し前に終了する
+                float fbxOffset = 0.1f; // 100ms
+                recorderClip.start = preRollTime + fbxOffset;
+                recorderClip.duration = originalTimeline.duration - (fbxOffset * 2);
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX RecorderClip timing adjusted: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s");
             }
             else
             {
+                recorderClip.start = preRollTime;
                 recorderClip.duration = originalTimeline.duration;
             }
             
@@ -1088,8 +1104,69 @@ namespace BatchRenderingTool
             // Apply FBX patch if needed
             if (recorderType == RecorderSettingsType.FBX)
             {
-                BatchRenderingToolLogger.Log("[SingleTimelineRenderer] Applying FBX recorder patch...");
+                BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Applying FBX recorder special configuration ===");
+                
+                // FBXの場合、録画開始を少し遅らせる
+                // ただし、clipInは使用せず、Timeline全体の構成で対応
+                // float fbxStartDelay = 0.2f; // 200ms遅延
+                // recorderClip.clipIn = fbxStartDelay;
+                
+                // RecorderClipの実際の長さは変更しないが、表示上の調整
+                recorderClip.displayName = $"Record FBX {originalDirector.gameObject.name}";
+                
+                // RecorderAssetの設定を再確認
+                if (recorderAsset.settings != null)
+                {
+                    var fbxSettings = recorderAsset.settings;
+                    var settingsType = fbxSettings.GetType();
+                    
+                    // FBXレコーダーを手動で有効化
+                    fbxSettings.Enabled = true;
+                    fbxSettings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
+                    
+                    // InputSettingsを確認
+                    var inputSettingsProp = settingsType.GetProperty("InputSettings");
+                    if (inputSettingsProp != null)
+                    {
+                        var inputSettings = inputSettingsProp.GetValue(fbxSettings);
+                        if (inputSettings != null)
+                        {
+                            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX InputSettings type: {inputSettings.GetType().FullName}");
+                        }
+                    }
+                    
+                    // AnimationInputSettingsを確認
+                    var animInputProp = settingsType.GetProperty("AnimationInputSettings");
+                    if (animInputProp != null)
+                    {
+                        var animInput = animInputProp.GetValue(fbxSettings);
+                        if (animInput != null)
+                        {
+                            var animType = animInput.GetType();
+                            var gameObjectProp = animType.GetProperty("gameObject");
+                            if (gameObjectProp != null)
+                            {
+                                var targetGO = gameObjectProp.GetValue(animInput) as GameObject;
+                                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX Target GameObject: {(targetGO != null ? targetGO.name : "NULL")}");
+                                
+                                if (targetGO == null && fbxTargetGameObject != null)
+                                {
+                                    // ターゲットが設定されていない場合は再設定
+                                    gameObjectProp.SetValue(animInput, fbxTargetGameObject);
+                                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Set FBX Target GameObject to: {fbxTargetGameObject.name}");
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // FBXRecorderPatchを適用
                 Patches.FBXRecorderPatch.ValidateFBXRecorderClip(recorderClip);
+                
+                // FBXレコーダーの診断情報を出力
+                Workarounds.FBXRecorderWorkaround.DiagnoseFBXRecorderIssue(recorderSettings);
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX configuration complete - clipIn: {recorderClip.clipIn}s");
             }
             
             // For Alembic Recorder, ensure the UI reflects the correct settings
@@ -1406,19 +1483,7 @@ namespace BatchRenderingTool
                     renderingData.directorName = directorName;
                     renderingData.renderTimeline = renderTimeline;
                     
-                    // FBXレコーダーの場合、durationを1フレーム分延長
-                    int recorderTypeValue = EditorPrefs.GetInt("STR_RecorderType", 0);
-                    RecorderSettingsType currentRecorderType = (RecorderSettingsType)recorderTypeValue;
-                    if (currentRecorderType == RecorderSettingsType.FBX)
-                    {
-                        float frameDuration = 1f / frameRate;
-                        renderingData.duration = duration + frameDuration;
-                        BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX: Extended RenderingData duration by {frameDuration:F4}s");
-                    }
-                    else
-                    {
-                        renderingData.duration = duration;
-                    }
+                    renderingData.duration = duration;
                     
                     renderingData.exposedName = exposedName;
                     renderingData.frameRate = frameRate;

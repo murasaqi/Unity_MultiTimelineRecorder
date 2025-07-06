@@ -85,8 +85,31 @@ namespace BatchRenderingTool.Patches
                         // Apply patch
                         PrepareFBXRecording(settings);
                         
+                        // RecorderClipの内部フィールドも調整
+                        var recorderAsset = recorderClip.asset;
+                        
+                        // m_RecorderTypeフィールドを確認・設定
+                        var recorderTypeField = clipType.GetField("m_RecorderType", BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (recorderTypeField != null)
+                        {
+                            recorderTypeField.SetValue(recorderAsset, settings.GetType());
+                            BatchRenderingToolLogger.Log("[FBXRecorderPatch] Set m_RecorderType field");
+                        }
+                        
+                        // 初期化フラグをリセット（もし存在すれば）
+                        var initializedField = clipType.GetField("m_Initialized", BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (initializedField != null && initializedField.FieldType == typeof(bool))
+                        {
+                            initializedField.SetValue(recorderAsset, false);
+                            BatchRenderingToolLogger.Log("[FBXRecorderPatch] Reset m_Initialized flag");
+                        }
+                        
                         // Ensure the clip is properly configured
                         recorderClip.displayName = "FBX Recording";
+                        
+                        // Dirtyフラグを設定
+                        UnityEditor.EditorUtility.SetDirty(recorderAsset);
+                        UnityEditor.EditorUtility.SetDirty(settings);
                     }
                 }
             }
