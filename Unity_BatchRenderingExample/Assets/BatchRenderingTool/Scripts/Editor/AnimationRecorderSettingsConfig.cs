@@ -109,7 +109,7 @@ namespace BatchRenderingTool
         /// </summary>
         public RecorderSettings CreateAnimationRecorderSettings(string name)
         {
-            Debug.Log($"[AnimationRecorderSettingsConfig] Creating Animation settings: {name}");
+            UnityEngine.Debug.Log($"[AnimationRecorderSettingsConfig] Creating Animation settings: {name}");
             
             // Create actual AnimationRecorderSettings
             var settings = ScriptableObject.CreateInstance<AnimationRecorderSettings>();
@@ -175,9 +175,9 @@ namespace BatchRenderingTool
                 }
             }
             
-            Debug.Log($"[AnimationRecorderSettingsConfig] Recording properties: {recordingProperties}");
-            Debug.Log($"[AnimationRecorderSettingsConfig] Frame rate: {frameRate}, Interpolation: {interpolationMode}");
-            Debug.Log($"[AnimationRecorderSettingsConfig] Compression: {compressionLevel}");
+            UnityEngine.Debug.Log($"[AnimationRecorderSettingsConfig] Recording properties: {recordingProperties}");
+            UnityEngine.Debug.Log($"[AnimationRecorderSettingsConfig] Frame rate: {frameRate}, Interpolation: {interpolationMode}");
+            UnityEngine.Debug.Log($"[AnimationRecorderSettingsConfig] Compression: {compressionLevel}");
             
             return settings;
         }

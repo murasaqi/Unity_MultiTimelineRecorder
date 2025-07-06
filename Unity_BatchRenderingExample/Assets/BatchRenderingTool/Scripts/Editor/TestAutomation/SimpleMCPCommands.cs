@@ -16,7 +16,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         public static void Execute(string command)
         {
-            Debug.Log($"[SimpleMCPCommands] コマンド実行: {command}");
+            UnityEngine.Debug.Log($"[SimpleMCPCommands] コマンド実行: {command}");
             
             switch (command.ToLower())
             {
@@ -33,7 +33,7 @@ namespace BatchRenderingTool.TestAutomation
                     break;
                     
                 default:
-                    Debug.LogError($"[SimpleMCPCommands] 不明なコマンド: {command}");
+                    UnityEngine.Debug.LogError($"[SimpleMCPCommands] 不明なコマンド: {command}");
                     ShowHelp();
                     break;
             }
@@ -44,17 +44,17 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ExportTestResults()
         {
-            Debug.Log("[SimpleMCPCommands] Unity Test Runner標準のExport Resultを実行します");
+            UnityEngine.Debug.Log("[SimpleMCPCommands] Unity Test Runner標準のExport Resultを実行します");
             
             try
             {
                 TestRunnerExportAutomation.AutoExportTestResults();
-                Debug.Log("[SimpleMCPCommands] Export Result実行を開始しました");
-                Debug.Log("[SimpleMCPCommands] 保存ダイアログが表示される場合があります");
+                UnityEngine.Debug.Log("[SimpleMCPCommands] Export Result実行を開始しました");
+                UnityEngine.Debug.Log("[SimpleMCPCommands] 保存ダイアログが表示される場合があります");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SimpleMCPCommands] Export Result実行エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[SimpleMCPCommands] Export Result実行エラー: {e.Message}");
             }
         }
         
@@ -63,17 +63,17 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void RunTestsAndExport()
         {
-            Debug.Log("[SimpleMCPCommands] テストを実行してからExport Resultを実行します");
+            UnityEngine.Debug.Log("[SimpleMCPCommands] テストを実行してからExport Resultを実行します");
             
             try
             {
                 TestRunnerExportAutomation.RunTestsAndAutoExport();
-                Debug.Log("[SimpleMCPCommands] テスト実行とExport Resultを開始しました");
-                Debug.Log("[SimpleMCPCommands] テスト完了後に自動的にExport Resultが実行されます");
+                UnityEngine.Debug.Log("[SimpleMCPCommands] テスト実行とExport Resultを開始しました");
+                UnityEngine.Debug.Log("[SimpleMCPCommands] テスト完了後に自動的にExport Resultが実行されます");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SimpleMCPCommands] テスト実行エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[SimpleMCPCommands] テスト実行エラー: {e.Message}");
             }
         }
         
@@ -82,19 +82,19 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ShowHelp()
         {
-            Debug.Log("========================================");
-            Debug.Log("Unity Natural MCP テストコマンド（標準機能版）");
-            Debug.Log("========================================");
-            Debug.Log("利用可能なコマンド:");
-            Debug.Log("  test:export         - Unity Test RunnerのExport Resultを実行");
-            Debug.Log("  test:run-and-export - テスト実行後にExport Resultを実行");
-            Debug.Log("  test:help          - このヘルプを表示");
-            Debug.Log("");
-            Debug.Log("注意事項:");
-            Debug.Log("- Export時に保存ダイアログが表示される場合があります");
-            Debug.Log("- Unity Test Runner標準のNUnit XML形式で出力されます");
-            Debug.Log("- Test Runnerウィンドウが自動的に開く場合があります");
-            Debug.Log("========================================");
+            UnityEngine.Debug.Log("========================================");
+            UnityEngine.Debug.Log("Unity Natural MCP テストコマンド（標準機能版）");
+            UnityEngine.Debug.Log("========================================");
+            UnityEngine.Debug.Log("利用可能なコマンド:");
+            UnityEngine.Debug.Log("  test:export         - Unity Test RunnerのExport Resultを実行");
+            UnityEngine.Debug.Log("  test:run-and-export - テスト実行後にExport Resultを実行");
+            UnityEngine.Debug.Log("  test:help          - このヘルプを表示");
+            UnityEngine.Debug.Log("");
+            UnityEngine.Debug.Log("注意事項:");
+            UnityEngine.Debug.Log("- Export時に保存ダイアログが表示される場合があります");
+            UnityEngine.Debug.Log("- Unity Test Runner標準のNUnit XML形式で出力されます");
+            UnityEngine.Debug.Log("- Test Runnerウィンドウが自動的に開く場合があります");
+            UnityEngine.Debug.Log("========================================");
         }
         
         /// <summary>

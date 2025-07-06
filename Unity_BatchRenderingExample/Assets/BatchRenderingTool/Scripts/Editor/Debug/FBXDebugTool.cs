@@ -387,7 +387,7 @@ namespace BatchRenderingTool.DebugTools
         private void AddLog(string message)
         {
             debugLogs.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
-            Debug.Log($"[FBXDebugTool] {message}");
+            UnityEngine.Debug.Log($"[FBXDebugTool] {message}");
         }
     }
 }

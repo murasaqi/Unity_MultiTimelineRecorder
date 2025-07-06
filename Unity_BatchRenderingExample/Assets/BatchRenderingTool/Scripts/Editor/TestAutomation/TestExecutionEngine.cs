@@ -47,7 +47,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestExecutionEngine] Edit Modeテスト実行エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestExecutionEngine] Edit Modeテスト実行エラー: {e.Message}");
                 onComplete?.Invoke(CreateErrorResult(config, e.Message));
             }
         }
@@ -81,7 +81,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestExecutionEngine] Play Modeテスト実行エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestExecutionEngine] Play Modeテスト実行エラー: {e.Message}");
                 onComplete?.Invoke(CreateErrorResult(config, e.Message));
             }
         }
@@ -109,7 +109,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestExecutionEngine] コンパイルエラーチェック失敗: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestExecutionEngine] コンパイルエラーチェック失敗: {e.Message}");
                 errors.Add($"エラーチェック失敗: {e.Message}");
                 return true;
             }
@@ -140,13 +140,13 @@ namespace BatchRenderingTool.TestAutomation
                     if (getCountMethod != null)
                     {
                         int count = (int)getCountMethod.Invoke(null, null);
-                        Debug.Log($"[TestExecutionEngine] コンソールログ数: {count}");
+                        UnityEngine.Debug.Log($"[TestExecutionEngine] コンソールログ数: {count}");
                     }
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestExecutionEngine] ログ取得エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestExecutionEngine] ログ取得エラー: {e.Message}");
             }
             
             return logs;
@@ -165,12 +165,12 @@ namespace BatchRenderingTool.TestAutomation
                 {
                     var clearMethod = logEntries.GetMethod("Clear", BindingFlags.Static | BindingFlags.Public);
                     clearMethod?.Invoke(null, null);
-                    Debug.Log("[TestExecutionEngine] コンソールログをクリアしました");
+                    UnityEngine.Debug.Log("[TestExecutionEngine] コンソールログをクリアしました");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestExecutionEngine] ログクリアエラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestExecutionEngine] ログクリアエラー: {e.Message}");
             }
         }
         
@@ -183,11 +183,11 @@ namespace BatchRenderingTool.TestAutomation
             {
                 // Unity Natural MCPのrefresh_assetsをシミュレート
                 AssetDatabase.Refresh();
-                Debug.Log("[TestExecutionEngine] アセットをリフレッシュしました");
+                UnityEngine.Debug.Log("[TestExecutionEngine] アセットをリフレッシュしました");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestExecutionEngine] アセットリフレッシュエラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestExecutionEngine] アセットリフレッシュエラー: {e.Message}");
             }
         }
         

@@ -18,7 +18,7 @@ namespace BatchRenderingTool.Editor.Tests
         [SetUp]
         public void Setup()
         {
-            Debug.Log("SingleTimelineRendererTests - Setup開始");
+            UnityEngine.Debug.Log("SingleTimelineRendererTests - Setup開始");
             
             // テスト用のGameObjectとPlayableDirectorを作成
             testGameObject = new GameObject("TestDirector");
@@ -28,13 +28,13 @@ namespace BatchRenderingTool.Editor.Tests
             testTimeline = ScriptableObject.CreateInstance<TimelineAsset>();
             testDirector.playableAsset = testTimeline;
             
-            Debug.Log("SingleTimelineRendererTests - Setup完了");
+            UnityEngine.Debug.Log("SingleTimelineRendererTests - Setup完了");
         }
 
         [TearDown]
         public void TearDown()
         {
-            Debug.Log("SingleTimelineRendererTests - TearDown開始");
+            UnityEngine.Debug.Log("SingleTimelineRendererTests - TearDown開始");
             
             // テスト用オブジェクトをクリーンアップ
             if (testGameObject != null)
@@ -47,13 +47,13 @@ namespace BatchRenderingTool.Editor.Tests
                 Object.DestroyImmediate(testTimeline);
             }
             
-            Debug.Log("SingleTimelineRendererTests - TearDown完了");
+            UnityEngine.Debug.Log("SingleTimelineRendererTests - TearDown完了");
         }
 
         [Test]
         public void Constructor_InitializesDefaultValues()
         {
-            Debug.Log("Constructor_InitializesDefaultValues - テスト開始");
+            UnityEngine.Debug.Log("Constructor_InitializesDefaultValues - テスト開始");
             
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             
@@ -65,7 +65,7 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(24, renderer.FrameRate);
             Assert.AreEqual(RecorderSettingsHelper.ImageFormat.PNG, renderer.ImageFormat);
             
-            Debug.Log("Constructor_InitializesDefaultValues - テスト完了");
+            UnityEngine.Debug.Log("Constructor_InitializesDefaultValues - テスト完了");
             
             // EditorWindowのクリーンアップ
             Object.DestroyImmediate(renderer);
@@ -74,7 +74,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void GetAllPlayableDirectors_ReturnsActiveDirectors()
         {
-            Debug.Log("GetAllPlayableDirectors_ReturnsActiveDirectors - テスト開始");
+            UnityEngine.Debug.Log("GetAllPlayableDirectors_ReturnsActiveDirectors - テスト開始");
             
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             var directors = renderer.GetAllPlayableDirectors();
@@ -82,8 +82,8 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsNotNull(directors);
             Assert.Contains(testDirector, directors);
             
-            Debug.Log($"GetAllPlayableDirectors_ReturnsActiveDirectors - 検出されたDirector数: {directors.Count}");
-            Debug.Log("GetAllPlayableDirectors_ReturnsActiveDirectors - テスト完了");
+            UnityEngine.Debug.Log($"GetAllPlayableDirectors_ReturnsActiveDirectors - 検出されたDirector数: {directors.Count}");
+            UnityEngine.Debug.Log("GetAllPlayableDirectors_ReturnsActiveDirectors - テスト完了");
             
             // EditorWindowのクリーンアップ
             Object.DestroyImmediate(renderer);
@@ -92,14 +92,14 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void SetSelectedDirector_UpdatesSelection()
         {
-            Debug.Log("SetSelectedDirector_UpdatesSelection - テスト開始");
+            UnityEngine.Debug.Log("SetSelectedDirector_UpdatesSelection - テスト開始");
             
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             renderer.SetSelectedDirector(testDirector);
             
             Assert.AreEqual(testDirector, renderer.GetSelectedDirector());
             
-            Debug.Log("SetSelectedDirector_UpdatesSelection - テスト完了");
+            UnityEngine.Debug.Log("SetSelectedDirector_UpdatesSelection - テスト完了");
             
             // EditorWindowのクリーンアップ
             Object.DestroyImmediate(renderer);
@@ -108,7 +108,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void ValidateSettings_WithValidSettings_ReturnsTrue()
         {
-            Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト開始");
+            UnityEngine.Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト開始");
             
             var renderer = ScriptableObject.CreateInstance<SingleTimelineRenderer>();
             renderer.SetSelectedDirector(testDirector);
@@ -118,7 +118,7 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue(isValid, $"Expected validation to succeed but got error: '{errorMessage}'");
             Assert.IsTrue(string.IsNullOrEmpty(errorMessage), $"Expected empty error message but got: '{errorMessage}'");
             
-            Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト完了");
+            UnityEngine.Debug.Log("ValidateSettings_WithValidSettings_ReturnsTrue - テスト完了");
             
             // EditorWindowのクリーンアップ
             Object.DestroyImmediate(renderer);
@@ -127,7 +127,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void ValidateSettings_WithoutDirector_ReturnsFalse()
         {
-            Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト開始");
+            UnityEngine.Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト開始");
             
             // 一時的にtestDirectorを破棄して、Directorがない状態を作る
             if (testGameObject != null)
@@ -148,8 +148,8 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsNotEmpty(errorMessage);
             Assert.IsTrue(errorMessage.Contains("Timeline"));
             
-            Debug.Log($"ValidateSettings_WithoutDirector_ReturnsFalse - エラーメッセージ: {errorMessage}");
-            Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト完了");
+            UnityEngine.Debug.Log($"ValidateSettings_WithoutDirector_ReturnsFalse - エラーメッセージ: {errorMessage}");
+            UnityEngine.Debug.Log("ValidateSettings_WithoutDirector_ReturnsFalse - テスト完了");
             
             // EditorWindowのクリーンアップ
             Object.DestroyImmediate(renderer);

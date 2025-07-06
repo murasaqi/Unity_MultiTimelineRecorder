@@ -201,46 +201,27 @@ namespace BatchRenderingTool.RecorderConfigEditors
             
             var movieConfig = configItem.movieConfig;
             
-            // Preset
-            movieConfig.usePreset = EditorGUILayout.Toggle("Use Preset", movieConfig.usePreset);
-            if (movieConfig.usePreset)
-            {
-                movieConfig.preset = (MovieRecorderPreset)EditorGUILayout.EnumPopup("Preset", movieConfig.preset);
-                
-                if (GUILayout.Button("Apply Preset"))
-                {
-                    var presetConfig = MovieRecorderSettingsConfig.GetPreset(movieConfig.preset);
-                    movieConfig.videoFormat = presetConfig.videoFormat;
-                    movieConfig.videoBitrateMode = presetConfig.videoBitrateMode;
-                    movieConfig.videoBitrate = presetConfig.videoBitrate;
-                    movieConfig.includeAlpha = presetConfig.includeAlpha;
-                    movieConfig.includeAudio = presetConfig.includeAudio;
-                    movieConfig.audioBitrateMode = presetConfig.audioBitrateMode;
-                }
-            }
-            
             // Video settings
             EditorGUILayout.Space();
-            movieConfig.videoFormat = (MovieRecorderSettings.VideoRecorderOutputFormat)
-                EditorGUILayout.EnumPopup("Video Format", movieConfig.videoFormat);
+            movieConfig.outputFormat = (MovieRecorderSettings.VideoRecorderOutputFormat)
+                EditorGUILayout.EnumPopup("Video Format", movieConfig.outputFormat);
                 
             movieConfig.videoBitrateMode = (VideoBitrateMode)
                 EditorGUILayout.EnumPopup("Quality", movieConfig.videoBitrateMode);
                 
-            if (movieConfig.videoBitrateMode == VideoBitrateMode.Custom)
+            if (movieConfig.videoBitrateMode == VideoBitrateMode.Low)
             {
-                movieConfig.videoBitrate = EditorGUILayout.IntField("Bitrate (Mbps)", movieConfig.videoBitrate);
+                movieConfig.customBitrate = EditorGUILayout.IntField("Bitrate (kbps)", movieConfig.customBitrate);
             }
             
-            movieConfig.includeAlpha = EditorGUILayout.Toggle("Include Alpha", movieConfig.includeAlpha);
+            movieConfig.captureAlpha = EditorGUILayout.Toggle("Capture Alpha", movieConfig.captureAlpha);
             
             // Audio settings
             EditorGUILayout.Space();
-            movieConfig.includeAudio = EditorGUILayout.Toggle("Include Audio", movieConfig.includeAudio);
-            if (movieConfig.includeAudio)
+            movieConfig.captureAudio = EditorGUILayout.Toggle("Capture Audio", movieConfig.captureAudio);
+            if (movieConfig.captureAudio)
             {
-                movieConfig.audioBitrateMode = (AudioBitRateMode)
-                    EditorGUILayout.EnumPopup("Audio Quality", movieConfig.audioBitrateMode);
+                movieConfig.audioBitrate = EditorGUILayout.IntField("Audio Bitrate (kbps)", movieConfig.audioBitrate);
             }
         }
         
@@ -257,10 +238,7 @@ namespace BatchRenderingTool.RecorderConfigEditors
             animConfig.recordingScope = (AnimationRecordingScope)
                 EditorGUILayout.EnumPopup("Recording Scope", animConfig.recordingScope);
                 
-            if (animConfig.recordingScope == AnimationRecordingScope.RecursiveGameObject)
-            {
-                animConfig.includeChildren = EditorGUILayout.Toggle("Include Children", animConfig.includeChildren);
-            }
+            // Note: recordingScope handles hierarchy recording
             
             // Properties
             EditorGUILayout.Space();
@@ -268,8 +246,6 @@ namespace BatchRenderingTool.RecorderConfigEditors
             
             animConfig.recordingProperties = (AnimationRecordingProperties)
                 EditorGUILayout.EnumFlagsField("Record", animConfig.recordingProperties);
-                
-            animConfig.recordBlendShapes = EditorGUILayout.Toggle("Record Blend Shapes", animConfig.recordBlendShapes);
             
             // Compression
             EditorGUILayout.Space();
@@ -277,8 +253,6 @@ namespace BatchRenderingTool.RecorderConfigEditors
             
             animConfig.compressionLevel = (AnimationCompressionLevel)
                 EditorGUILayout.EnumPopup("Compression", animConfig.compressionLevel);
-                
-            animConfig.clampedTangents = EditorGUILayout.Toggle("Clamped Tangents", animConfig.clampedTangents);
             
             if (animConfig.compressionLevel != AnimationCompressionLevel.None)
             {
@@ -309,14 +283,13 @@ namespace BatchRenderingTool.RecorderConfigEditors
             alembicConfig.exportTargets = (AlembicExportTargets)
                 EditorGUILayout.EnumFlagsField("Export", alembicConfig.exportTargets);
                 
-            alembicConfig.includeChildren = EditorGUILayout.Toggle("Include Children", alembicConfig.includeChildren);
             alembicConfig.flattenHierarchy = EditorGUILayout.Toggle("Flatten Hierarchy", alembicConfig.flattenHierarchy);
             
             // Format settings
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Format", EditorStyles.miniLabel);
             
-            alembicConfig.worldScale = EditorGUILayout.FloatField("World Scale", alembicConfig.worldScale);
+            alembicConfig.scaleFactor = EditorGUILayout.FloatField("Scale Factor", alembicConfig.scaleFactor);
             alembicConfig.handedness = (AlembicHandedness)
                 EditorGUILayout.EnumPopup("Handedness", alembicConfig.handedness);
                 
@@ -324,10 +297,10 @@ namespace BatchRenderingTool.RecorderConfigEditors
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Time Sampling", EditorStyles.miniLabel);
             
-            alembicConfig.timeSamplingType = (AlembicTimeSamplingType)
-                EditorGUILayout.EnumPopup("Type", alembicConfig.timeSamplingType);
+            alembicConfig.timeSamplingMode = (AlembicTimeSamplingMode)
+                EditorGUILayout.EnumPopup("Type", alembicConfig.timeSamplingMode);
                 
-            if (alembicConfig.timeSamplingType != AlembicTimeSamplingType.Uniform)
+            if (alembicConfig.timeSamplingMode != AlembicTimeSamplingMode.Uniform)
             {
                 alembicConfig.frameRate = EditorGUILayout.FloatField("Sample Rate", alembicConfig.frameRate);
             }

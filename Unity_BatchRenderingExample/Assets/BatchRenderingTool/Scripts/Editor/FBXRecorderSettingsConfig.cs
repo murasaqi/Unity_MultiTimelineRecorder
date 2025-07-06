@@ -281,5 +281,23 @@ namespace BatchRenderingTool
                 return null;
             }
         }
+        
+        /// <summary>
+        /// Clone this configuration
+        /// </summary>
+        public FBXRecorderSettingsConfig Clone()
+        {
+            return new FBXRecorderSettingsConfig
+            {
+                targetGameObject = this.targetGameObject,
+                recordHierarchy = this.recordHierarchy,
+                clampedTangents = this.clampedTangents,
+                animationCompression = this.animationCompression,
+                exportGeometry = this.exportGeometry,
+                transferAnimationSource = this.transferAnimationSource,
+                transferAnimationDest = this.transferAnimationDest,
+                frameRate = this.frameRate
+            };
+        }
     }
 }

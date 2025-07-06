@@ -16,48 +16,48 @@ namespace BatchRenderingTool.DebugTools
         [MenuItem("Window/Batch Rendering Tool/Debug/Validate AOV Integration")]
         public static void ValidateAOVIntegration()
         {
-            Debug.Log("=== AOV Integration Validation ===");
-            Debug.Log($"実行時刻: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-            Debug.Log("");
+            UnityEngine.Debug.Log("=== AOV Integration Validation ===");
+            UnityEngine.Debug.Log($"実行時刻: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            UnityEngine.Debug.Log("");
             
             bool allTestsPassed = true;
             
             // 1. HDRPプロジェクト判定
             allTestsPassed &= ValidateHDRPProject();
-            Debug.Log("");
+            UnityEngine.Debug.Log("");
             
             // 2. AOVパッケージ検証
             allTestsPassed &= ValidateAOVPackages();
-            Debug.Log("");
+            UnityEngine.Debug.Log("");
             
             // 3. AOVタイプの自動検出
             allTestsPassed &= ValidateAOVTypeDetection();
-            Debug.Log("");
+            UnityEngine.Debug.Log("");
             
             // 4. RecorderSettings作成テスト
             allTestsPassed &= ValidateAOVRecorderSettingsCreation();
-            Debug.Log("");
+            UnityEngine.Debug.Log("");
             
             // 5. SingleTimelineRenderer統合テスト
             allTestsPassed &= ValidateSingleTimelineRendererAOVIntegration();
-            Debug.Log("");
+            UnityEngine.Debug.Log("");
             
             // 6. EXRサポート検証
             allTestsPassed &= ValidateEXRSupport();
-            Debug.Log("");
+            UnityEngine.Debug.Log("");
             
             // 結果サマリー
-            Debug.Log("=== Validation Summary ===");
+            UnityEngine.Debug.Log("=== Validation Summary ===");
             if (allTestsPassed)
             {
-                Debug.Log("<color=green>✓ All AOV validation tests passed!</color>");
+                UnityEngine.Debug.Log("<color=green>✓ All AOV validation tests passed!</color>");
                 EditorUtility.DisplayDialog("AOV Integration Validation", 
                     "All validation tests passed!\n\nAOV integration is ready for use.", 
                     "OK");
             }
             else
             {
-                Debug.LogError("✗ Some AOV validation tests failed. Check the console for details.");
+                UnityEngine.Debug.LogError("✗ Some AOV validation tests failed. Check the console for details.");
                 EditorUtility.DisplayDialog("AOV Integration Validation", 
                     "Some validation tests failed.\n\nPlease check the console for details.", 
                     "OK");
@@ -69,7 +69,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private static bool ValidateHDRPProject()
         {
-            Debug.Log("--- 1. HDRP Project Check ---");
+            UnityEngine.Debug.Log("--- 1. HDRP Project Check ---");
             
             bool isHDRP = false;
             string pipelineInfo = "None";
@@ -90,14 +90,14 @@ namespace BatchRenderingTool.DebugTools
             if (!isHDRP)
             {
                 isHDRP = true;
-                Debug.LogWarning("HDRP preprocessor is defined but Graphics Settings doesn't show HDRP");
+                UnityEngine.Debug.LogWarning("HDRP preprocessor is defined but Graphics Settings doesn't show HDRP");
             }
             #endif
             
             if (isHDRP)
             {
-                Debug.Log($"<color=green>✓ HDRP is active</color>");
-                Debug.Log($"  Pipeline: {pipelineInfo}");
+                UnityEngine.Debug.Log($"<color=green>✓ HDRP is active</color>");
+                UnityEngine.Debug.Log($"  Pipeline: {pipelineInfo}");
                 
                 // HDRPアセットの設定を確認
                 if (currentRP != null)
@@ -106,7 +106,7 @@ namespace BatchRenderingTool.DebugTools
                     var frameSettingsField = hdrpAssetType.GetField("m_RenderingPathDefaultFrameSettings", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (frameSettingsField != null)
                     {
-                        Debug.Log("  HDRP Asset settings are accessible");
+                        UnityEngine.Debug.Log("  HDRP Asset settings are accessible");
                     }
                 }
                 
@@ -114,9 +114,9 @@ namespace BatchRenderingTool.DebugTools
             }
             else
             {
-                Debug.LogError("✗ HDRP is NOT active");
-                Debug.Log($"  Current Pipeline: {pipelineInfo}");
-                Debug.LogError("  AOV Recorder requires HDRP. Please configure your project to use HDRP.");
+                UnityEngine.Debug.LogError("✗ HDRP is NOT active");
+                UnityEngine.Debug.Log($"  Current Pipeline: {pipelineInfo}");
+                UnityEngine.Debug.LogError("  AOV Recorder requires HDRP. Please configure your project to use HDRP.");
                 return false;
             }
         }
@@ -126,7 +126,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private static bool ValidateAOVPackages()
         {
-            Debug.Log("--- 2. AOV Package Validation ---");
+            UnityEngine.Debug.Log("--- 2. AOV Package Validation ---");
             
             bool hasUnityRecorder = false;
             bool hasHDRPAOVSupport = false;
@@ -137,16 +137,16 @@ namespace BatchRenderingTool.DebugTools
                 if (assembly.FullName.Contains("Unity.Recorder"))
                 {
                     hasUnityRecorder = true;
-                    Debug.Log($"<color=green>✓ Unity Recorder found</color>");
-                    Debug.Log($"  Assembly: {assembly.FullName}");
+                    UnityEngine.Debug.Log($"<color=green>✓ Unity Recorder found</color>");
+                    UnityEngine.Debug.Log($"  Assembly: {assembly.FullName}");
                     break;
                 }
             }
             
             if (!hasUnityRecorder)
             {
-                Debug.LogError("✗ Unity Recorder package not found");
-                Debug.LogError("  Please install Unity Recorder package via Package Manager");
+                UnityEngine.Debug.LogError("✗ Unity Recorder package not found");
+                UnityEngine.Debug.LogError("  Please install Unity Recorder package via Package Manager");
                 return false;
             }
             
@@ -164,14 +164,14 @@ namespace BatchRenderingTool.DebugTools
                 if (type != null)
                 {
                     hasHDRPAOVSupport = true;
-                    Debug.Log($"<color=green>✓ HDRP AOV type found: {type.Name}</color>");
+                    UnityEngine.Debug.Log($"<color=green>✓ HDRP AOV type found: {type.Name}</color>");
                 }
             }
             
             if (!hasHDRPAOVSupport)
             {
-                Debug.LogWarning("⚠ HDRP AOV types not fully detected");
-                Debug.Log("  This may be due to Unity version differences");
+                UnityEngine.Debug.LogWarning("⚠ HDRP AOV types not fully detected");
+                UnityEngine.Debug.Log("  This may be due to Unity version differences");
             }
             
             return hasUnityRecorder;
@@ -182,7 +182,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private static bool ValidateAOVTypeDetection()
         {
-            Debug.Log("--- 3. AOV Type Detection Test ---");
+            UnityEngine.Debug.Log("--- 3. AOV Type Detection Test ---");
             
             try
             {
@@ -201,20 +201,20 @@ namespace BatchRenderingTool.DebugTools
                     }
                 }
                 
-                Debug.Log($"<color=green>✓ Detected {validTypes} AOV types</color>");
+                UnityEngine.Debug.Log($"<color=green>✓ Detected {validTypes} AOV types</color>");
                 
                 // カテゴリ別の検証
                 var aovsByCategory = AOVTypeInfo.GetAOVsByCategory();
                 foreach (var category in aovsByCategory)
                 {
-                    Debug.Log($"  {category.Key}: {category.Value.Count} types");
+                    UnityEngine.Debug.Log($"  {category.Key}: {category.Value.Count} types");
                 }
                 
                 return validTypes > 0;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"✗ AOV type detection failed: {ex.Message}");
+                UnityEngine.Debug.LogError($"✗ AOV type detection failed: {ex.Message}");
                 return false;
             }
         }
@@ -224,7 +224,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private static bool ValidateAOVRecorderSettingsCreation()
         {
-            Debug.Log("--- 4. AOV RecorderSettings Creation Test ---");
+            UnityEngine.Debug.Log("--- 4. AOV RecorderSettings Creation Test ---");
             
             try
             {
@@ -243,10 +243,10 @@ namespace BatchRenderingTool.DebugTools
                 
                 if (!isValid)
                 {
-                    Debug.LogWarning($"⚠ AOV config validation failed: {errorMessage}");
+                    UnityEngine.Debug.LogWarning($"⚠ AOV config validation failed: {errorMessage}");
                     if (errorMessage.Contains("HDRP"))
                     {
-                        Debug.Log("  This is expected if HDRP is not active");
+                        UnityEngine.Debug.Log("  This is expected if HDRP is not active");
                         return true; // HDRPがない場合は警告レベルにする
                     }
                     return false;
@@ -257,11 +257,11 @@ namespace BatchRenderingTool.DebugTools
                 
                 if (settingsList != null && settingsList.Count > 0)
                 {
-                    Debug.Log($"<color=green>✓ Successfully created {settingsList.Count} AOV recorder settings</color>");
+                    UnityEngine.Debug.Log($"<color=green>✓ Successfully created {settingsList.Count} AOV recorder settings</color>");
                     
                     foreach (var settings in settingsList)
                     {
-                        Debug.Log($"  Created: {settings.name}");
+                        UnityEngine.Debug.Log($"  Created: {settings.name}");
                         // クリーンアップ
                         UnityEngine.Object.DestroyImmediate(settings);
                     }
@@ -270,13 +270,13 @@ namespace BatchRenderingTool.DebugTools
                 }
                 else
                 {
-                    Debug.LogError("✗ Failed to create AOV recorder settings");
+                    UnityEngine.Debug.LogError("✗ Failed to create AOV recorder settings");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"✗ Exception during AOV settings creation: {ex.Message}");
+                UnityEngine.Debug.LogError($"✗ Exception during AOV settings creation: {ex.Message}");
                 return false;
             }
         }
@@ -286,7 +286,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private static bool ValidateSingleTimelineRendererAOVIntegration()
         {
-            Debug.Log("--- 5. SingleTimelineRenderer AOV Integration Test ---");
+            UnityEngine.Debug.Log("--- 5. SingleTimelineRenderer AOV Integration Test ---");
             
             try
             {
@@ -305,7 +305,7 @@ namespace BatchRenderingTool.DebugTools
                 
                 if (hasAOV)
                 {
-                    Debug.Log($"<color=green>✓ SingleTimelineRenderer supports AOV recorder type</color>");
+                    UnityEngine.Debug.Log($"<color=green>✓ SingleTimelineRenderer supports AOV recorder type</color>");
                     
                     // RecorderSettingsFactoryがAOVをサポートしているか確認
                     var factoryType = typeof(RecorderSettingsFactory);
@@ -314,24 +314,24 @@ namespace BatchRenderingTool.DebugTools
                     bool hasCreateAOVMethod = methods.Any(m => m.Name.Contains("AOV"));
                     if (hasCreateAOVMethod)
                     {
-                        Debug.Log($"<color=green>✓ RecorderSettingsFactory has AOV support methods</color>");
+                        UnityEngine.Debug.Log($"<color=green>✓ RecorderSettingsFactory has AOV support methods</color>");
                     }
                     else
                     {
-                        Debug.LogWarning("⚠ RecorderSettingsFactory may need AOV method implementation");
+                        UnityEngine.Debug.LogWarning("⚠ RecorderSettingsFactory may need AOV method implementation");
                     }
                     
                     return true;
                 }
                 else
                 {
-                    Debug.LogError("✗ RecorderSettingsType enum does not include AOV");
+                    UnityEngine.Debug.LogError("✗ RecorderSettingsType enum does not include AOV");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"✗ Exception during SingleTimelineRenderer validation: {ex.Message}");
+                UnityEngine.Debug.LogError($"✗ Exception during SingleTimelineRenderer validation: {ex.Message}");
                 return false;
             }
         }
@@ -341,7 +341,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private static bool ValidateEXRSupport()
         {
-            Debug.Log("--- 6. EXR Support Validation ---");
+            UnityEngine.Debug.Log("--- 6. EXR Support Validation ---");
             
             try
             {
@@ -357,23 +357,23 @@ namespace BatchRenderingTool.DebugTools
                         
                         if (hasEXR)
                         {
-                            Debug.Log($"<color=green>✓ EXR format is supported in Unity Recorder</color>");
+                            UnityEngine.Debug.Log($"<color=green>✓ EXR format is supported in Unity Recorder</color>");
                             return true;
                         }
                         else
                         {
-                            Debug.LogError("✗ EXR format not found in ImageRecorderOutputFormat");
+                            UnityEngine.Debug.LogError("✗ EXR format not found in ImageRecorderOutputFormat");
                             return false;
                         }
                     }
                 }
                 
-                Debug.LogWarning("⚠ Could not verify EXR support");
+                UnityEngine.Debug.LogWarning("⚠ Could not verify EXR support");
                 return true; // 警告レベル
             }
             catch (Exception ex)
             {
-                Debug.LogError($"✗ Exception during EXR validation: {ex.Message}");
+                UnityEngine.Debug.LogError($"✗ Exception during EXR validation: {ex.Message}");
                 return false;
             }
         }
@@ -392,7 +392,7 @@ namespace BatchRenderingTool.DebugTools
             
             try
             {
-                Debug.Log("=== Quick AOV Test ===");
+                UnityEngine.Debug.Log("=== Quick AOV Test ===");
                 
                 // テスト用の設定を作成
                 var config = AOVRecorderSettingsConfig.Presets.GetGeometryOnly();
@@ -405,14 +405,14 @@ namespace BatchRenderingTool.DebugTools
                 
                 if (settingsList == null || settingsList.Count == 0)
                 {
-                    Debug.LogError("Failed to create AOV recorder settings");
+                    UnityEngine.Debug.LogError("Failed to create AOV recorder settings");
                     return;
                 }
                 
-                Debug.Log($"Created {settingsList.Count} AOV recorder settings:");
+                UnityEngine.Debug.Log($"Created {settingsList.Count} AOV recorder settings:");
                 foreach (var settings in settingsList)
                 {
-                    Debug.Log($"  - {settings.name}");
+                    UnityEngine.Debug.Log($"  - {settings.name}");
                     
                     // 出力設定
                     RecorderSettingsHelper.SetOutputPath(settings, "Assets/AOVTest", settings.name);
@@ -430,7 +430,7 @@ namespace BatchRenderingTool.DebugTools
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Quick AOV test failed: {ex}");
+                UnityEngine.Debug.LogError($"Quick AOV test failed: {ex}");
                 EditorUtility.DisplayDialog("Quick Test Failed", 
                     $"Failed to create AOV test:\n\n{ex.Message}", 
                     "OK");
@@ -440,22 +440,22 @@ namespace BatchRenderingTool.DebugTools
         [MenuItem("Window/Batch Rendering Tool/Debug/Analyze HDRP Settings")]
         public static void AnalyzeHDRPSettings()
         {
-            Debug.Log("=== HDRP Settings Analysis ===");
+            UnityEngine.Debug.Log("=== HDRP Settings Analysis ===");
             
             var currentRP = GraphicsSettings.currentRenderPipeline;
             if (currentRP == null || !currentRP.GetType().FullName.Contains("HighDefinition"))
             {
-                Debug.LogError("HDRP is not active");
+                UnityEngine.Debug.LogError("HDRP is not active");
                 return;
             }
             
-            Debug.Log($"HDRP Asset Type: {currentRP.GetType().FullName}");
+            UnityEngine.Debug.Log($"HDRP Asset Type: {currentRP.GetType().FullName}");
             
             // HDRPアセットの設定を分析
             var assetType = currentRP.GetType();
             var fields = assetType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             
-            Debug.Log("\n--- Relevant HDRP Settings for AOV ---");
+            UnityEngine.Debug.Log("\n--- Relevant HDRP Settings for AOV ---");
             
             foreach (var field in fields)
             {
@@ -467,16 +467,16 @@ namespace BatchRenderingTool.DebugTools
                     try
                     {
                         var value = field.GetValue(currentRP);
-                        Debug.Log($"{field.Name}: {value}");
+                        UnityEngine.Debug.Log($"{field.Name}: {value}");
                     }
                     catch
                     {
-                        Debug.Log($"{field.Name}: (unable to read)");
+                        UnityEngine.Debug.Log($"{field.Name}: (unable to read)");
                     }
                 }
             }
             
-            Debug.Log("\n=== Analysis Complete ===");
+            UnityEngine.Debug.Log("\n=== Analysis Complete ===");
         }
     }
 }

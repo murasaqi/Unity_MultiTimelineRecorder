@@ -23,7 +23,7 @@ namespace BatchRenderingTool.Editor.Tests
             
             if (settings != null)
             {
-                Debug.Log($"[FBXRecorderCreationTests] Created FBX recorder settings of type: {settings.GetType().FullName}");
+                UnityEngine.Debug.Log($"[FBXRecorderCreationTests] Created FBX recorder settings of type: {settings.GetType().FullName}");
             }
         }
         
@@ -35,7 +35,7 @@ namespace BatchRenderingTool.Editor.Tests
             
             if (settings != null)
             {
-                Debug.Log($"[FBXRecorderCreationTests] Created FBX recorder settings of type: {settings.GetType().FullName}");
+                UnityEngine.Debug.Log($"[FBXRecorderCreationTests] Created FBX recorder settings of type: {settings.GetType().FullName}");
             }
         }
         
@@ -59,7 +59,7 @@ namespace BatchRenderingTool.Editor.Tests
                 
                 if (settings != null)
                 {
-                    Debug.Log($"[FBXRecorderCreationTests] Config created settings of type: {settings.GetType().FullName}");
+                    UnityEngine.Debug.Log($"[FBXRecorderCreationTests] Config created settings of type: {settings.GetType().FullName}");
                 }
             }
             finally
@@ -93,8 +93,8 @@ namespace BatchRenderingTool.Editor.Tests
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             Assert.IsNotNull(animInputField, "m_AnimationInputSettings field not found");
             
-            Debug.Log($"[FBXRecorderCreationTests] FBX recorder settings type: {settingsType.FullName}");
-            Debug.Log($"[FBXRecorderCreationTests] Properties found: ExportGeometry={exportGeometryProp != null}, AnimationInputSettings={animInputField != null}");
+            UnityEngine.Debug.Log($"[FBXRecorderCreationTests] FBX recorder settings type: {settingsType.FullName}");
+            UnityEngine.Debug.Log($"[FBXRecorderCreationTests] Properties found: ExportGeometry={exportGeometryProp != null}, AnimationInputSettings={animInputField != null}");
         }
     }
 }

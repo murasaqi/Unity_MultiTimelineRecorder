@@ -501,7 +501,7 @@ namespace BatchRenderingTool.DebugTools
             
             try
             {
-                Debug.Log("[AlembicDebugTool] Starting test export...");
+                UnityEngine.Debug.Log("[AlembicDebugTool] Starting test export...");
                 
                 // 出力ディレクトリを作成
                 if (!Directory.Exists(testOutputPath))
@@ -528,7 +528,7 @@ namespace BatchRenderingTool.DebugTools
                 settings.StartFrame = 0;
                 settings.EndFrame = testFrameCount - 1;
                 
-                Debug.Log($"[AlembicDebugTool] Export settings created. Output: {Path.Combine(testOutputPath, fileName)}.abc");
+                UnityEngine.Debug.Log($"[AlembicDebugTool] Export settings created. Output: {Path.Combine(testOutputPath, fileName)}.abc");
                 
                 // レコーダーコントローラーを作成して実行
                 var controllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
@@ -538,7 +538,7 @@ namespace BatchRenderingTool.DebugTools
                 
                 if (controller.StartRecording())
                 {
-                    Debug.Log("[AlembicDebugTool] Recording started successfully");
+                    UnityEngine.Debug.Log("[AlembicDebugTool] Recording started successfully");
                     
                     // Note: 実際のUnity Editorでは、Play Modeで実行する必要があります
                     EditorUtility.DisplayDialog("Test Export", 
@@ -556,7 +556,7 @@ namespace BatchRenderingTool.DebugTools
             catch (Exception ex)
             {
                 errorLogs.Add($"Export failed: {ex.Message}");
-                Debug.LogError($"[AlembicDebugTool] Export failed: {ex}");
+                UnityEngine.Debug.LogError($"[AlembicDebugTool] Export failed: {ex}");
             }
         }
         
@@ -565,7 +565,7 @@ namespace BatchRenderingTool.DebugTools
         /// </summary>
         private void AnalyzeAlembicAPI()
         {
-            Debug.Log("=== Alembic API Analysis ===");
+            UnityEngine.Debug.Log("=== Alembic API Analysis ===");
             
             // AlembicRecorderSettings型を探す
             System.Type alembicRecorderSettingsType = null;
@@ -580,44 +580,44 @@ namespace BatchRenderingTool.DebugTools
                 alembicRecorderSettingsType = System.Type.GetType(typeName);
                 if (alembicRecorderSettingsType != null)
                 {
-                    Debug.Log($"Found AlembicRecorderSettings: {alembicRecorderSettingsType.FullName}");
+                    UnityEngine.Debug.Log($"Found AlembicRecorderSettings: {alembicRecorderSettingsType.FullName}");
                     break;
                 }
             }
             
             if (alembicRecorderSettingsType == null)
             {
-                Debug.LogError("AlembicRecorderSettings type not found");
+                UnityEngine.Debug.LogError("AlembicRecorderSettings type not found");
                 return;
             }
             
             // プロパティとフィールドを分析
-            Debug.Log("\n--- Properties ---");
+            UnityEngine.Debug.Log("\n--- Properties ---");
             var properties = alembicRecorderSettingsType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (var prop in properties)
             {
-                Debug.Log($"Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
+                UnityEngine.Debug.Log($"Property: {prop.Name} (Type: {prop.PropertyType.Name}, CanWrite: {prop.CanWrite})");
             }
             
-            Debug.Log("\n--- Fields ---");
+            UnityEngine.Debug.Log("\n--- Fields ---");
             var fields = alembicRecorderSettingsType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (var field in fields)
             {
-                Debug.Log($"Field: {field.Name} (Type: {field.FieldType.Name})");
+                UnityEngine.Debug.Log($"Field: {field.Name} (Type: {field.FieldType.Name})");
             }
             
-            Debug.Log("\n--- Methods ---");
+            UnityEngine.Debug.Log("\n--- Methods ---");
             var methods = alembicRecorderSettingsType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             foreach (var method in methods)
             {
                 if (!method.IsSpecialName) // プロパティのゲッター/セッターを除外
                 {
                     var parameters = string.Join(", ", method.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"));
-                    Debug.Log($"Method: {method.ReturnType.Name} {method.Name}({parameters})");
+                    UnityEngine.Debug.Log($"Method: {method.ReturnType.Name} {method.Name}({parameters})");
                 }
             }
             
-            Debug.Log("\n=== Analysis Complete ===");
+            UnityEngine.Debug.Log("\n=== Analysis Complete ===");
         }
     }
 }

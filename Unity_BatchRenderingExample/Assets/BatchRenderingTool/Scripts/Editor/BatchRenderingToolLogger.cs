@@ -27,7 +27,7 @@ namespace BatchRenderingTool
             #if UNITY_EDITOR && BATCH_RENDERING_TOOL_DEBUG
             if (s_EnableVerboseLogging)
             {
-                Debug.Log(message);
+                UnityEngine.Debug.Log(message);
             }
             #endif
         }
@@ -37,7 +37,7 @@ namespace BatchRenderingTool
         /// </summary>
         public static void Log(string message)
         {
-            Debug.Log(message);
+            UnityEngine.Debug.Log(message);
         }
         
         /// <summary>
@@ -45,7 +45,7 @@ namespace BatchRenderingTool
         /// </summary>
         public static void LogWarning(string message)
         {
-            Debug.LogWarning(message);
+            UnityEngine.Debug.LogWarning(message);
         }
         
         /// <summary>
@@ -53,7 +53,7 @@ namespace BatchRenderingTool
         /// </summary>
         public static void LogError(string message)
         {
-            Debug.LogError(message);
+            UnityEngine.Debug.LogError(message);
         }
     }
 }

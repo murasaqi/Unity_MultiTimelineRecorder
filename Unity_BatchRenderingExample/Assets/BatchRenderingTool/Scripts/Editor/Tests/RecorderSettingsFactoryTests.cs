@@ -12,7 +12,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void CreateImageRecorderSettings_WithPNG_CreatesValidSettings()
         {
-            Debug.Log("CreateImageRecorderSettings_WithPNG_CreatesValidSettings - テスト開始");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_WithPNG_CreatesValidSettings - テスト開始");
             
             var settings = RecorderSettingsFactory.CreateImageRecorderSettings("TestImageRecorder");
             
@@ -24,13 +24,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(ImageRecorderSettings.ImageRecorderOutputFormat.PNG, imageSettings.OutputFormat);
             Assert.AreEqual(30, settings.FrameRate);
             
-            Debug.Log("CreateImageRecorderSettings_WithPNG_CreatesValidSettings - テスト完了");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_WithPNG_CreatesValidSettings - テスト完了");
         }
 
         [Test]
         public void CreateImageRecorderSettings_WithJPG_CreatesValidSettings()
         {
-            Debug.Log("CreateImageRecorderSettings_WithJPG_CreatesValidSettings - テスト開始");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_WithJPG_CreatesValidSettings - テスト開始");
             
             var settings = RecorderSettingsFactory.CreateImageRecorderSettings("TestImageRecorder");
             settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.JPEG;
@@ -39,13 +39,13 @@ namespace BatchRenderingTool.Editor.Tests
             var imageSettings = settings as ImageRecorderSettings;
             Assert.AreEqual(ImageRecorderSettings.ImageRecorderOutputFormat.JPEG, imageSettings.OutputFormat);
             
-            Debug.Log("CreateImageRecorderSettings_WithJPG_CreatesValidSettings - テスト完了");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_WithJPG_CreatesValidSettings - テスト完了");
         }
 
         [Test]
         public void CreateImageRecorderSettings_WithEXR_CreatesValidSettings()
         {
-            Debug.Log("CreateImageRecorderSettings_WithEXR_CreatesValidSettings - テスト開始");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_WithEXR_CreatesValidSettings - テスト開始");
             
             var settings = RecorderSettingsFactory.CreateImageRecorderSettings("TestImageRecorder");
             settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.EXR;
@@ -54,13 +54,13 @@ namespace BatchRenderingTool.Editor.Tests
             var imageSettings = settings as ImageRecorderSettings;
             Assert.AreEqual(ImageRecorderSettings.ImageRecorderOutputFormat.EXR, imageSettings.OutputFormat);
             
-            Debug.Log("CreateImageRecorderSettings_WithEXR_CreatesValidSettings - テスト完了");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_WithEXR_CreatesValidSettings - テスト完了");
         }
 
         [Test]
         public void CreateImageRecorderSettings_SetsCorrectResolution()
         {
-            Debug.Log("CreateImageRecorderSettings_SetsCorrectResolution - テスト開始");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_SetsCorrectResolution - テスト開始");
             
             int testWidth = 2560;
             int testHeight = 1440;
@@ -76,14 +76,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(testWidth, inputSettings.OutputWidth);
             Assert.AreEqual(testHeight, inputSettings.OutputHeight);
             
-            Debug.Log($"CreateImageRecorderSettings_SetsCorrectResolution - 解像度: {testWidth}x{testHeight}");
-            Debug.Log("CreateImageRecorderSettings_SetsCorrectResolution - テスト完了");
+            UnityEngine.Debug.Log($"CreateImageRecorderSettings_SetsCorrectResolution - 解像度: {testWidth}x{testHeight}");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_SetsCorrectResolution - テスト完了");
         }
 
         [Test]
         public void CreateImageRecorderSettings_SetsCorrectFrameRate()
         {
-            Debug.Log("CreateImageRecorderSettings_SetsCorrectFrameRate - テスト開始");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_SetsCorrectFrameRate - テスト開始");
             
             int[] testFrameRates = { 24, 30, 60, 120 };
             
@@ -93,16 +93,16 @@ namespace BatchRenderingTool.Editor.Tests
                 settings.FrameRate = frameRate;
                 
                 Assert.AreEqual(frameRate, settings.FrameRate);
-                Debug.Log($"CreateImageRecorderSettings_SetsCorrectFrameRate - フレームレート: {frameRate}fps 確認OK");
+                UnityEngine.Debug.Log($"CreateImageRecorderSettings_SetsCorrectFrameRate - フレームレート: {frameRate}fps 確認OK");
             }
             
-            Debug.Log("CreateImageRecorderSettings_SetsCorrectFrameRate - テスト完了");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_SetsCorrectFrameRate - テスト完了");
         }
 
         [Test]
         public void CreateFBXRecorderSettings_CreatesValidSettings()
         {
-            Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト開始");
+            UnityEngine.Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト開始");
             
             // Skip test if FBX package is not available
             if (!FBXExportInfo.IsFBXPackageAvailable())
@@ -131,7 +131,7 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(settings.Enabled);
                 Assert.AreEqual(RecordMode.Manual, settings.RecordMode);
                 
-                Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
+                UnityEngine.Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
             }
             finally
             {
@@ -144,7 +144,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly()
         {
-            Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト開始");
+            UnityEngine.Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト開始");
             
             // Skip test if FBX package is not available
             if (!FBXExportInfo.IsFBXPackageAvailable())
@@ -178,7 +178,7 @@ namespace BatchRenderingTool.Editor.Tests
                     Assert.IsFalse(value, "ExportGeometry should be false");
                 }
                 
-                Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト完了");
+                UnityEngine.Debug.Log("CreateFBXRecorderSettings_WithConfig_AppliesConfigCorrectly - テスト完了");
             }
             finally
             {
@@ -191,7 +191,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings()
         {
-            Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト開始");
+            UnityEngine.Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト開始");
             
             // Skip test if FBX package is not available
             if (!FBXExportInfo.IsFBXPackageAvailable())
@@ -222,7 +222,7 @@ namespace BatchRenderingTool.Editor.Tests
                 var bothSettings = RecorderSettingsFactory.CreateFBXRecorderSettings("TestFBX", bothPreset);
                 Assert.IsNotNull(bothSettings, "Model and animation export settings should not be null");
                 
-                Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト完了");
+                UnityEngine.Debug.Log("CreateFBXRecorderSettings_WithPreset_CreatesCorrectSettings - テスト完了");
             }
             finally
             {
@@ -235,7 +235,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void CreateImageRecorderSettings_HandlesSpecialCharactersInPath()
         {
-            Debug.Log("CreateImageRecorderSettings_HandlesSpecialCharactersInPath - テスト開始");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_HandlesSpecialCharactersInPath - テスト開始");
             
             string[] testPaths = {
                 "Test Output",
@@ -252,10 +252,10 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsNotNull(settings);
                 var imageSettings = settings as ImageRecorderSettings;
                 Assert.AreEqual(path, imageSettings.name);
-                Debug.Log($"CreateImageRecorderSettings_HandlesSpecialCharactersInPath - パス: '{path}' 確認OK");
+                UnityEngine.Debug.Log($"CreateImageRecorderSettings_HandlesSpecialCharactersInPath - パス: '{path}' 確認OK");
             }
             
-            Debug.Log("CreateImageRecorderSettings_HandlesSpecialCharactersInPath - テスト完了");
+            UnityEngine.Debug.Log("CreateImageRecorderSettings_HandlesSpecialCharactersInPath - テスト完了");
         }
     }
 }

@@ -15,7 +15,7 @@ namespace BatchRenderingTool.Editor.Tests
         [SetUp]
         public void Setup()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] Setup - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Setup - テスト開始");
             
             // テスト用GameObjectを作成
             testGameObject = new GameObject("TestAlembicObject");
@@ -33,7 +33,7 @@ namespace BatchRenderingTool.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] TearDown - テスト終了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] TearDown - テスト終了");
             
             if (testGameObject != null)
                 GameObject.DestroyImmediate(testGameObject);
@@ -42,10 +42,10 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void AlembicPackage_IsAvailable()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] AlembicPackage_IsAvailable - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] AlembicPackage_IsAvailable - テスト開始");
             
             bool isAvailable = AlembicExportInfo.IsAlembicPackageAvailable();
-            Debug.Log($"[AlembicRecorderSettingsTests] Alembic package available: {isAvailable}");
+            UnityEngine.Debug.Log($"[AlembicRecorderSettingsTests] Alembic package available: {isAvailable}");
             
             if (!isAvailable)
             {
@@ -56,13 +56,13 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(isAvailable, "Alembic package should be available");
             }
             
-            Debug.Log("[AlembicRecorderSettingsTests] AlembicPackage_IsAvailable - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] AlembicPackage_IsAvailable - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_Validate_WithValidConfig_ReturnsTrue()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithValidConfig - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithValidConfig - テスト開始");
             
             var config = new AlembicRecorderSettingsConfig
             {
@@ -87,13 +87,13 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(string.IsNullOrEmpty(errorMessage), "Error message should be empty for valid config");
             }
             
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithValidConfig - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithValidConfig - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_Validate_WithInvalidFrameRate_ReturnsFalse()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithInvalidFrameRate - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithInvalidFrameRate - テスト開始");
             
             var config = new AlembicRecorderSettingsConfig
             {
@@ -107,14 +107,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsFalse(isValid, "Config with zero frame rate should be invalid");
             Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
             
-            Debug.Log($"[AlembicRecorderSettingsTests] エラーメッセージ: {errorMessage}");
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithInvalidFrameRate - テスト完了");
+            UnityEngine.Debug.Log($"[AlembicRecorderSettingsTests] エラーメッセージ: {errorMessage}");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithInvalidFrameRate - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_Validate_WithNoExportTargets_ReturnsFalse()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithNoExportTargets - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithNoExportTargets - テスト開始");
             
             var config = new AlembicRecorderSettingsConfig
             {
@@ -128,14 +128,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsFalse(isValid, "Config with no export targets should be invalid");
             Assert.IsTrue(errorMessage.Contains("export target"), "Error message should mention export target");
             
-            Debug.Log($"[AlembicRecorderSettingsTests] エラーメッセージ: {errorMessage}");
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithNoExportTargets - テスト完了");
+            UnityEngine.Debug.Log($"[AlembicRecorderSettingsTests] エラーメッセージ: {errorMessage}");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithNoExportTargets - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_Validate_WithTargetGameObjectScope_RequiresGameObject()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithTargetGameObjectScope - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithTargetGameObjectScope - テスト開始");
             
             var config = new AlembicRecorderSettingsConfig
             {
@@ -160,13 +160,13 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(isValid, "Config with valid GameObject should be valid");
             }
             
-            Debug.Log("[AlembicRecorderSettingsTests] Validate_WithTargetGameObjectScope - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Validate_WithTargetGameObjectScope - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_GetExportObjects_EntireScene_ReturnsAllRootObjects()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_EntireScene - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_EntireScene - テスト開始");
             
             var config = new AlembicRecorderSettingsConfig
             {
@@ -177,14 +177,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsNotNull(objects, "Export objects list should not be null");
             Assert.Greater(objects.Count, 0, "Should return at least one object from scene");
             
-            Debug.Log($"[AlembicRecorderSettingsTests] Found {objects.Count} root objects in scene");
-            Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_EntireScene - テスト完了");
+            UnityEngine.Debug.Log($"[AlembicRecorderSettingsTests] Found {objects.Count} root objects in scene");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_EntireScene - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_GetExportObjects_TargetGameObject_ReturnsSpecificObject()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_TargetGameObject - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_TargetGameObject - テスト開始");
             
             var config = new AlembicRecorderSettingsConfig
             {
@@ -197,13 +197,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(1, objects.Count, "Should return exactly one object");
             Assert.AreEqual(testGameObject, objects[0], "Should return the target GameObject");
             
-            Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_TargetGameObject - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetExportObjects_TargetGameObject - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_Clone_CreatesIdenticalCopy()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト開始");
             
             var original = new AlembicRecorderSettingsConfig
             {
@@ -230,13 +230,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(original.exportUVs, clone.exportUVs, "Export UVs should match");
             Assert.AreEqual(original.exportNormals, clone.exportNormals, "Export normals should match");
             
-            Debug.Log("[AlembicRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_GetPreset_AnimationExport_ReturnsCorrectConfig()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] GetPreset_AnimationExport - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetPreset_AnimationExport - テスト開始");
             
             var config = AlembicRecorderSettingsConfig.GetPreset(AlembicExportPreset.AnimationExport);
             
@@ -246,13 +246,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(1, config.samplesPerFrame, "Should use 1 sample per frame");
             Assert.IsFalse(config.assumeUnchangedTopology, "Should not assume unchanged topology for animation");
             
-            Debug.Log("[AlembicRecorderSettingsTests] GetPreset_AnimationExport - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetPreset_AnimationExport - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_GetPreset_FullSceneExport_ReturnsCorrectConfig()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] GetPreset_FullSceneExport - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetPreset_FullSceneExport - テスト開始");
             
             var config = AlembicRecorderSettingsConfig.GetPreset(AlembicExportPreset.FullSceneExport);
             
@@ -263,13 +263,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(AlembicExportScope.EntireScene, config.exportScope, "Should use EntireScene scope");
             Assert.IsTrue(config.includeInactiveMeshes, "Should include inactive meshes");
             
-            Debug.Log("[AlembicRecorderSettingsTests] GetPreset_FullSceneExport - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] GetPreset_FullSceneExport - テスト完了");
         }
         
         [Test]
         public void AlembicRecorderSettingsConfig_CreateAlembicRecorderSettings_CreatesValidSettings()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] CreateAlembicRecorderSettings - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] CreateAlembicRecorderSettings - テスト開始");
             
             // Skip test if Alembic package is not available
             if (!AlembicExportInfo.IsAlembicPackageAvailable())
@@ -293,13 +293,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue(settings.Enabled, "Settings should be enabled");
             Assert.AreEqual(RecordMode.Manual, settings.RecordMode, "Should use Manual record mode");
             
-            Debug.Log("[AlembicRecorderSettingsTests] CreateAlembicRecorderSettings - テスト完了");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] CreateAlembicRecorderSettings - テスト完了");
         }
         
         [Test]
         public void AlembicExportTargets_Flags_CanCombineMultipleTargets()
         {
-            Debug.Log("[AlembicRecorderSettingsTests] AlembicExportTargets_Flags - テスト開始");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] AlembicExportTargets_Flags - テスト開始");
             
             var combined = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Camera | AlembicExportTargets.Transform;
             
@@ -308,8 +308,8 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue((combined & AlembicExportTargets.Transform) != 0, "Should include Transform");
             Assert.IsFalse((combined & AlembicExportTargets.Light) != 0, "Should not include Light");
             
-            Debug.Log($"[AlembicRecorderSettingsTests] Combined flags value: {combined}");
-            Debug.Log("[AlembicRecorderSettingsTests] AlembicExportTargets_Flags - テスト完了");
+            UnityEngine.Debug.Log($"[AlembicRecorderSettingsTests] Combined flags value: {combined}");
+            UnityEngine.Debug.Log("[AlembicRecorderSettingsTests] AlembicExportTargets_Flags - テスト完了");
         }
     }
 }

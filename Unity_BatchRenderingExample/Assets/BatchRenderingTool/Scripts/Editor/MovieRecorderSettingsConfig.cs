@@ -60,7 +60,7 @@ namespace BatchRenderingTool
             // Actual encoding quality is controlled by the system's media encoder
             if (videoBitrateMode == VideoBitrateMode.Low)
             {
-                Debug.Log($"Low quality mode selected (target bitrate: {customBitrate} kbps)");
+                UnityEngine.Debug.Log($"Low quality mode selected (target bitrate: {customBitrate} kbps)");
             }
             
             // Resolution

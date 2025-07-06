@@ -111,7 +111,7 @@ namespace BatchRenderingTool
             var settings = new List<RecorderSettings>();
             var selectedList = GetSelectedAOVsList();
             
-            Debug.Log($"[AOVRecorderSettingsConfig] Creating AOV settings for {selectedList.Count} selected AOVs");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsConfig] Creating AOV settings for {selectedList.Count} selected AOVs");
             
             // Note: The actual implementation depends on Unity Recorder's AOV API
             // This is a placeholder structure that would need to be adapted to the actual API
@@ -135,7 +135,7 @@ namespace BatchRenderingTool
             // Note: This is a conceptual implementation
             // The actual Unity Recorder AOV API might be different
             
-            Debug.Log($"[AOVRecorderSettingsConfig] Creating settings for AOV: {aovType}");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsConfig] Creating settings for AOV: {aovType}");
             
             // For now, we'll create ImageRecorderSettings as a placeholder
             // In actual implementation, this would use AOVRecorderSettings class

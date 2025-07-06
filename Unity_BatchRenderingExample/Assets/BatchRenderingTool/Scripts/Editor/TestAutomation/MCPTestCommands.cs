@@ -20,7 +20,7 @@ namespace BatchRenderingTool.TestAutomation
         {
             if (args == null) args = new Dictionary<string, string>();
             
-            Debug.Log($"[MCPTestCommands] コマンド実行: {command}");
+            UnityEngine.Debug.Log($"[MCPTestCommands] コマンド実行: {command}");
             
             switch (command.ToLower())
             {
@@ -57,7 +57,7 @@ namespace BatchRenderingTool.TestAutomation
                     break;
                     
                 default:
-                    Debug.LogError($"[MCPTestCommands] 不明なコマンド: {command}");
+                    UnityEngine.Debug.LogError($"[MCPTestCommands] 不明なコマンド: {command}");
                     ShowHelp();
                     break;
             }
@@ -68,7 +68,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ExecuteAllTests(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] すべてのテストを実行します");
+            UnityEngine.Debug.Log("[MCPTestCommands] すべてのテストを実行します");
             
             // オプション解析
             bool exportReport = GetBoolArg(args, "export", true);
@@ -90,7 +90,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ExecuteEditModeTests(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] Edit Modeテストを実行します");
+            UnityEngine.Debug.Log("[MCPTestCommands] Edit Modeテストを実行します");
             
             // フィルター設定
             string[] assemblies = GetArrayArg(args, "assemblies", new[] { "BatchRenderingTool.Editor.Tests" });
@@ -105,7 +105,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ExecutePlayModeTests(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] Play Modeテストを実行します");
+            UnityEngine.Debug.Log("[MCPTestCommands] Play Modeテストを実行します");
             
             // フィルター設定
             string[] assemblies = GetArrayArg(args, "assemblies", new[] { "BatchRenderingTool.Runtime.Tests" });
@@ -119,7 +119,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ExportTestResults(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] テスト結果をエクスポートします");
+            UnityEngine.Debug.Log("[MCPTestCommands] テスト結果をエクスポートします");
             
             // フォーマット指定
             string format = GetStringArg(args, "format", "all");
@@ -137,7 +137,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ExportTestResultsAsXML(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] テスト結果をNUnit XML形式でエクスポートします");
+            UnityEngine.Debug.Log("[MCPTestCommands] テスト結果をNUnit XML形式でエクスポートします");
             
             // 出力パスの設定
             string outputPath = GetStringArg(args, "output", null);
@@ -161,17 +161,17 @@ namespace BatchRenderingTool.TestAutomation
                 // Unity Test RunnerのExport Resultボタンを自動化
                 if (useNativeExport)
                 {
-                    Debug.Log("[MCPTestCommands] Unity Test RunnerのExport Resultボタンを自動実行します");
+                    UnityEngine.Debug.Log("[MCPTestCommands] Unity Test RunnerのExport Resultボタンを自動実行します");
                     
                     // 最新のテスト結果があるか確認
                     if (!HasTestResults())
                     {
-                        Debug.LogWarning("[MCPTestCommands] エクスポートするテスト結果がありません。");
+                        UnityEngine.Debug.LogWarning("[MCPTestCommands] エクスポートするテスト結果がありません。");
                         
                         // テストを実行してからエクスポート
                         if (GetBoolArg(args, "runfirst", true))
                         {
-                            Debug.Log("[MCPTestCommands] テストを実行してからエクスポートします");
+                            UnityEngine.Debug.Log("[MCPTestCommands] テストを実行してからエクスポートします");
                             TestRunnerExportAutomation.RunTestsAndAutoExport();
                             return;
                         }
@@ -185,11 +185,11 @@ namespace BatchRenderingTool.TestAutomation
                 else
                 {
                     // 従来の方法でエクスポート（互換性のため残す）
-                    Debug.Log("[MCPTestCommands] カスタムXMLエクスポーターを使用します");
+                    UnityEngine.Debug.Log("[MCPTestCommands] カスタムXMLエクスポーターを使用します");
                     TestRunnerXMLExporter.ExportFromTestRunner(Path.GetDirectoryName(outputPath));
                 }
                 
-                Debug.Log($"[MCPTestCommands] XML形式でエクスポート処理を開始しました");
+                UnityEngine.Debug.Log($"[MCPTestCommands] XML形式でエクスポート処理を開始しました");
                 
                 // エクスポート結果の確認（少し待機）
                 EditorApplication.delayCall += () =>
@@ -207,7 +207,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[MCPTestCommands] XMLエクスポートエラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[MCPTestCommands] XMLエクスポートエラー: {e.Message}");
             }
         }
         
@@ -216,13 +216,13 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void AnalyzeTestFailures(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] テスト失敗を分析します");
+            UnityEngine.Debug.Log("[MCPTestCommands] テスト失敗を分析します");
             
             // 最新のテスト結果を取得
             var results = GetLatestTestResults();
             if (results == null || results.Count == 0)
             {
-                Debug.LogWarning("分析するテスト結果がありません");
+                UnityEngine.Debug.LogWarning("分析するテスト結果がありません");
                 return;
             }
             
@@ -230,7 +230,7 @@ namespace BatchRenderingTool.TestAutomation
             var allFailures = results.SelectMany(r => r.failedTests).ToList();
             if (allFailures.Count == 0)
             {
-                Debug.Log("失敗したテストはありません");
+                UnityEngine.Debug.Log("失敗したテストはありません");
                 return;
             }
             
@@ -238,25 +238,25 @@ namespace BatchRenderingTool.TestAutomation
             var analyses = TestErrorAnalyzer.AnalyzeFailures(allFailures);
             
             // 分析結果を出力
-            Debug.Log("========================================");
-            Debug.Log("テスト失敗分析レポート");
-            Debug.Log("========================================");
-            Debug.Log(TestErrorAnalyzer.GenerateErrorSummary(analyses));
+            UnityEngine.Debug.Log("========================================");
+            UnityEngine.Debug.Log("テスト失敗分析レポート");
+            UnityEngine.Debug.Log("========================================");
+            UnityEngine.Debug.Log(TestErrorAnalyzer.GenerateErrorSummary(analyses));
             
             // 修正提案
-            Debug.Log("\n推奨される修正:");
+            UnityEngine.Debug.Log("\n推奨される修正:");
             var fixes = TestErrorAnalyzer.GetAllSuggestedFixes(analyses);
             foreach (var fix in fixes)
             {
-                Debug.Log($"  • {fix}");
+                UnityEngine.Debug.Log($"  • {fix}");
             }
             
             // 統計情報
             var stats = TestErrorAnalyzer.GetErrorStatistics(results);
-            Debug.Log("\nエラータイプ別統計:");
+            UnityEngine.Debug.Log("\nエラータイプ別統計:");
             foreach (var stat in stats.OrderByDescending(s => s.Value))
             {
-                Debug.Log($"  • {stat.Key}: {stat.Value}件");
+                UnityEngine.Debug.Log($"  • {stat.Key}: {stat.Value}件");
             }
         }
         
@@ -265,14 +265,14 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void CleanTestReports(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] 古いテストレポートをクリーンアップします");
+            UnityEngine.Debug.Log("[MCPTestCommands] 古いテストレポートをクリーンアップします");
             
             int daysToKeep = GetIntArg(args, "days", 7);
             string reportPath = GetStringArg(args, "path", "Assets/BatchRenderingTool/Tests/Reports");
             
             if (!Directory.Exists(reportPath))
             {
-                Debug.LogWarning($"レポートディレクトリが存在しません: {reportPath}");
+                UnityEngine.Debug.LogWarning($"レポートディレクトリが存在しません: {reportPath}");
                 return;
             }
             
@@ -289,16 +289,16 @@ namespace BatchRenderingTool.TestAutomation
                     {
                         File.Delete(file);
                         deletedCount++;
-                        Debug.Log($"削除: {Path.GetFileName(file)}");
+                        UnityEngine.Debug.Log($"削除: {Path.GetFileName(file)}");
                     }
                     catch (Exception e)
                     {
-                        Debug.LogError($"ファイル削除エラー: {file} - {e.Message}");
+                        UnityEngine.Debug.LogError($"ファイル削除エラー: {file} - {e.Message}");
                     }
                 }
             }
             
-            Debug.Log($"{deletedCount}個の古いレポートを削除しました");
+            UnityEngine.Debug.Log($"{deletedCount}個の古いレポートを削除しました");
         }
         
         /// <summary>
@@ -306,22 +306,22 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ShowTestStatus(Dictionary<string, string> args)
         {
-            Debug.Log("[MCPTestCommands] テスト実行状態を確認します");
+            UnityEngine.Debug.Log("[MCPTestCommands] テスト実行状態を確認します");
             
             // アセンブリ情報
-            Debug.Log("\n登録されているテストアセンブリ:");
-            Debug.Log("  • BatchRenderingTool.Editor.Tests (Edit Mode)");
-            Debug.Log("  • BatchRenderingTool.Runtime.Tests (Play Mode)");
+            UnityEngine.Debug.Log("\n登録されているテストアセンブリ:");
+            UnityEngine.Debug.Log("  • BatchRenderingTool.Editor.Tests (Edit Mode)");
+            UnityEngine.Debug.Log("  • BatchRenderingTool.Runtime.Tests (Play Mode)");
             
             // 最新の結果
             var latestResults = GetLatestTestResults();
             if (latestResults != null && latestResults.Count > 0)
             {
-                Debug.Log("\n最新のテスト結果:");
+                UnityEngine.Debug.Log("\n最新のテスト結果:");
                 foreach (var result in latestResults)
                 {
                     var status = result.success ? "✅ 成功" : "❌ 失敗";
-                    Debug.Log($"  • {result.assemblyName}: {status} (Pass: {result.passCount}, Fail: {result.failCount})");
+                    UnityEngine.Debug.Log($"  • {result.assemblyName}: {status} (Pass: {result.passCount}, Fail: {result.failCount})");
                 }
             }
             
@@ -336,11 +336,11 @@ namespace BatchRenderingTool.TestAutomation
                 
                 if (reports.Any())
                 {
-                    Debug.Log($"\n最近のレポート ({reports.Count}件):");
+                    UnityEngine.Debug.Log($"\n最近のレポート ({reports.Count}件):");
                     foreach (var report in reports)
                     {
                         var info = new FileInfo(report);
-                        Debug.Log($"  • {Path.GetFileName(report)} ({info.CreationTime:yyyy-MM-dd HH:mm})");
+                        UnityEngine.Debug.Log($"  • {Path.GetFileName(report)} ({info.CreationTime:yyyy-MM-dd HH:mm})");
                     }
                 }
             }
@@ -351,27 +351,27 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         private static void ShowHelp()
         {
-            Debug.Log("========================================");
-            Debug.Log("Unity Natural MCP テストコマンド");
-            Debug.Log("========================================");
-            Debug.Log("利用可能なコマンド:");
-            Debug.Log("  test:all         - すべてのテストを実行");
-            Debug.Log("  test:edit        - Edit Modeテストのみ実行");
-            Debug.Log("  test:play        - Play Modeテストのみ実行");
-            Debug.Log("  test:export      - テスト結果をエクスポート（全形式）");
-            Debug.Log("  test:export:xml  - NUnit XML形式でエクスポート（Test Runner標準）");
-            Debug.Log("  test:analyze     - テスト失敗を分析");
-            Debug.Log("  test:clean       - 古いレポートを削除");
-            Debug.Log("  test:status      - テスト状態を表示");
-            Debug.Log("\nオプション例:");
-            Debug.Log("  --export=true    レポートをエクスポート");
-            Debug.Log("  --format=html    出力フォーマット指定");
-            Debug.Log("  --output=path    出力パス指定");
-            Debug.Log("  --runfirst=true  テスト実行後にエクスポート");
-            Debug.Log("  --native=true    Unity Test RunnerのExport Resultボタンを自動化（デフォルト）");
-            Debug.Log("  --native=false   カスタムXMLエクスポーターを使用");
-            Debug.Log("  --days=7         保持日数指定");
-            Debug.Log("========================================");
+            UnityEngine.Debug.Log("========================================");
+            UnityEngine.Debug.Log("Unity Natural MCP テストコマンド");
+            UnityEngine.Debug.Log("========================================");
+            UnityEngine.Debug.Log("利用可能なコマンド:");
+            UnityEngine.Debug.Log("  test:all         - すべてのテストを実行");
+            UnityEngine.Debug.Log("  test:edit        - Edit Modeテストのみ実行");
+            UnityEngine.Debug.Log("  test:play        - Play Modeテストのみ実行");
+            UnityEngine.Debug.Log("  test:export      - テスト結果をエクスポート（全形式）");
+            UnityEngine.Debug.Log("  test:export:xml  - NUnit XML形式でエクスポート（Test Runner標準）");
+            UnityEngine.Debug.Log("  test:analyze     - テスト失敗を分析");
+            UnityEngine.Debug.Log("  test:clean       - 古いレポートを削除");
+            UnityEngine.Debug.Log("  test:status      - テスト状態を表示");
+            UnityEngine.Debug.Log("\nオプション例:");
+            UnityEngine.Debug.Log("  --export=true    レポートをエクスポート");
+            UnityEngine.Debug.Log("  --format=html    出力フォーマット指定");
+            UnityEngine.Debug.Log("  --output=path    出力パス指定");
+            UnityEngine.Debug.Log("  --runfirst=true  テスト実行後にエクスポート");
+            UnityEngine.Debug.Log("  --native=true    Unity Test RunnerのExport Resultボタンを自動化（デフォルト）");
+            UnityEngine.Debug.Log("  --native=false   カスタムXMLエクスポーターを使用");
+            UnityEngine.Debug.Log("  --days=7         保持日数指定");
+            UnityEngine.Debug.Log("========================================");
         }
         
         // ヘルパーメソッド
@@ -422,10 +422,10 @@ namespace BatchRenderingTool.TestAutomation
             
             if (files.Any())
             {
-                Debug.Log($"\nエクスポートされたファイル:");
+                UnityEngine.Debug.Log($"\nエクスポートされたファイル:");
                 foreach (var file in files)
                 {
-                    Debug.Log($"  • {Path.GetFileName(file)}");
+                    UnityEngine.Debug.Log($"  • {Path.GetFileName(file)}");
                 }
             }
         }
@@ -452,10 +452,10 @@ namespace BatchRenderingTool.TestAutomation
             {
                 // XMLファイルから統計情報を読み取り
                 var fileInfo = new FileInfo(xmlPath);
-                Debug.Log($"[MCPTestCommands] XMLエクスポート完了:");
-                Debug.Log($"  ファイル: {Path.GetFileName(xmlPath)}");
-                Debug.Log($"  サイズ: {fileInfo.Length / 1024.0:F2} KB");
-                Debug.Log($"  作成日時: {fileInfo.CreationTime:yyyy-MM-dd HH:mm:ss}");
+                UnityEngine.Debug.Log($"[MCPTestCommands] XMLエクスポート完了:");
+                UnityEngine.Debug.Log($"  ファイル: {Path.GetFileName(xmlPath)}");
+                UnityEngine.Debug.Log($"  サイズ: {fileInfo.Length / 1024.0:F2} KB");
+                UnityEngine.Debug.Log($"  作成日時: {fileInfo.CreationTime:yyyy-MM-dd HH:mm:ss}");
                 
                 // XML内容の簡易解析
                 var xmlContent = File.ReadAllText(xmlPath);
@@ -468,13 +468,13 @@ namespace BatchRenderingTool.TestAutomation
                     
                     if (passedMatch.Success && failedMatch.Success && totalMatch.Success)
                     {
-                        Debug.Log($"  テスト結果: Total={totalMatch.Groups[1].Value}, Passed={passedMatch.Groups[1].Value}, Failed={failedMatch.Groups[1].Value}");
+                        UnityEngine.Debug.Log($"  テスト結果: Total={totalMatch.Groups[1].Value}, Passed={passedMatch.Groups[1].Value}, Failed={failedMatch.Groups[1].Value}");
                     }
                 }
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[MCPTestCommands] XML統計情報の読み取りエラー: {e.Message}");
+                UnityEngine.Debug.LogWarning($"[MCPTestCommands] XML統計情報の読み取りエラー: {e.Message}");
             }
         }
         

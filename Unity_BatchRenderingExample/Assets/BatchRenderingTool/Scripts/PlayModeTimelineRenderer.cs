@@ -36,7 +36,7 @@ namespace BatchRenderingTool
         
         private void Awake()
         {
-            Debug.Log("[PlayModeTimelineRenderer] Awake called");
+            UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Awake called");
             DontDestroyOnLoad(gameObject);
             
             // Play Mode設定を保存して変更
@@ -47,7 +47,7 @@ namespace BatchRenderingTool
         
         private void Start()
         {
-            Debug.Log("[PlayModeTimelineRenderer] Start called");
+            UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Start called");
             StartCoroutine(WaitForRenderingData());
         }
         
@@ -66,7 +66,7 @@ namespace BatchRenderingTool
                 var renderingData = GameObject.Find("[RenderingData]");
                 if (renderingData != null)
                 {
-                    Debug.Log("[PlayModeTimelineRenderer] Found rendering data");
+                    UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Found rendering data");
                     var data = renderingData.GetComponent<RenderingData>();
                     if (data != null)
                     {
@@ -84,7 +84,7 @@ namespace BatchRenderingTool
         
         private IEnumerator StartRendering(RenderingData data)
         {
-            Debug.Log($"[PlayModeTimelineRenderer] Starting rendering - Director: {data.directorName}");
+            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Starting rendering - Director: {data.directorName}");
             
             currentState = State.Rendering;
             statusMessage = "Rendering in progress...";
@@ -113,7 +113,7 @@ namespace BatchRenderingTool
             renderingDirector.time = 0;
             renderingDirector.Play();
             
-            Debug.Log("[PlayModeTimelineRenderer] Started rendering");
+            UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Started rendering");
             
             // レンダリング進行状況を監視
             float timeout = data.duration + 10f;
@@ -136,7 +136,7 @@ namespace BatchRenderingTool
                 currentState = State.Complete;
                 statusMessage = "Rendering complete!";
                 progress = 1f;
-                Debug.Log("[PlayModeTimelineRenderer] Rendering completed successfully");
+                UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Rendering completed successfully");
                 
 #if UNITY_EDITOR
                 // 完了フラグを設定（SingleTimelineRenderer用）
@@ -168,7 +168,7 @@ namespace BatchRenderingTool
                     if (output.sourceObject is ControlTrack track)
                     {
                         renderingDirector.SetGenericBinding(track, targetDirector.gameObject);
-                        Debug.Log($"[PlayModeTimelineRenderer] Bound ControlTrack to {targetDirector.gameObject.name}");
+                        UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Bound ControlTrack to {targetDirector.gameObject.name}");
                         
                         if (!string.IsNullOrEmpty(data.exposedName))
                         {
@@ -185,7 +185,7 @@ namespace BatchRenderingTool
         {
             currentState = State.Error;
             statusMessage = message;
-            Debug.LogError($"[PlayModeTimelineRenderer] Error: {message}");
+            UnityEngine.Debug.LogError($"[PlayModeTimelineRenderer] Error: {message}");
             
             StartCoroutine(ErrorCleanup());
         }
@@ -198,7 +198,7 @@ namespace BatchRenderingTool
         
         private void Cleanup()
         {
-            Debug.Log("[PlayModeTimelineRenderer] Starting cleanup");
+            UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Starting cleanup");
             
             // 設定を元に戻す
             Application.runInBackground = originalRunInBackground;
@@ -215,7 +215,7 @@ namespace BatchRenderingTool
         
         private void OnDestroy()
         {
-            Debug.Log("[PlayModeTimelineRenderer] OnDestroy called");
+            UnityEngine.Debug.Log("[PlayModeTimelineRenderer] OnDestroy called");
             
             if (renderingDirector != null)
             {

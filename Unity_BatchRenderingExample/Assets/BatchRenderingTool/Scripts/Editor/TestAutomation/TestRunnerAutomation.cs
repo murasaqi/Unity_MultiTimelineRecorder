@@ -336,7 +336,7 @@ namespace BatchRenderingTool.TestAutomation
             {
                 if (GUILayout.Button("Show Stack Trace", GUILayout.Width(120)))
                 {
-                    Debug.LogError($"{failed.fullName}\n{failed.message}\n{failed.stackTrace}");
+                    UnityEngine.Debug.LogError($"{failed.fullName}\n{failed.message}\n{failed.stackTrace}");
                 }
             }
             
@@ -381,7 +381,7 @@ namespace BatchRenderingTool.TestAutomation
             currentTestIndex = 0;
             testResults.Clear();
             
-            Debug.Log("[TestRunnerAutomation] テスト実行を開始します");
+            UnityEngine.Debug.Log("[TestRunnerAutomation] テスト実行を開始します");
         }
 
         private void StopTestExecution()
@@ -390,7 +390,7 @@ namespace BatchRenderingTool.TestAutomation
             currentTestIndex = 0;
             statusMessage = "Stopped";
             
-            Debug.Log("[TestRunnerAutomation] テスト実行を停止しました");
+            UnityEngine.Debug.Log("[TestRunnerAutomation] テスト実行を停止しました");
         }
 
         private void OnEditorUpdate()
@@ -419,7 +419,7 @@ namespace BatchRenderingTool.TestAutomation
 
         private void RunSingleTest(TestRunConfiguration config)
         {
-            Debug.Log($"[TestRunnerAutomation] 単体テスト実行: {config.assemblyName} ({config.testMode})");
+            UnityEngine.Debug.Log($"[TestRunnerAutomation] 単体テスト実行: {config.assemblyName} ({config.testMode})");
             
             isRunning = true;
             statusMessage = $"実行中: {config.assemblyName}";
@@ -438,7 +438,7 @@ namespace BatchRenderingTool.TestAutomation
             // コンパイルエラーをチェック
             if (TestExecutionEngine.CheckCompileErrors(out var errors))
             {
-                Debug.LogError($"[TestRunnerAutomation] コンパイルエラーが検出されました: {string.Join("\n", errors)}");
+                UnityEngine.Debug.LogError($"[TestRunnerAutomation] コンパイルエラーが検出されました: {string.Join("\n", errors)}");
                 AddErrorResult(config, "コンパイルエラー", string.Join("\n", errors));
                 currentTestIndex++;
                 onComplete?.Invoke();
@@ -472,7 +472,7 @@ namespace BatchRenderingTool.TestAutomation
             if (!result.success && autoRetryFailed && config.retryCount < maxRetryCount)
             {
                 config.retryCount++;
-                Debug.Log($"[TestRunnerAutomation] テスト失敗。リトライ {config.retryCount}/{maxRetryCount}");
+                UnityEngine.Debug.Log($"[TestRunnerAutomation] テスト失敗。リトライ {config.retryCount}/{maxRetryCount}");
                 return; // リトライのため、インデックスを進めない
             }
             
@@ -480,7 +480,7 @@ namespace BatchRenderingTool.TestAutomation
             if (!result.success && !config.continueOnFailure)
             {
                 StopTestExecution();
-                Debug.LogError($"[TestRunnerAutomation] テスト失敗のため実行を停止しました: {config.assemblyName}");
+                UnityEngine.Debug.LogError($"[TestRunnerAutomation] テスト失敗のため実行を停止しました: {config.assemblyName}");
                 return;
             }
             
@@ -504,15 +504,15 @@ namespace BatchRenderingTool.TestAutomation
             int totalFail = testResults.Sum(r => r.failCount);
             int totalSkip = testResults.Sum(r => r.skipCount);
             
-            Debug.Log($"[TestRunnerAutomation] テスト実行完了 - Pass: {totalPass}, Fail: {totalFail}, Skip: {totalSkip}");
+            UnityEngine.Debug.Log($"[TestRunnerAutomation] テスト実行完了 - Pass: {totalPass}, Fail: {totalFail}, Skip: {totalSkip}");
             
             // 失敗があった場合は詳細を出力
             foreach (var result in testResults.Where(r => !r.success))
             {
-                Debug.LogError($"[TestRunnerAutomation] 失敗: {result.assemblyName} - {result.failCount}個のテストが失敗");
+                UnityEngine.Debug.LogError($"[TestRunnerAutomation] 失敗: {result.assemblyName} - {result.failCount}個のテストが失敗");
                 foreach (var failed in result.failedTests)
                 {
-                    Debug.LogError($"  - {failed.name}: {failed.message}");
+                    UnityEngine.Debug.LogError($"  - {failed.name}: {failed.message}");
                 }
             }
             
@@ -574,11 +574,11 @@ namespace BatchRenderingTool.TestAutomation
                 
                 var json = JsonUtility.ToJson(report, true);
                 System.IO.File.WriteAllText(path, json);
-                Debug.Log($"[TestRunnerAutomation] テストレポートを保存しました: {path}");
+                UnityEngine.Debug.Log($"[TestRunnerAutomation] テストレポートを保存しました: {path}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerAutomation] レポート保存エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestRunnerAutomation] レポート保存エラー: {e.Message}");
             }
         }
 
@@ -602,7 +602,7 @@ namespace BatchRenderingTool.TestAutomation
                 enabled = true
             });
             
-            Debug.Log($"[TestRunnerAutomation] {testConfigurations.Count}個のテストアセンブリを検出しました");
+            UnityEngine.Debug.Log($"[TestRunnerAutomation] {testConfigurations.Count}個のテストアセンブリを検出しました");
         }
 
         private void AddTestConfiguration()
@@ -682,7 +682,7 @@ namespace BatchRenderingTool.TestAutomation
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[TestRunnerAutomation] 設定の読み込みに失敗しました: {e.Message}");
+                    UnityEngine.Debug.LogError($"[TestRunnerAutomation] 設定の読み込みに失敗しました: {e.Message}");
                 }
             }
             

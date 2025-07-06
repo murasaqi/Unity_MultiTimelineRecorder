@@ -482,7 +482,7 @@ namespace BatchRenderingTool.DebugTools
             }
             #endif
             
-            Debug.Log($"[AOVDebugTool] HDRP Status: {(isHDRPActive ? "Active" : "Not Active")}, Version: {hdrpVersion}");
+            UnityEngine.Debug.Log($"[AOVDebugTool] HDRP Status: {(isHDRPActive ? "Active" : "Not Active")}, Version: {hdrpVersion}");
         }
         
         /// <summary>
@@ -491,11 +491,11 @@ namespace BatchRenderingTool.DebugTools
         private void DetectAvailableAOVs()
         {
             availableAOVTypes.Clear();
-            Debug.Log("[AOVDebugTool] Detecting available AOV types...");
+            UnityEngine.Debug.Log("[AOVDebugTool] Detecting available AOV types...");
             
             if (!isHDRPActive)
             {
-                Debug.LogError("[AOVDebugTool] HDRP is not active");
+                UnityEngine.Debug.LogError("[AOVDebugTool] HDRP is not active");
                 return;
             }
             
@@ -517,13 +517,13 @@ namespace BatchRenderingTool.DebugTools
                 if (type != null)
                 {
                     availableAOVTypes.Add(type.FullName);
-                    Debug.Log($"[AOVDebugTool] Found AOV type: {type.FullName}");
+                    UnityEngine.Debug.Log($"[AOVDebugTool] Found AOV type: {type.FullName}");
                 }
             }
             
             if (availableAOVTypes.Count == 0)
             {
-                Debug.LogWarning("[AOVDebugTool] No AOV types found. Make sure Unity Recorder is installed with HDRP support.");
+                UnityEngine.Debug.LogWarning("[AOVDebugTool] No AOV types found. Make sure Unity Recorder is installed with HDRP support.");
             }
         }
         
@@ -537,7 +537,7 @@ namespace BatchRenderingTool.DebugTools
             
             try
             {
-                Debug.Log("[AOVDebugTool] Starting single frame AOV test...");
+                UnityEngine.Debug.Log("[AOVDebugTool] Starting single frame AOV test...");
                 
                 // 設定の検証
                 string errorMessage;
@@ -561,7 +561,7 @@ namespace BatchRenderingTool.DebugTools
                 {
                     var aovStartTime = EditorApplication.timeSinceStartup;
                     
-                    Debug.Log($"[AOVDebugTool] Testing AOV: {aovType}");
+                    UnityEngine.Debug.Log($"[AOVDebugTool] Testing AOV: {aovType}");
                     
                     // 実際のレンダリングの代わりにダミーファイルを作成
                     string fileName = $"Test_AOV_{aovType}_Frame0000.{GetFormatExtension()}";
@@ -576,7 +576,7 @@ namespace BatchRenderingTool.DebugTools
                 
                 lastTestDuration = (float)(EditorApplication.timeSinceStartup - startTime);
                 
-                Debug.Log($"[AOVDebugTool] Single frame test completed in {lastTestDuration:F2} seconds");
+                UnityEngine.Debug.Log($"[AOVDebugTool] Single frame test completed in {lastTestDuration:F2} seconds");
                 EditorUtility.DisplayDialog("Test Complete", 
                     $"Single frame AOV test completed.\n\n" +
                     $"Output: {testOutputPath}\n" +
@@ -587,7 +587,7 @@ namespace BatchRenderingTool.DebugTools
             catch (Exception ex)
             {
                 errorLogs.Add($"Test failed: {ex.Message}");
-                Debug.LogError($"[AOVDebugTool] Test failed: {ex}");
+                UnityEngine.Debug.LogError($"[AOVDebugTool] Test failed: {ex}");
             }
         }
         
@@ -601,7 +601,7 @@ namespace BatchRenderingTool.DebugTools
             
             try
             {
-                Debug.Log($"[AOVDebugTool] Starting multi-frame AOV test ({testFrameCount} frames)...");
+                UnityEngine.Debug.Log($"[AOVDebugTool] Starting multi-frame AOV test ({testFrameCount} frames)...");
                 
                 // 設定の検証
                 string errorMessage;
@@ -620,7 +620,7 @@ namespace BatchRenderingTool.DebugTools
                     return;
                 }
                 
-                Debug.Log($"[AOVDebugTool] Created {recorderSettingsList.Count} recorder settings");
+                UnityEngine.Debug.Log($"[AOVDebugTool] Created {recorderSettingsList.Count} recorder settings");
                 
                 // 各設定にフレーム範囲を設定
                 foreach (var settings in recorderSettingsList)
@@ -643,7 +643,7 @@ namespace BatchRenderingTool.DebugTools
             catch (Exception ex)
             {
                 errorLogs.Add($"Multi-frame test failed: {ex.Message}");
-                Debug.LogError($"[AOVDebugTool] Multi-frame test failed: {ex}");
+                UnityEngine.Debug.LogError($"[AOVDebugTool] Multi-frame test failed: {ex}");
             }
         }
         
@@ -666,7 +666,7 @@ namespace BatchRenderingTool.DebugTools
                 return;
             }
             
-            Debug.Log($"[AOVDebugTool] Validating {exrFiles.Length} EXR files...");
+            UnityEngine.Debug.Log($"[AOVDebugTool] Validating {exrFiles.Length} EXR files...");
             
             int validFiles = 0;
             foreach (var file in exrFiles)
@@ -675,7 +675,7 @@ namespace BatchRenderingTool.DebugTools
                 if (fileInfo.Length > 0)
                 {
                     validFiles++;
-                    Debug.Log($"[AOVDebugTool] Valid: {Path.GetFileName(file)} ({fileInfo.Length / 1024f / 1024f:F2} MB)");
+                    UnityEngine.Debug.Log($"[AOVDebugTool] Valid: {Path.GetFileName(file)} ({fileInfo.Length / 1024f / 1024f:F2} MB)");
                 }
                 else
                 {

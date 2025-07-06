@@ -26,7 +26,7 @@ namespace BatchRenderingTool.TestAutomation
                 var testRunnerWindowType = Type.GetType("UnityEditor.TestTools.TestRunner.TestRunnerWindow, UnityEditor.TestRunner");
                 if (testRunnerWindowType == null)
                 {
-                    Debug.LogError("[TestRunnerExportAutomation] Test Runner Windowクラスが見つかりません");
+                    UnityEngine.Debug.LogError("[TestRunnerExportAutomation] Test Runner Windowクラスが見つかりません");
                     return;
                 }
                 
@@ -55,7 +55,7 @@ namespace BatchRenderingTool.TestAutomation
                 
                 if (testRunnerWindow == null)
                 {
-                    Debug.LogError("[TestRunnerExportAutomation] Test Runner Windowのインスタンスを取得できませんでした");
+                    UnityEngine.Debug.LogError("[TestRunnerExportAutomation] Test Runner Windowのインスタンスを取得できませんでした");
                     return;
                 }
                 
@@ -64,7 +64,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerExportAutomation] エラー: {e.Message}\n{e.StackTrace}");
+                UnityEngine.Debug.LogError($"[TestRunnerExportAutomation] エラー: {e.Message}\n{e.StackTrace}");
             }
         }
         
@@ -73,7 +73,7 @@ namespace BatchRenderingTool.TestAutomation
         /// </summary>
         public static void RunTestsAndAutoExport()
         {
-            Debug.Log("[TestRunnerExportAutomation] テストを実行してから結果をエクスポートします");
+            UnityEngine.Debug.Log("[TestRunnerExportAutomation] テストを実行してから結果をエクスポートします");
             
             // Test Runner APIのコールバックを登録
             var api = ScriptableObject.CreateInstance<TestRunnerApi>();
@@ -88,7 +88,7 @@ namespace BatchRenderingTool.TestAutomation
             isWaitingForResults = true;
             api.Execute(new ExecutionSettings(filter));
             
-            Debug.Log("[TestRunnerExportAutomation] テスト実行を開始しました。完了後に自動的にエクスポートされます。");
+            UnityEngine.Debug.Log("[TestRunnerExportAutomation] テスト実行を開始しました。完了後に自動的にエクスポートされます。");
         }
         
         /// <summary>
@@ -102,7 +102,7 @@ namespace BatchRenderingTool.TestAutomation
                 var selectedTestTypesField = windowType.GetField("m_SelectedTestTypes", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (selectedTestTypesField == null)
                 {
-                    Debug.LogWarning("[TestRunnerExportAutomation] m_SelectedTestTypesフィールドが見つかりません");
+                    UnityEngine.Debug.LogWarning("[TestRunnerExportAutomation] m_SelectedTestTypesフィールドが見つかりません");
                 }
                 
                 // ExportTestResults メソッドを探す（Unity 2021以降）
@@ -130,7 +130,7 @@ namespace BatchRenderingTool.TestAutomation
                 
                 if (exportMethod != null)
                 {
-                    Debug.Log($"[TestRunnerExportAutomation] Export Resultメソッドを実行します: {exportMethod.Name}");
+                    UnityEngine.Debug.Log($"[TestRunnerExportAutomation] Export Resultメソッドを実行します: {exportMethod.Name}");
                     
                     // 保存ダイアログを表示せずに自動保存する場合
                     var defaultPath = Path.Combine(Application.dataPath, "..", "TestResults");
@@ -156,11 +156,11 @@ namespace BatchRenderingTool.TestAutomation
                     }
                     else
                     {
-                        Debug.LogWarning($"[TestRunnerExportAutomation] 予期しないパラメータ: {parameters.Length}個");
+                        UnityEngine.Debug.LogWarning($"[TestRunnerExportAutomation] 予期しないパラメータ: {parameters.Length}個");
                         exportMethod.Invoke(testRunnerWindow, null);
                     }
                     
-                    Debug.Log($"[TestRunnerExportAutomation] エクスポート完了: {fullPath}");
+                    UnityEngine.Debug.Log($"[TestRunnerExportAutomation] エクスポート完了: {fullPath}");
                 }
                 else
                 {
@@ -170,7 +170,7 @@ namespace BatchRenderingTool.TestAutomation
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerExportAutomation] Export Result実行エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestRunnerExportAutomation] Export Result実行エラー: {e.Message}");
             }
         }
         
@@ -185,7 +185,7 @@ namespace BatchRenderingTool.TestAutomation
                 var guiMethod = windowType.GetMethod("OnGUI", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (guiMethod != null)
                 {
-                    Debug.Log("[TestRunnerExportAutomation] GUI操作によるエクスポートを試みます");
+                    UnityEngine.Debug.Log("[TestRunnerExportAutomation] GUI操作によるエクスポートを試みます");
                     
                     // EditorUtility.SaveFilePanelを使用して保存先を指定
                     var path = EditorUtility.SaveFilePanel(
@@ -201,18 +201,18 @@ namespace BatchRenderingTool.TestAutomation
                         if (lastTestResult != null)
                         {
                             SaveTestResultAsXML(lastTestResult, path);
-                            Debug.Log($"[TestRunnerExportAutomation] テスト結果を保存しました: {path}");
+                            UnityEngine.Debug.Log($"[TestRunnerExportAutomation] テスト結果を保存しました: {path}");
                         }
                         else
                         {
-                            Debug.LogWarning("[TestRunnerExportAutomation] エクスポートする最新のテスト結果がありません");
+                            UnityEngine.Debug.LogWarning("[TestRunnerExportAutomation] エクスポートする最新のテスト結果がありません");
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerExportAutomation] GUI操作エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestRunnerExportAutomation] GUI操作エラー: {e.Message}");
             }
         }
         
@@ -237,7 +237,7 @@ namespace BatchRenderingTool.TestAutomation
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"[TestRunnerExportAutomation] XmlResultWriter使用エラー: {e.Message}");
+                    UnityEngine.Debug.LogWarning($"[TestRunnerExportAutomation] XmlResultWriter使用エラー: {e.Message}");
                 }
             }
             
@@ -252,12 +252,12 @@ namespace BatchRenderingTool.TestAutomation
         {
             public void RunStarted(ITestAdaptor testsToRun)
             {
-                Debug.Log("[TestRunnerExportAutomation] テスト実行開始");
+                UnityEngine.Debug.Log("[TestRunnerExportAutomation] テスト実行開始");
             }
             
             public void RunFinished(ITestResultAdaptor result)
             {
-                Debug.Log("[TestRunnerExportAutomation] テスト実行完了");
+                UnityEngine.Debug.Log("[TestRunnerExportAutomation] テスト実行完了");
                 lastTestResult = result;
                 
                 if (isWaitingForResults)

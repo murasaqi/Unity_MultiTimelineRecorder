@@ -53,12 +53,12 @@ namespace BatchRenderingTool.TestAutomation
                 var xmlContent = GenerateNUnitXML();
                 File.WriteAllText(path, xmlContent);
                 
-                Debug.Log($"[TestRunnerXMLExporter] テスト結果をエクスポートしました: {path}");
+                UnityEngine.Debug.Log($"[TestRunnerXMLExporter] テスト結果をエクスポートしました: {path}");
                 EditorUtility.DisplayDialog("エクスポート完了", "テスト結果をXML形式でエクスポートしました。", "OK");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerXMLExporter] エクスポートエラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestRunnerXMLExporter] エクスポートエラー: {e.Message}");
                 EditorUtility.DisplayDialog("エラー", $"エクスポート中にエラーが発生しました:\n{e.Message}", "OK");
             }
         }
@@ -85,11 +85,11 @@ namespace BatchRenderingTool.TestAutomation
             {
                 var xmlContent = GenerateNUnitXML();
                 File.WriteAllText(fullPath, xmlContent);
-                Debug.Log($"[TestRunnerXMLExporter] Test results exported to: {fullPath}");
+                UnityEngine.Debug.Log($"[TestRunnerXMLExporter] Test results exported to: {fullPath}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerXMLExporter] Export failed: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestRunnerXMLExporter] Export failed: {e.Message}");
             }
         }
         
@@ -303,12 +303,12 @@ namespace BatchRenderingTool.TestAutomation
         {
             public void RunStarted(ITestAdaptor testsToRun)
             {
-                Debug.Log("[TestRunnerXMLExporter] Test run started");
+                UnityEngine.Debug.Log("[TestRunnerXMLExporter] Test run started");
             }
             
             public void RunFinished(ITestResultAdaptor result)
             {
-                Debug.Log("[TestRunnerXMLExporter] Test run finished");
+                UnityEngine.Debug.Log("[TestRunnerXMLExporter] Test run finished");
                 lastTestResult = result;
             }
             

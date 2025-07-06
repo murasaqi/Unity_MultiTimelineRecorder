@@ -53,11 +53,11 @@ namespace BatchRenderingTool.TestAutomation
                         break;
                 }
                 
-                Debug.Log($"[TestReportGenerator] レポートを生成しました: {outputPath}");
+                UnityEngine.Debug.Log($"[TestReportGenerator] レポートを生成しました: {outputPath}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestReportGenerator] レポート生成エラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestReportGenerator] レポート生成エラー: {e.Message}");
             }
         }
         

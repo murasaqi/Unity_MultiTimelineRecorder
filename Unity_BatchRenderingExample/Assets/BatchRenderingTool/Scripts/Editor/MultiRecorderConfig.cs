@@ -263,7 +263,7 @@ namespace BatchRenderingTool
                 
                 // Movie Recorder
                 var movieItem = CreateDefaultRecorder(RecorderSettingsType.Movie);
-                movieItem.movieConfig = MovieRecorderSettingsConfig.GetPreset(MovieRecorderPreset.HD_H264);
+                movieItem.movieConfig = MovieRecorderSettingsConfig.GetPreset(MovieRecorderPreset.HighQuality1080p);
                 config.AddRecorder(movieItem);
                 
                 // Image Sequence
@@ -292,7 +292,7 @@ namespace BatchRenderingTool
                 // Preview Movie
                 var movieItem = CreateDefaultRecorder(RecorderSettingsType.Movie);
                 movieItem.name = "Preview Movie";
-                movieItem.movieConfig = MovieRecorderSettingsConfig.GetPreset(MovieRecorderPreset.HD_H264);
+                movieItem.movieConfig = MovieRecorderSettingsConfig.GetPreset(MovieRecorderPreset.HighQuality1080p);
                 config.AddRecorder(movieItem);
                 
                 return config;

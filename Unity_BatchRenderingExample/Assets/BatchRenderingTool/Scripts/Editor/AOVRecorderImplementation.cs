@@ -52,7 +52,7 @@ Unity Recorder 5.1.2でのAOV実装方法:
                 // HDRPチェック
                 if (!AOVTypeInfo.IsHDRPAvailable())
                 {
-                    Debug.LogWarning("[AOVRecorder] HDRP is not available. AOV recording requires HDRP.");
+                    UnityEngine.Debug.LogWarning("[AOVRecorder] HDRP is not available. AOV recording requires HDRP.");
                     return settingsList;
                 }
                 
@@ -97,7 +97,7 @@ Unity Recorder 5.1.2でのAOV実装方法:
                     
                     settingsList.Add(settings);
                     
-                    Debug.Log($"[AOVRecorder] Created fallback settings for AOV type: {aovType}");
+                    UnityEngine.Debug.Log($"[AOVRecorder] Created fallback settings for AOV type: {aovType}");
                 }
                 
                 return settingsList;

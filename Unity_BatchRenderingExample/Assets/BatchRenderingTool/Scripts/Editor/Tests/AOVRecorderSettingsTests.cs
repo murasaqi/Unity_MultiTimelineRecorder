@@ -11,7 +11,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void AOVTypeInfo_IsHDRPAvailable_ReturnsCorrectValue()
         {
-            Debug.Log("[AOVRecorderSettingsTests] IsHDRPAvailable - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] IsHDRPAvailable - テスト開始");
             
             bool isAvailable = AOVTypeInfo.IsHDRPAvailable();
             
@@ -21,14 +21,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsFalse(isAvailable, "HDRP should not be available when UNITY_PIPELINE_HDRP is not defined");
             #endif
             
-            Debug.Log($"[AOVRecorderSettingsTests] HDRP available: {isAvailable}");
-            Debug.Log("[AOVRecorderSettingsTests] IsHDRPAvailable - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] HDRP available: {isAvailable}");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] IsHDRPAvailable - テスト完了");
         }
         
         [Test]
         public void AOVTypeInfo_GetInfo_ReturnsValidInfoForAllTypes()
         {
-            Debug.Log("[AOVRecorderSettingsTests] GetInfo_ReturnsValidInfoForAllTypes - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] GetInfo_ReturnsValidInfoForAllTypes - テスト開始");
             
             var aovTypes = System.Enum.GetValues(typeof(AOVType));
             int validInfoCount = 0;
@@ -46,19 +46,19 @@ namespace BatchRenderingTool.Editor.Tests
                     Assert.IsTrue(info.RequiresHDRP, $"RequiresHDRP should be true for {aovType}");
                     validInfoCount++;
                     
-                    Debug.Log($"[AOVRecorderSettingsTests] {aovType}: {info.DisplayName} - {info.Category}");
+                    UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] {aovType}: {info.DisplayName} - {info.Category}");
                 }
             }
             
             Assert.Greater(validInfoCount, 0, "At least one AOV type should have valid info");
-            Debug.Log($"[AOVRecorderSettingsTests] Valid info found for {validInfoCount} AOV types");
-            Debug.Log("[AOVRecorderSettingsTests] GetInfo_ReturnsValidInfoForAllTypes - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] Valid info found for {validInfoCount} AOV types");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] GetInfo_ReturnsValidInfoForAllTypes - テスト完了");
         }
         
         [Test]
         public void AOVTypeInfo_GetAOVsByCategory_ReturnsGroupedAOVs()
         {
-            Debug.Log("[AOVRecorderSettingsTests] GetAOVsByCategory - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] GetAOVsByCategory - テスト開始");
             
             var aovsByCategory = AOVTypeInfo.GetAOVsByCategory();
             
@@ -73,17 +73,17 @@ namespace BatchRenderingTool.Editor.Tests
                 if (aovsByCategory.ContainsKey(category))
                 {
                     Assert.Greater(aovsByCategory[category].Count, 0, $"Category '{category}' should have at least one AOV type");
-                    Debug.Log($"[AOVRecorderSettingsTests] Category '{category}' has {aovsByCategory[category].Count} AOV types");
+                    UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] Category '{category}' has {aovsByCategory[category].Count} AOV types");
                 }
             }
             
-            Debug.Log("[AOVRecorderSettingsTests] GetAOVsByCategory - テスト完了");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] GetAOVsByCategory - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_Validate_WithoutHDRP_ReturnsFalse()
         {
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithoutHDRP - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithoutHDRP - テスト開始");
             
             var config = new AOVRecorderSettingsConfig
             {
@@ -107,14 +107,14 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(string.IsNullOrEmpty(errorMessage), "Error message should be empty with HDRP");
             }
             
-            Debug.Log($"[AOVRecorderSettingsTests] Validation result: {isValid}, Message: {errorMessage}");
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithoutHDRP - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] Validation result: {isValid}, Message: {errorMessage}");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithoutHDRP - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_Validate_WithNoSelectedAOVs_ReturnsFalse()
         {
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithNoSelectedAOVs - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithNoSelectedAOVs - テスト開始");
             
             var config = new AOVRecorderSettingsConfig
             {
@@ -129,14 +129,14 @@ namespace BatchRenderingTool.Editor.Tests
             
             Assert.IsFalse(isValid, "Should be invalid with no selected AOVs");
             
-            Debug.Log($"[AOVRecorderSettingsTests] エラーメッセージ: {errorMessage}");
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithNoSelectedAOVs - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] エラーメッセージ: {errorMessage}");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithNoSelectedAOVs - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_Validate_WithInvalidResolution_ReturnsFalse()
         {
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithInvalidResolution - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithInvalidResolution - テスト開始");
             
             // Skip if HDRP is not available
             if (!AOVTypeInfo.IsHDRPAvailable())
@@ -167,13 +167,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsFalse(isValid, "Should be invalid with excessive resolution");
             Assert.IsTrue(errorMessage.Contains("exceeds maximum"), "Error message should mention maximum resolution");
             
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithInvalidResolution - テスト完了");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithInvalidResolution - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_Validate_WithCustomPassButNoName_ReturnsFalse()
         {
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithCustomPassButNoName - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithCustomPassButNoName - テスト開始");
             
             // Skip if HDRP is not available
             if (!AOVTypeInfo.IsHDRPAvailable())
@@ -207,13 +207,13 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(isValid, "Should be valid with custom pass name provided");
             }
             
-            Debug.Log("[AOVRecorderSettingsTests] Validate_WithCustomPassButNoName - テスト完了");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Validate_WithCustomPassButNoName - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_GetSelectedAOVsList_ReturnsCorrectList()
         {
-            Debug.Log("[AOVRecorderSettingsTests] GetSelectedAOVsList - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] GetSelectedAOVsList - テスト開始");
             
             var config = new AOVRecorderSettingsConfig
             {
@@ -228,14 +228,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue(selectedList.Contains(AOVType.Normal), "Should contain Normal");
             Assert.IsTrue(selectedList.Contains(AOVType.Albedo), "Should contain Albedo");
             
-            Debug.Log($"[AOVRecorderSettingsTests] Selected AOVs: {string.Join(", ", selectedList)}");
-            Debug.Log("[AOVRecorderSettingsTests] GetSelectedAOVsList - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] Selected AOVs: {string.Join(", ", selectedList)}");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] GetSelectedAOVsList - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_Clone_CreatesIdenticalCopy()
         {
-            Debug.Log("[AOVRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト開始");
             
             var original = new AOVRecorderSettingsConfig
             {
@@ -264,13 +264,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(original.flipVertical, clone.flipVertical, "Flip vertical should match");
             Assert.AreEqual(original.customPassName, clone.customPassName, "Custom pass name should match");
             
-            Debug.Log("[AOVRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト完了");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Clone_CreatesIdenticalCopy - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_Presets_ReturnValidConfigurations()
         {
-            Debug.Log("[AOVRecorderSettingsTests] Presets_ReturnValidConfigurations - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Presets_ReturnValidConfigurations - テスト開始");
             
             // Compositingプリセット
             var compositing = AOVRecorderSettingsConfig.Presets.GetCompositing();
@@ -298,14 +298,14 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue(material.selectedAOVs.HasFlag(AOVType.Albedo), "MaterialProperties should include Albedo");
             Assert.IsTrue(material.selectedAOVs.HasFlag(AOVType.Metal), "MaterialProperties should include Metal");
             
-            Debug.Log("[AOVRecorderSettingsTests] All presets validated successfully");
-            Debug.Log("[AOVRecorderSettingsTests] Presets_ReturnValidConfigurations - テスト完了");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] All presets validated successfully");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] Presets_ReturnValidConfigurations - テスト完了");
         }
         
         [Test]
         public void AOVRecorderSettingsConfig_CreateAOVRecorderSettings_CreatesMultipleSettings()
         {
-            Debug.Log("[AOVRecorderSettingsTests] CreateAOVRecorderSettings - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] CreateAOVRecorderSettings - テスト開始");
             
             var config = new AOVRecorderSettingsConfig
             {
@@ -329,14 +329,14 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsTrue(settings.Enabled, "Settings should be enabled");
             }
             
-            Debug.Log($"[AOVRecorderSettingsTests] Created {settingsList.Count} AOV recorder settings");
-            Debug.Log("[AOVRecorderSettingsTests] CreateAOVRecorderSettings - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] Created {settingsList.Count} AOV recorder settings");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] CreateAOVRecorderSettings - テスト完了");
         }
         
         [Test]
         public void AOVType_Flags_CanCombineMultipleTypes()
         {
-            Debug.Log("[AOVRecorderSettingsTests] AOVType_Flags - テスト開始");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] AOVType_Flags - テスト開始");
             
             var combined = AOVType.Depth | AOVType.Normal | AOVType.Albedo;
             
@@ -349,8 +349,8 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreNotEqual(AOVType.None, combined, "Combined should not equal None");
             Assert.AreNotEqual(0, (int)combined, "Combined should have non-zero value");
             
-            Debug.Log($"[AOVRecorderSettingsTests] Combined flags value: {combined} ({(int)combined})");
-            Debug.Log("[AOVRecorderSettingsTests] AOVType_Flags - テスト完了");
+            UnityEngine.Debug.Log($"[AOVRecorderSettingsTests] Combined flags value: {combined} ({(int)combined})");
+            UnityEngine.Debug.Log("[AOVRecorderSettingsTests] AOVType_Flags - テスト完了");
         }
     }
 }

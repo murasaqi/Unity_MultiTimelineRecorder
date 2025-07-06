@@ -9,7 +9,7 @@ namespace BatchRenderingTool.Editor.Tests
         [Test]
         public void Validate_WithValidConfig_ReturnsTrue()
         {
-            Debug.Log("Validate_WithValidConfig_ReturnsTrue - テスト開始");
+            UnityEngine.Debug.Log("Validate_WithValidConfig_ReturnsTrue - テスト開始");
             
             var testGameObject = new GameObject("TestObject");
             var config = new FBXRecorderSettingsConfig
@@ -23,21 +23,21 @@ namespace BatchRenderingTool.Editor.Tests
             };
             
             string errorMessage;
-            Debug.Log($"Validate_WithValidConfig_ReturnsTrue - Config: targetGameObject={config.targetGameObject?.name ?? "null"}, frameRate={config.frameRate}");
+            UnityEngine.Debug.Log($"Validate_WithValidConfig_ReturnsTrue - Config: targetGameObject={config.targetGameObject?.name ?? "null"}, frameRate={config.frameRate}");
             bool isValid = config.Validate(out errorMessage);
-            Debug.Log($"Validate_WithValidConfig_ReturnsTrue - Validation result: isValid={isValid}, errorMessage='{errorMessage}'");
+            UnityEngine.Debug.Log($"Validate_WithValidConfig_ReturnsTrue - Validation result: isValid={isValid}, errorMessage='{errorMessage}'");
             
             Assert.IsTrue(isValid, $"Valid config should return true. Error: '{errorMessage}'");
             Assert.IsTrue(string.IsNullOrEmpty(errorMessage), $"Error message should be empty for valid config. Actual: '{errorMessage}'");
             
             GameObject.DestroyImmediate(testGameObject);
-            Debug.Log("Validate_WithValidConfig_ReturnsTrue - テスト完了");
+            UnityEngine.Debug.Log("Validate_WithValidConfig_ReturnsTrue - テスト完了");
         }
         
         [Test]
         public void Validate_WithInvalidFrameRate_ReturnsFalse()
         {
-            Debug.Log("Validate_WithInvalidFrameRate_ReturnsFalse - テスト開始");
+            UnityEngine.Debug.Log("Validate_WithInvalidFrameRate_ReturnsFalse - テスト開始");
             
             var testGameObject = new GameObject("TestObject");
             var config = new FBXRecorderSettingsConfig
@@ -51,23 +51,23 @@ namespace BatchRenderingTool.Editor.Tests
             };
             
             string errorMessage;
-            Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - Config: targetGameObject={config.targetGameObject?.name ?? "null"}, frameRate={config.frameRate}");
+            UnityEngine.Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - Config: targetGameObject={config.targetGameObject?.name ?? "null"}, frameRate={config.frameRate}");
             bool isValid = config.Validate(out errorMessage);
-            Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - Validation result: isValid={isValid}, errorMessage='{errorMessage}'");
+            UnityEngine.Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - Validation result: isValid={isValid}, errorMessage='{errorMessage}'");
             
             Assert.IsFalse(isValid, "Config with zero frame rate should be invalid");
             Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
             Assert.IsTrue(errorMessage.Contains("Frame rate") || errorMessage.Contains("frame rate"), $"Error message should mention frame rate. Actual message: '{errorMessage}'");
             
-            Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - エラーメッセージ: {errorMessage}");
+            UnityEngine.Debug.Log($"Validate_WithInvalidFrameRate_ReturnsFalse - エラーメッセージ: {errorMessage}");
             GameObject.DestroyImmediate(testGameObject);
-            Debug.Log("Validate_WithInvalidFrameRate_ReturnsFalse - テスト完了");
+            UnityEngine.Debug.Log("Validate_WithInvalidFrameRate_ReturnsFalse - テスト完了");
         }
         
         [Test]
         public void Validate_WithSourceButNoDestination_ReturnsFalse()
         {
-            Debug.Log("Validate_WithSourceButNoDestination_ReturnsFalse - テスト開始");
+            UnityEngine.Debug.Log("Validate_WithSourceButNoDestination_ReturnsFalse - テスト開始");
             
             var testGameObject = new GameObject("TestObject");
             try
@@ -91,20 +91,20 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
                 Assert.IsTrue(errorMessage.Contains("destination"), $"Error message should mention destination. Actual message: '{errorMessage}'");
                 
-                Debug.Log($"Validate_WithSourceButNoDestination_ReturnsFalse - エラーメッセージ: {errorMessage}");
+                UnityEngine.Debug.Log($"Validate_WithSourceButNoDestination_ReturnsFalse - エラーメッセージ: {errorMessage}");
             }
             finally
             {
                 GameObject.DestroyImmediate(testGameObject);
             }
             
-            Debug.Log("Validate_WithSourceButNoDestination_ReturnsFalse - テスト完了");
+            UnityEngine.Debug.Log("Validate_WithSourceButNoDestination_ReturnsFalse - テスト完了");
         }
         
         [Test]
         public void Validate_WithSameSourceAndDestination_ReturnsFalse()
         {
-            Debug.Log("Validate_WithSameSourceAndDestination_ReturnsFalse - テスト開始");
+            UnityEngine.Debug.Log("Validate_WithSameSourceAndDestination_ReturnsFalse - テスト開始");
             
             var testGameObject = new GameObject("TestObject");
             try
@@ -128,20 +128,20 @@ namespace BatchRenderingTool.Editor.Tests
                 Assert.IsFalse(string.IsNullOrEmpty(errorMessage), "Error message should not be empty");
                 Assert.IsTrue(errorMessage.Contains("same"), $"Error message should mention they are the same. Actual message: '{errorMessage}'");
                 
-                Debug.Log($"Validate_WithSameSourceAndDestination_ReturnsFalse - エラーメッセージ: {errorMessage}");
+                UnityEngine.Debug.Log($"Validate_WithSameSourceAndDestination_ReturnsFalse - エラーメッセージ: {errorMessage}");
             }
             finally
             {
                 GameObject.DestroyImmediate(testGameObject);
             }
             
-            Debug.Log("Validate_WithSameSourceAndDestination_ReturnsFalse - テスト完了");
+            UnityEngine.Debug.Log("Validate_WithSameSourceAndDestination_ReturnsFalse - テスト完了");
         }
         
         [Test]
         public void GetPreset_AnimationExport_ReturnsCorrectConfig()
         {
-            Debug.Log("GetPreset_AnimationExport_ReturnsCorrectConfig - テスト開始");
+            UnityEngine.Debug.Log("GetPreset_AnimationExport_ReturnsCorrectConfig - テスト開始");
             
             var config = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.AnimationExport);
             
@@ -149,13 +149,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsFalse(config.exportGeometry, "Animation export should not export geometry");
             Assert.AreEqual(24f, config.frameRate, "Default frame rate should be 24");
             
-            Debug.Log("GetPreset_AnimationExport_ReturnsCorrectConfig - テスト完了");
+            UnityEngine.Debug.Log("GetPreset_AnimationExport_ReturnsCorrectConfig - テスト完了");
         }
         
         [Test]
         public void GetPreset_ModelExport_ReturnsCorrectConfig()
         {
-            Debug.Log("GetPreset_ModelExport_ReturnsCorrectConfig - テスト開始");
+            UnityEngine.Debug.Log("GetPreset_ModelExport_ReturnsCorrectConfig - テスト開始");
             
             var config = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.ModelExport);
             
@@ -163,13 +163,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue(config.exportGeometry, "Model export should export geometry");
             Assert.AreEqual(24f, config.frameRate, "Default frame rate should be 24");
             
-            Debug.Log("GetPreset_ModelExport_ReturnsCorrectConfig - テスト完了");
+            UnityEngine.Debug.Log("GetPreset_ModelExport_ReturnsCorrectConfig - テスト完了");
         }
         
         [Test]
         public void GetPreset_ModelAndAnimation_ReturnsCorrectConfig()
         {
-            Debug.Log("GetPreset_ModelAndAnimation_ReturnsCorrectConfig - テスト開始");
+            UnityEngine.Debug.Log("GetPreset_ModelAndAnimation_ReturnsCorrectConfig - テスト開始");
             
             var config = FBXRecorderSettingsConfig.GetPreset(FBXExportPreset.ModelAndAnimation);
             
@@ -177,13 +177,13 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.IsTrue(config.exportGeometry, "Model and animation export should export geometry");
             Assert.AreEqual(24f, config.frameRate, "Default frame rate should be 24");
             
-            Debug.Log("GetPreset_ModelAndAnimation_ReturnsCorrectConfig - テスト完了");
+            UnityEngine.Debug.Log("GetPreset_ModelAndAnimation_ReturnsCorrectConfig - テスト完了");
         }
         
         [Test]
         public void CreateFBXRecorderSettings_CreatesValidSettings()
         {
-            Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト開始");
+            UnityEngine.Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト開始");
             
             // Skip test if FBX package is not available
             if (!FBXExportInfo.IsFBXPackageAvailable())
@@ -210,7 +210,7 @@ namespace BatchRenderingTool.Editor.Tests
             Assert.AreEqual(30f, settings.FrameRate, "Frame rate should match config");
             
             GameObject.DestroyImmediate(testGameObject);
-            Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
+            UnityEngine.Debug.Log("CreateFBXRecorderSettings_CreatesValidSettings - テスト完了");
         }
     }
 }

@@ -134,12 +134,12 @@ namespace BatchRenderingTool.TestAutomation
                 var xmlContent = GenerateNUnitXMLFromResults();
                 File.WriteAllText(path, xmlContent);
                 
-                Debug.Log($"[TestRunnerIntegration] テスト結果をエクスポートしました: {path}");
+                UnityEngine.Debug.Log($"[TestRunnerIntegration] テスト結果をエクスポートしました: {path}");
                 EditorUtility.DisplayDialog("エクスポート完了", $"テスト結果をエクスポートしました:\n{path}", "OK");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TestRunnerIntegration] エクスポートエラー: {e.Message}");
+                UnityEngine.Debug.LogError($"[TestRunnerIntegration] エクスポートエラー: {e.Message}");
                 EditorUtility.DisplayDialog("エラー", $"エクスポート中にエラーが発生しました:\n{e.Message}", "OK");
             }
         }
@@ -339,14 +339,14 @@ namespace BatchRenderingTool.TestAutomation
         // ICallbacks実装
         public void RunStarted(ITestAdaptor testsToRun)
         {
-            Debug.Log("[TestRunnerIntegration] テスト実行を開始しました");
+            UnityEngine.Debug.Log("[TestRunnerIntegration] テスト実行を開始しました");
             isRunning = true;
             testResults.Clear();
         }
         
         public void RunFinished(ITestResultAdaptor result)
         {
-            Debug.Log($"[TestRunnerIntegration] テスト実行が完了しました - {ConvertTestStatus(result.TestStatus)}");
+            UnityEngine.Debug.Log($"[TestRunnerIntegration] テスト実行が完了しました - {ConvertTestStatus(result.TestStatus)}");
             rootResult = result;
             isRunning = false;
         }

@@ -17,7 +17,7 @@ namespace BatchRenderingTool.Editor.Tests
         /// </summary>
         public static TimelineAsset CreateTestTimeline(string name = "TestTimeline")
         {
-            Debug.Log($"TestHelpers - テスト用Timeline作成: {name}");
+            UnityEngine.Debug.Log($"TestHelpers - テスト用Timeline作成: {name}");
             var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             timeline.name = name;
             return timeline;
@@ -28,7 +28,7 @@ namespace BatchRenderingTool.Editor.Tests
         /// </summary>
         public static GameObject CreateTestDirectorGameObject(string name = "TestDirector")
         {
-            Debug.Log($"TestHelpers - テスト用Director GameObject作成: {name}");
+            UnityEngine.Debug.Log($"TestHelpers - テスト用Director GameObject作成: {name}");
             var go = new GameObject(name);
             var director = go.AddComponent<PlayableDirector>();
             return go;
@@ -48,7 +48,7 @@ namespace BatchRenderingTool.Editor.Tests
         
         public static TestRecorderConfig CreateTestRecorderConfig()
         {
-            Debug.Log("TestHelpers - テスト用RecorderConfig作成");
+            UnityEngine.Debug.Log("TestHelpers - テスト用RecorderConfig作成");
             return new TestRecorderConfig();
         }
 
@@ -61,7 +61,7 @@ namespace BatchRenderingTool.Editor.Tests
             if (!Directory.Exists(testFolder))
             {
                 Directory.CreateDirectory(testFolder);
-                Debug.Log($"TestHelpers - テスト出力フォルダ作成: {testFolder}");
+                UnityEngine.Debug.Log($"TestHelpers - テスト出力フォルダ作成: {testFolder}");
             }
             return testFolder;
         }
@@ -74,7 +74,7 @@ namespace BatchRenderingTool.Editor.Tests
             if (Directory.Exists(folderPath))
             {
                 Directory.Delete(folderPath, true);
-                Debug.Log($"TestHelpers - テスト出力フォルダ削除: {folderPath}");
+                UnityEngine.Debug.Log($"TestHelpers - テスト出力フォルダ削除: {folderPath}");
             }
         }
 
@@ -86,7 +86,7 @@ namespace BatchRenderingTool.Editor.Tests
             if (EditorApplication.isPlaying)
             {
                 EditorApplication.isPlaying = false;
-                Debug.Log("TestHelpers - PlayMode終了");
+                UnityEngine.Debug.Log("TestHelpers - PlayMode終了");
             }
         }
 
@@ -95,7 +95,7 @@ namespace BatchRenderingTool.Editor.Tests
         /// </summary>
         public static T AddTestTrack<T>(TimelineAsset timeline, string trackName) where T : TrackAsset, new()
         {
-            Debug.Log($"TestHelpers - テスト用トラック追加: {trackName} (Type: {typeof(T).Name})");
+            UnityEngine.Debug.Log($"TestHelpers - テスト用トラック追加: {trackName} (Type: {typeof(T).Name})");
             var track = timeline.CreateTrack<T>(null, trackName);
             return track;
         }
@@ -105,7 +105,7 @@ namespace BatchRenderingTool.Editor.Tests
         /// </summary>
         public static TimelineClip CreateMockRecorderClip(TimelineAsset timeline, double duration = 5.0)
         {
-            Debug.Log($"TestHelpers - モックRecorderClip作成 (Duration: {duration}s)");
+            UnityEngine.Debug.Log($"TestHelpers - モックRecorderClip作成 (Duration: {duration}s)");
             
             // AnimationTrackを使用してモッククリップを作成
             var track = timeline.CreateTrack<AnimationTrack>(null, "MockRecorderTrack");
@@ -130,7 +130,7 @@ namespace BatchRenderingTool.Editor.Tests
         [SetUp]
         public virtual void BaseSetup()
         {
-            Debug.Log($"{GetType().Name} - 基底セットアップ開始");
+            UnityEngine.Debug.Log($"{GetType().Name} - 基底セットアップ開始");
             
             // PlayModeを確実に終了
             TestHelpers.SafeExitPlayMode();
@@ -144,13 +144,13 @@ namespace BatchRenderingTool.Editor.Tests
             // テスト用出力フォルダを作成
             testOutputFolder = TestHelpers.CreateTestOutputFolder($"TestOutput_{System.Guid.NewGuid()}");
             
-            Debug.Log($"{GetType().Name} - 基底セットアップ完了");
+            UnityEngine.Debug.Log($"{GetType().Name} - 基底セットアップ完了");
         }
 
         [TearDown]
         public virtual void BaseTearDown()
         {
-            Debug.Log($"{GetType().Name} - 基底クリーンアップ開始");
+            UnityEngine.Debug.Log($"{GetType().Name} - 基底クリーンアップ開始");
             
             // PlayModeを確実に終了
             TestHelpers.SafeExitPlayMode();
@@ -172,7 +172,7 @@ namespace BatchRenderingTool.Editor.Tests
                 TestHelpers.CleanupTestOutputFolder(testOutputFolder);
             }
             
-            Debug.Log($"{GetType().Name} - 基底クリーンアップ完了");
+            UnityEngine.Debug.Log($"{GetType().Name} - 基底クリーンアップ完了");
         }
     }
 }
