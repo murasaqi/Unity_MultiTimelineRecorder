@@ -156,6 +156,12 @@ namespace BatchRenderingTool.RecorderEditors
                 return false;
             
             // FBX-specific validation
+            if (host.fbxTargetGameObject == null)
+            {
+                errorMessage = "Target GameObject must be set for FBX recording";
+                return false;
+            }
+            
             if (host.fbxTransferAnimationSource != null && host.fbxTransferAnimationDest == null)
             {
                 errorMessage = "Animation destination transform must be set when source is specified";

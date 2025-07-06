@@ -1800,6 +1800,10 @@ namespace BatchRenderingTool
                 // Create custom configuration
                 config = new FBXRecorderSettingsConfig
                 {
+                    targetGameObject = fbxTargetGameObject,
+                    recordHierarchy = fbxRecordHierarchy,
+                    clampedTangents = fbxClampedTangents,
+                    animationCompression = fbxAnimationCompression,
                     exportGeometry = fbxExportGeometry,
                     transferAnimationSource = fbxTransferAnimationSource,
                     transferAnimationDest = fbxTransferAnimationDest,

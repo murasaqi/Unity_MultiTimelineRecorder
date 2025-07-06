@@ -353,7 +353,13 @@ namespace BatchRenderingTool
             // Create default FBX configuration
             var config = new FBXRecorderSettingsConfig
             {
+                targetGameObject = null,
+                recordHierarchy = true,
+                clampedTangents = true,
+                animationCompression = FBXAnimationCompressionLevel.Lossy,
                 exportGeometry = true,
+                transferAnimationSource = null,
+                transferAnimationDest = null,
                 frameRate = 24f
             };
             

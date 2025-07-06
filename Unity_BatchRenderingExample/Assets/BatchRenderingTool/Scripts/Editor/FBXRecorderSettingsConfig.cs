@@ -23,6 +23,13 @@ namespace BatchRenderingTool
         {
             errorMessage = string.Empty;
             
+            // targetGameObject is required for FBX recording
+            if (targetGameObject == null)
+            {
+                errorMessage = "Target GameObject must be set for FBX recording";
+                return false;
+            }
+            
             if (frameRate <= 0)
             {
                 errorMessage = "Frame rate must be greater than 0";
@@ -65,26 +72,54 @@ namespace BatchRenderingTool
                 case FBXExportPreset.AnimationExport:
                     return new FBXRecorderSettingsConfig
                     {
+                        targetGameObject = null,
+                        recordHierarchy = true,
+                        clampedTangents = true,
+                        animationCompression = FBXAnimationCompressionLevel.Lossy,
                         exportGeometry = false,
+                        transferAnimationSource = null,
+                        transferAnimationDest = null,
                         frameRate = 24f
                     };
                     
                 case FBXExportPreset.ModelExport:
                     return new FBXRecorderSettingsConfig
                     {
+                        targetGameObject = null,
+                        recordHierarchy = true,
+                        clampedTangents = true,
+                        animationCompression = FBXAnimationCompressionLevel.Lossy,
                         exportGeometry = true,
+                        transferAnimationSource = null,
+                        transferAnimationDest = null,
                         frameRate = 24f
                     };
                     
                 case FBXExportPreset.ModelAndAnimation:
                     return new FBXRecorderSettingsConfig
                     {
+                        targetGameObject = null,
+                        recordHierarchy = true,
+                        clampedTangents = true,
+                        animationCompression = FBXAnimationCompressionLevel.Lossy,
                         exportGeometry = true,
+                        transferAnimationSource = null,
+                        transferAnimationDest = null,
                         frameRate = 24f
                     };
                     
                 default:
-                    return new FBXRecorderSettingsConfig();
+                    return new FBXRecorderSettingsConfig
+                    {
+                        targetGameObject = null,
+                        recordHierarchy = true,
+                        clampedTangents = true,
+                        animationCompression = FBXAnimationCompressionLevel.Lossy,
+                        exportGeometry = true,
+                        transferAnimationSource = null,
+                        transferAnimationDest = null,
+                        frameRate = 24f
+                    };
             }
         }
         
