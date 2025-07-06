@@ -136,9 +136,15 @@ namespace BatchRenderingTool
                 var settings = RecorderClipUtility.CreateProperRecorderSettings("FbxRecorderSettings");
                 if (settings == null)
                 {
-                    BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Failed to create FBX recorder settings - RecorderClipUtility returned null");
-                    BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Please ensure the Unity FBX Exporter package (com.unity.formats.fbx) is installed");
-                    return null;
+                    BatchRenderingToolLogger.LogWarning("[FBXRecorderSettingsConfig] CreateProperRecorderSettings failed, trying CreateProperFBXRecorderSettings...");
+                    settings = RecorderClipUtility.CreateProperFBXRecorderSettings(name);
+                    
+                    if (settings == null)
+                    {
+                        BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Failed to create FBX recorder settings - all methods failed");
+                        BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Please ensure the Unity FBX Exporter package (com.unity.formats.fbx) is installed");
+                        return null;
+                    }
                 }
                 
                 settings.name = name;

@@ -47,6 +47,11 @@ namespace BatchRenderingTool.DebugTools
                 TestAnimationInputSettings();
             }
             
+            if (GUILayout.Button("Test FBX Package Detection"))
+            {
+                TestFBXPackageDetection();
+            }
+            
             if (GUILayout.Button("Clear Logs"))
             {
                 debugLogs.Clear();
@@ -292,6 +297,90 @@ namespace BatchRenderingTool.DebugTools
                 {
                     AddLog($"  {prop.Name}: (unable to read)");
                 }
+            }
+        }
+        
+        private void TestFBXPackageDetection()
+        {
+            debugLogs.Clear();
+            AddLog("=== Testing FBX Package Detection ===");
+            
+            // Check if FBX package is installed
+            AddLog("Checking FBX Package installation...");
+            bool isFBXInstalled = FBXExportInfo.IsFBXPackageAvailable();
+            AddLog($"FBX Package Available: {isFBXInstalled}");
+            
+            // List all FBX-related assemblies
+            AddLog("\n--- FBX-related Assemblies ---");
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly.FullName.Contains("Fbx") || assembly.FullName.Contains("FBX"))
+                {
+                    AddLog($"Assembly: {assembly.FullName}");
+                    
+                    // Try to list recorder-related types
+                    try
+                    {
+                        var types = assembly.GetTypes();
+                        foreach (var type in types)
+                        {
+                            if (type.Name.Contains("Recorder") || type.Name.Contains("Settings"))
+                            {
+                                AddLog($"  Type: {type.FullName}");
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        AddLog($"  Error listing types: {e.Message}");
+                    }
+                }
+            }
+            
+            // Try each known FBX recorder type name
+            AddLog("\n--- Testing FBX Recorder Type Names ---");
+            var typeNames = new[]
+            {
+                "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor",
+                "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                "UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                "Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime",
+                "UnityEditor.Formats.Fbx.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                "UnityEditor.Formats.Fbx.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
+                "UnityEditor.Recorder.FbxRecorderSettings, Unity.Recorder.Editor"
+            };
+            
+            foreach (var typeName in typeNames)
+            {
+                var type = System.Type.GetType(typeName);
+                if (type != null)
+                {
+                    AddLog($"✓ Found: {typeName}");
+                    AddLog($"  Assembly: {type.Assembly.FullName}");
+                }
+                else
+                {
+                    AddLog($"✗ Not found: {typeName}");
+                }
+            }
+            
+            // Test direct creation
+            AddLog("\n--- Testing Direct FBX Recorder Creation ---");
+            try
+            {
+                var settings = RecorderClipUtility.CreateProperFBXRecorderSettings("TestFBX");
+                if (settings != null)
+                {
+                    AddLog($"✓ Successfully created FBX recorder: {settings.GetType().FullName}");
+                }
+                else
+                {
+                    AddLog("✗ Failed to create FBX recorder settings");
+                }
+            }
+            catch (Exception e)
+            {
+                AddLog($"✗ Exception during creation: {e.Message}");
             }
         }
         
