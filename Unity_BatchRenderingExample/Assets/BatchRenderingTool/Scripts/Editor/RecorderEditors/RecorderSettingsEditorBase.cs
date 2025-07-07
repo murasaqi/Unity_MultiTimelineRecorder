@@ -20,34 +20,34 @@ namespace BatchRenderingTool.RecorderEditors
         public virtual void DrawRecorderSettings()
         {
             // Input section
-            inputFoldout = RecorderUIHelper.DrawHeaderFoldout(inputFoldout, "Input");
+            inputFoldout = EditorGUILayout.Foldout(inputFoldout, "Input");
             if (inputFoldout)
             {
-                RecorderUIHelper.BeginIndentedSection();
+                EditorGUI.indentLevel++;
                 DrawInputSettings();
-                RecorderUIHelper.EndIndentedSection();
+                EditorGUI.indentLevel--;
             }
             
-            RecorderUIHelper.DrawSeparator();
+            GUILayout.Space(10);
             
             // Output Format section
-            outputFormatFoldout = RecorderUIHelper.DrawHeaderFoldout(outputFormatFoldout, "Output Format");
+            outputFormatFoldout = EditorGUILayout.Foldout(outputFormatFoldout, "Output Format");
             if (outputFormatFoldout)
             {
-                RecorderUIHelper.BeginIndentedSection();
+                EditorGUI.indentLevel++;
                 DrawOutputFormatSettings();
-                RecorderUIHelper.EndIndentedSection();
+                EditorGUI.indentLevel--;
             }
             
-            RecorderUIHelper.DrawSeparator();
+            GUILayout.Space(10);
             
             // Output File section
-            outputFileFoldout = RecorderUIHelper.DrawHeaderFoldout(outputFileFoldout, "Output File");
+            outputFileFoldout = EditorGUILayout.Foldout(outputFileFoldout, "Output File");
             if (outputFileFoldout)
             {
-                RecorderUIHelper.BeginIndentedSection();
+                EditorGUI.indentLevel++;
                 DrawOutputFileSettings();
-                RecorderUIHelper.EndIndentedSection();
+                EditorGUI.indentLevel--;
             }
         }
         
@@ -97,30 +97,10 @@ namespace BatchRenderingTool.RecorderEditors
                 GUI.changed = true;
             }
             
-            // Help button
-            if (GUILayout.Button("?", GUILayout.Width(20)))
-            {
-                WildcardHelpUtility.ShowWildcardHelp();
-            }
-            
-            // Wildcards dropdown button
-            if (GUILayout.Button("+ Wildcards ▼", GUILayout.Width(100)))
-            {
-                ShowWildcardsMenu();
-            }
             EditorGUILayout.EndHorizontal();
             
-            // Validate filename pattern and show warning if needed
-            string validationError;
-            RecorderSettingsType recorderType = GetRecorderType();
-            if (!WildcardHelpUtility.ValidateFilenamePattern(host.fileName, recorderType, out validationError))
-            {
-                EditorGUILayout.HelpBox(validationError, MessageType.Warning);
-            }
-            
             // Show example output
-            string example = WildcardHelpUtility.GetExampleOutput(host.fileName, recorderType);
-            EditorGUILayout.LabelField("Example:", example, EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Example: Scene1_Image_001.png", EditorStyles.miniLabel);
             
             // Path field with browse button
             EditorGUILayout.BeginHorizontal();

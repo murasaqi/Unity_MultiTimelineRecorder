@@ -29,12 +29,10 @@ namespace BatchRenderingTool.RecorderEditors
                 typeof(GameObject), 
                 true);
             
-            // Recorded Components dropdown (currently Camera only)
-            EditorGUI.BeginDisabledGroup(true); // Disable for now as only Camera is supported
+            // Recorded Components dropdown
             host.fbxRecordedComponent = (FBXRecordedComponent)EditorGUILayout.EnumPopup(
                 "Recorded Components", 
-                FBXRecordedComponent.Camera);
-            EditorGUI.EndDisabledGroup();
+                host.fbxRecordedComponent);
             
             // Record Hierarchy checkbox
             host.fbxRecordHierarchy = EditorGUILayout.Toggle("Record Hierarchy", host.fbxRecordHierarchy);

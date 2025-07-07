@@ -101,7 +101,7 @@ namespace BatchRenderingTool
                 config.recorderType = newType;
                 
                 // Update file name pattern when type changes
-                config.fileName = WildcardHelpUtility.GetRecommendedPattern(newType);
+                config.fileName = "<Scene>_<Recorder>_<Take>";
                 
                 // Ensure <Frame> wildcard for sequence types
                 if ((newType == RecorderSettingsType.Image || newType == RecorderSettingsType.AOV) 

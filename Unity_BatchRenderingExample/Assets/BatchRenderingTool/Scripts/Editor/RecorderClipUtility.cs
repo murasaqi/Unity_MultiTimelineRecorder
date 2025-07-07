@@ -58,7 +58,6 @@ namespace BatchRenderingTool
                     if (currentType != expectedType)
                     {
                         s_SetRecorderTypeMethod.Invoke(clip, new object[] { expectedType });
-                        BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Set recorder type from {currentType} to {expectedType}");
                     }
                 }
             }
@@ -211,45 +210,7 @@ namespace BatchRenderingTool
                 var clipType = clip.GetType();
                 var settingsType = settings.GetType();
                 
-                // Log available fields on RecorderClip
-                BatchRenderingToolLogger.LogVerbose("[RecorderClipUtility] RecorderClip fields:");
-                var clipFields = clipType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
-                foreach (var field in clipFields)
-                {
-                    BatchRenderingToolLogger.LogVerbose($"  - {field.Name} ({field.FieldType.Name})");
-                }
-                
-                // Check if settings has any GameObject reference
-                var settingsFields = settingsType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
-                GameObject targetGameObject = null;
-                foreach (var field in settingsFields)
-                {
-                    if (field.FieldType == typeof(GameObject))
-                    {
-                        var value = field.GetValue(settings) as GameObject;
-                        if (value != null)
-                        {
-                            targetGameObject = value;
-                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Found GameObject in settings field {field.Name}: {targetGameObject.name}");
-                            break;
-                        }
-                    }
-                }
-                
-                // If we found a target GameObject, try to set it on the clip
-                if (targetGameObject != null)
-                {
-                    foreach (var field in clipFields)
-                    {
-                        if (field.FieldType == typeof(GameObject) || 
-                            field.Name.ToLower().Contains("target") || 
-                            field.Name.ToLower().Contains("gameobject"))
-                        {
-                            field.SetValue(clip, targetGameObject);
-                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Set RecorderClip field {field.Name} to {targetGameObject.name}");
-                        }
-                    }
-                }
+                // Simplified: Just try to apply settings without excessive logging
             }
             catch (System.Exception e)
             {

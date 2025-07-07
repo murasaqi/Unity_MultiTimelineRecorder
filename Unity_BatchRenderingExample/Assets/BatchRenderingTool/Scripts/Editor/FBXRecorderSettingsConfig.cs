@@ -307,8 +307,6 @@ namespace BatchRenderingTool
                 
                 BatchRenderingToolLogger.LogVerbose("[FBXRecorderSettingsConfig] FBX recorder settings created successfully");
                 
-                // Debug the structure to understand how Unity's FBX Recorder works
-                DebugFBXRecorderStructure(settings);
                 
                 return settings;
             }
@@ -409,71 +407,5 @@ namespace BatchRenderingTool
             };
         }
         
-        /// <summary>
-        /// Debug method to analyze FBX Recorder structure
-        /// </summary>
-        public static void DebugFBXRecorderStructure(RecorderSettings settings)
-        {
-            if (settings == null)
-                return;
-                
-            BatchRenderingToolLogger.Log("[FBXRecorderSettingsConfig] === DEBUG: Analyzing FBX Recorder Structure ===");
-            
-            var settingsType = settings.GetType();
-            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Settings Type: {settingsType.FullName}");
-            
-            // Check for RecordedComponent at settings level
-            var allSettingsProps = settingsType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            foreach (var prop in allSettingsProps)
-            {
-                if (prop.Name.ToLower().Contains("recorded") || prop.Name.ToLower().Contains("component"))
-                {
-                    try
-                    {
-                        var value = prop.GetValue(settings);
-                        BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Settings Property {prop.Name}: {value} (Type: {prop.PropertyType.Name})");
-                    }
-                    catch { }
-                }
-            }
-            
-            // Check AnimationInputSettings
-            var animInputProp = settingsType.GetProperty("AnimationInputSettings");
-            if (animInputProp != null)
-            {
-                var animInput = animInputProp.GetValue(settings);
-                if (animInput != null)
-                {
-                    var animType = animInput.GetType();
-                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] AnimationInputSettings Type: {animType.FullName}");
-                    
-                    // Check all properties
-                    var animProps = animType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    foreach (var prop in animProps)
-                    {
-                        try
-                        {
-                            var value = prop.GetValue(animInput);
-                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] AnimInputSettings.{prop.Name}: {value} (Type: {prop.PropertyType.Name})");
-                        }
-                        catch { }
-                    }
-                    
-                    // Check fields too
-                    var animFields = animType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    foreach (var field in animFields)
-                    {
-                        try
-                        {
-                            var value = field.GetValue(animInput);
-                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] AnimInputSettings Field {field.Name}: {value} (Type: {field.FieldType.Name})");
-                        }
-                        catch { }
-                    }
-                }
-            }
-            
-            BatchRenderingToolLogger.Log("[FBXRecorderSettingsConfig] === END DEBUG ===");
-        }
     }
 }

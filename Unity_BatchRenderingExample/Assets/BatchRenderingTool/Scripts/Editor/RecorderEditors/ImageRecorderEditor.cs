@@ -59,12 +59,7 @@ namespace BatchRenderingTool.RecorderEditors
             switch (host.imageOutputFormat)
             {
                 case ImageRecorderSettings.ImageRecorderOutputFormat.JPEG:
-                    RecorderUIHelper.DrawPropertyWithHelp(
-                        "JPEG Quality",
-                        "Lower values produce smaller files but lower quality",
-                        MessageType.None,
-                        () => host.jpegQuality = EditorGUILayout.IntSlider("Quality", host.jpegQuality, 1, 100)
-                    );
+                    host.jpegQuality = EditorGUILayout.IntSlider("Quality", host.jpegQuality, 1, 100);
                     break;
                     
                 case ImageRecorderSettings.ImageRecorderOutputFormat.EXR:

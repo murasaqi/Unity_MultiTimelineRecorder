@@ -101,7 +101,7 @@ namespace BatchRenderingTool
             {
                 recorderType = type,
                 configName = GetDefaultName(type),
-                fileName = WildcardHelpUtility.GetRecommendedPattern(type)
+                fileName = "<Scene>_<Recorder>_<Take>"
             };
             
             // Set type-specific defaults

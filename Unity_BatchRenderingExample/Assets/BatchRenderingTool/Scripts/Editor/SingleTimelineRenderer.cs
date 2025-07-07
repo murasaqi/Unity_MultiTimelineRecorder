@@ -58,6 +58,10 @@ namespace BatchRenderingTool
         public int takeNumber = 1;
         public int preRollFrames = 0; // Pre-roll frames for simulation warm-up
         
+        // Debug settings
+        public bool debugMode = false; // Keep generated assets for debugging
+        private string lastGeneratedAssetPath = null; // Track the last generated asset
+        
         // Image recorder settings
         public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
         public bool imageCaptureAlpha = false;
@@ -226,7 +230,7 @@ namespace BatchRenderingTool
             // Initialize file name with default template if empty
             if (string.IsNullOrEmpty(fileName))
             {
-                fileName = WildcardHelpUtility.GetRecommendedPattern(recorderType);
+                fileName = "<Scene>_<Recorder>_<Take>";
             }
             
             // Ensure <Frame> wildcard is present for image sequence types
@@ -266,7 +270,10 @@ namespace BatchRenderingTool
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Detected rendering in progress in Play Mode");
             }
             
-            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}");
+            // Restore debug mode setting
+            debugMode = EditorPrefs.GetBool("STR_DebugMode", false);
+            
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}, DebugMode: {debugMode}");
         }
         
         private void OnDisable()
@@ -311,6 +318,9 @@ namespace BatchRenderingTool
                 EditorGUILayout.Space(10);
                 
                 DrawStatusSection();
+                EditorGUILayout.Space(10);
+                
+                DrawDebugSettings();
             }
             finally
             {
@@ -404,8 +414,7 @@ namespace BatchRenderingTool
                 recorderType = newRecorderType;
                 
                 // Update default file name when recorder type changes
-                // Use recommended pattern for each recorder type
-                fileName = WildcardHelpUtility.GetRecommendedPattern(newRecorderType);
+                fileName = "<Scene>_<Recorder>_<Take>";
                 
                 // Create appropriate editor instance
                 UpdateRecorderEditor();
@@ -606,6 +615,126 @@ namespace BatchRenderingTool
             }
             
             EditorGUILayout.EndVertical();
+        }
+        
+        private void DrawDebugSettings()
+        {
+            EditorGUILayout.LabelField("Debug Settings", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            // Debug mode toggle
+            EditorGUI.BeginChangeCheck();
+            debugMode = EditorGUILayout.Toggle("Keep Generated Assets", debugMode);
+            if (EditorGUI.EndChangeCheck())
+            {
+                // Save preference
+                EditorPrefs.SetBool("STR_DebugMode", debugMode);
+            }
+            
+            if (debugMode)
+            {
+                EditorGUILayout.HelpBox("Debug Mode Active: Generated Timeline assets and GameObjects will not be deleted after rendering.", MessageType.Info);
+                
+                // Show last generated asset if available
+                if (!string.IsNullOrEmpty(lastGeneratedAssetPath))
+                {
+                    EditorGUILayout.Space(5);
+                    EditorGUILayout.LabelField("Last Generated Asset:", EditorStyles.miniBoldLabel);
+                    
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField(lastGeneratedAssetPath);
+                    
+                    if (GUILayout.Button("Select", GUILayout.Width(60)))
+                    {
+                        var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(lastGeneratedAssetPath);
+                        if (asset != null)
+                        {
+                            Selection.activeObject = asset;
+                            EditorGUIUtility.PingObject(asset);
+                        }
+                        else
+                        {
+                            BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Could not find asset at: {lastGeneratedAssetPath}");
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                
+                // Clean up debug assets button
+                EditorGUILayout.Space(10);
+                EditorGUILayout.BeginHorizontal();
+                
+                if (GUILayout.Button("Clean Debug Assets", GUILayout.Height(25)))
+                {
+                    CleanDebugAssets();
+                }
+                
+                if (GUILayout.Button("Open Temp Folder", GUILayout.Height(25)))
+                {
+                    string tempPath = Application.dataPath + "/BatchRenderingTool/Temp";
+                    if (Directory.Exists(tempPath))
+                    {
+                        EditorUtility.RevealInFinder(tempPath);
+                    }
+                    else
+                    {
+                        BatchRenderingToolLogger.LogWarning("[SingleTimelineRenderer] Temp folder does not exist.");
+                    }
+                }
+                
+                EditorGUILayout.EndHorizontal();
+            }
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        private void CleanDebugAssets()
+        {
+            if (EditorUtility.DisplayDialog("Clean Debug Assets",
+                "This will delete all [DEBUG] prefixed assets in the Temp folder. Continue?",
+                "Yes", "Cancel"))
+            {
+                string tempDir = "Assets/BatchRenderingTool/Temp";
+                if (AssetDatabase.IsValidFolder(tempDir))
+                {
+                    var guids = AssetDatabase.FindAssets("t:Object", new[] { tempDir });
+                    int deletedCount = 0;
+                    
+                    foreach (var guid in guids)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
+                        
+                        if (asset != null && asset.name.StartsWith("[DEBUG]"))
+                        {
+                            AssetDatabase.DeleteAsset(path);
+                            deletedCount++;
+                        }
+                    }
+                    
+                    // Also clean up debug GameObjects in the scene
+                    var debugObjects = GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
+                        .Where(go => go.name.StartsWith("[DEBUG]"))
+                        .ToArray();
+                    
+                    foreach (var obj in debugObjects)
+                    {
+                        DestroyImmediate(obj);
+                        deletedCount++;
+                    }
+                    
+                    AssetDatabase.Refresh();
+                    
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Cleaned {deletedCount} debug assets and objects.");
+                    
+                    // Clear the last generated asset path if it was deleted
+                    if (!string.IsNullOrEmpty(lastGeneratedAssetPath) && 
+                        AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(lastGeneratedAssetPath) == null)
+                    {
+                        lastGeneratedAssetPath = null;
+                    }
+                }
+            }
         }
         
         private void ScanTimelines()
@@ -1163,10 +1292,7 @@ namespace BatchRenderingTool
                 }
                 
                 // FBXRecorderPatchを適用
-                Patches.FBXRecorderPatch.ValidateFBXRecorderClip(recorderClip);
-                
-                // FBXレコーダーの診断情報を出力
-                Workarounds.FBXRecorderWorkaround.DiagnoseFBXRecorderIssue(recorderSettings);
+                // FBX clip validation completed
                 
                 BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX configuration complete - clipIn: {recorderClip.clipIn}s");
             }
@@ -1246,15 +1372,48 @@ namespace BatchRenderingTool
                 renderingDirector.Stop();
             }
             
+            // Check debug mode before destroying GameObject
             if (renderingGameObject != null)
             {
-                DestroyImmediate(renderingGameObject);
+                if (debugMode)
+                {
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Debug Mode: Keeping GameObject '{renderingGameObject.name}' active in scene");
+                    // Rename the GameObject to indicate it's a debug object
+                    renderingGameObject.name = $"[DEBUG] {renderingGameObject.name}";
+                }
+                else
+                {
+                    DestroyImmediate(renderingGameObject);
+                }
                 renderingGameObject = null;
             }
             
+            // Check debug mode before deleting temporary assets
             if (!string.IsNullOrEmpty(tempAssetPath) && AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(tempAssetPath) != null)
             {
-                AssetDatabase.DeleteAsset(tempAssetPath);
+                if (debugMode)
+                {
+                    lastGeneratedAssetPath = tempAssetPath;
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Debug Mode: Keeping Timeline asset at: {tempAssetPath}");
+                    
+                    // Rename the asset to make it clear it's for debugging
+                    var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(tempAssetPath);
+                    if (asset != null)
+                    {
+                        string newName = $"[DEBUG] {asset.name}";
+                        AssetDatabase.RenameAsset(tempAssetPath, newName);
+                        AssetDatabase.SaveAssets();
+                        
+                        // Update the path after rename
+                        string directory = Path.GetDirectoryName(tempAssetPath);
+                        string extension = Path.GetExtension(tempAssetPath);
+                        lastGeneratedAssetPath = Path.Combine(directory, newName + extension);
+                    }
+                }
+                else
+                {
+                    AssetDatabase.DeleteAsset(tempAssetPath);
+                }
             }
             
             renderTimeline = null;
@@ -1951,6 +2110,7 @@ namespace BatchRenderingTool
                 config = new FBXRecorderSettingsConfig
                 {
                     targetGameObject = fbxTargetGameObject,
+                    recordedComponent = fbxRecordedComponent,
                     recordHierarchy = fbxRecordHierarchy,
                     clampedTangents = fbxClampedTangents,
                     animationCompression = fbxAnimationCompression,
