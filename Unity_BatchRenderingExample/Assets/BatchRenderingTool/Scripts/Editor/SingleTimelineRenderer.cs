@@ -261,13 +261,16 @@ namespace BatchRenderingTool
                 UpdateRecorderEditor();
             }
             
-            // MonoBehaviourベースの新しい実装では、Play Mode遷移時の複雑な処理は不要
+            // Play Mode内でレンダリング中かチェック
             if (EditorApplication.isPlaying && EditorPrefs.GetBool("STR_IsRendering", false))
             {
-                // Play Mode内でTimelineRendererが処理中
-                currentState = RenderState.WaitingForPlayMode;
+                // Play Mode内でPlayModeTimelineRendererが処理中
+                currentState = RenderState.Rendering;
                 statusMessage = "Rendering in Play Mode...";
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Detected rendering in progress in Play Mode");
+                
+                // 進捗監視を開始
+                MonitorRenderingProgress();
             }
             
             // Restore debug mode setting
@@ -953,13 +956,8 @@ namespace BatchRenderingTool
                 EditorPrefs.SetInt("STR_FrameRate", frameRate);
                 EditorPrefs.SetInt("STR_PreRollFrames", preRollFrames);
                 
-                // MonoBehaviourベースのレンダラーを使用するフラグ
-                EditorPrefs.SetBool("STR_UseMonoBehaviour", true);
-                
-                // Set static flag
-                
                 EditorApplication.isPlaying = true;
-                // Play Modeに入ると、TimelineRendererが自動的に処理を引き継ぐ
+                // Play Modeに入ると、PlayModeTimelineRendererが自動的に処理を引き継ぐ
             }
         }
         
@@ -1633,11 +1631,10 @@ namespace BatchRenderingTool
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Entered Play Mode");
                 
-                // レンダリングが進行中の場合、TimelineRendererを作成
+                // レンダリングが進行中の場合、PlayModeTimelineRendererを作成
                 bool isRendering = EditorPrefs.GetBool("STR_IsRendering", false);
-                bool useMonoBehaviour = EditorPrefs.GetBool("STR_UseMonoBehaviour", false);
                 
-                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] STR_IsRendering: {isRendering}, STR_UseMonoBehaviour: {useMonoBehaviour}");
+                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] STR_IsRendering: {isRendering}");
                 
                 if (isRendering)
                 {
@@ -1704,31 +1701,11 @@ namespace BatchRenderingTool
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Exiting Play Mode");
                 
-                // レンダリング完了を確認
-                if (EditorPrefs.GetBool("STR_RenderingComplete", false))
-                {
-                    string completionStatus = EditorPrefs.GetString("STR_RenderingStatus", "Unknown");
-                    
-                    if (completionStatus.Contains("complete"))
-                    {
-                        currentState = RenderState.Complete;
-                        statusMessage = completionStatus;
-                        renderProgress = 1f;
-                    }
-                    else
-                    {
-                        currentState = RenderState.Error;
-                        statusMessage = completionStatus;
-                    }
-                    
-                    EditorPrefs.DeleteKey("STR_RenderingComplete");
-                    EditorPrefs.DeleteKey("STR_RenderingStatus");
-                }
-                else
-                {
-                    currentState = RenderState.Idle;
-                    statusMessage = "Play Mode exited";
-                }
+                // 状態はすでにOnRenderingProgressUpdateで更新されているため、
+                // ここでは最終的なクリーンアップのみ行う
+                
+                // 監視を停止
+                EditorApplication.update -= OnRenderingProgressUpdate;
                 
                 // クリーンアップ
                 if (renderCoroutine != null)
@@ -1738,8 +1715,9 @@ namespace BatchRenderingTool
                 }
                 
                 CleanupRendering();
+                
+                // EditorPrefsのクリーンアップ
                 EditorPrefs.SetBool("STR_IsRendering", false);
-                EditorPrefs.SetBool("STR_UseMonoBehaviour", false);
             }
         }
         
@@ -1758,6 +1736,39 @@ namespace BatchRenderingTool
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Rendering progress monitoring ended");
                 EditorApplication.update -= OnRenderingProgressUpdate;
+                return;
+            }
+            
+            // RenderingDataオブジェクトを直接監視
+            var renderingDataGO = GameObject.Find("[RenderingData]");
+            if (renderingDataGO != null)
+            {
+                var renderingData = renderingDataGO.GetComponent<RenderingData>();
+                if (renderingData != null)
+                {
+                    // 進捗を更新
+                    renderProgress = renderingData.progress;
+                    
+                    // 状態を更新
+                    if (renderingData.hasError)
+                    {
+                        currentState = RenderState.Error;
+                        statusMessage = renderingData.errorMessage;
+                    }
+                    else if (renderingData.isComplete)
+                    {
+                        currentState = RenderState.Complete;
+                        statusMessage = "Rendering complete!";
+                        renderProgress = 1f;
+                    }
+                    else if (renderingData.isPlaying)
+                    {
+                        statusMessage = $"Rendering... {(renderingData.progress * 100f):F1}%";
+                    }
+                    
+                    // UIを更新
+                    Repaint();
+                }
             }
         }
         
