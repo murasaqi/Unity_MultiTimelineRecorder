@@ -227,6 +227,8 @@ namespace BatchRenderingTool
                         if (animInputSettings != null)
                         {
                             BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Found AnimationInputSettings via field: {animInputSettings.GetType().FullName}");
+                            
+                            // CRITICAL: Configure the AnimationInputSettings with GameObject and components
                             ConfigureAnimationInputSettings(animInputSettings, targetGameObject, recordedComponent, recordHierarchy, clampedTangents);
                             
                             // Set SimplyCurves (Animation Compression) - not handled in ConfigureAnimationInputSettings
@@ -256,6 +258,21 @@ namespace BatchRenderingTool
                                 {
                                     simplyCurvesField.SetValue(animInputSettings, compressionValue);
                                     BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set SimplyCurves to {compressionValue}");
+                                }
+                            }
+                            
+                            // IMPORTANT: Verify that gameObject was set correctly
+                            var goProperty = animType.GetProperty("gameObject");
+                            if (goProperty != null && goProperty.CanRead)
+                            {
+                                var go = goProperty.GetValue(animInputSettings) as GameObject;
+                                if (go == null)
+                                {
+                                    BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] CRITICAL: GameObject is still null after configuration!");
+                                }
+                                else
+                                {
+                                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] SUCCESS: GameObject is set to {go.name}");
                                 }
                             }
                         }
@@ -335,35 +352,40 @@ namespace BatchRenderingTool
                 BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Set target GameObject to {targetGameObject.name}");
             }
             
-            // Try to set the actual component instead of enum
-            Component targetComponent = null;
-            if (recordedComponent == FBXRecordedComponent.Camera)
+            // Add component to record using AddComponentToRecord method
+            var addComponentMethod = animType.GetMethod("AddComponentToRecord");
+            if (addComponentMethod != null)
             {
-                targetComponent = targetGameObject.GetComponent<Camera>();
-                if (targetComponent == null)
+                try
                 {
-                    BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Camera not found on {targetGameObject.name}, using Transform");
-                    targetComponent = targetGameObject.transform;
+                    // Determine which component to record
+                    Type componentType = typeof(Transform); // Default to Transform
+                    
+                    if (recordedComponent == FBXRecordedComponent.Camera)
+                    {
+                        var camera = targetGameObject.GetComponent<Camera>();
+                        if (camera != null)
+                        {
+                            componentType = typeof(Camera);
+                        }
+                        else
+                        {
+                            BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Camera not found on {targetGameObject.name}, recording Transform instead");
+                        }
+                    }
+                    
+                    // Call AddComponentToRecord(Type componentType)
+                    addComponentMethod.Invoke(animInputSettings, new object[] { componentType });
+                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added {componentType.Name} to recorded components");
+                }
+                catch (Exception ex)
+                {
+                    BatchRenderingToolLogger.LogError($"[FBXRecorderSettingsConfig] Failed to add component to record: {ex.Message}");
                 }
             }
             else
             {
-                targetComponent = targetGameObject.transform;
-            }
-            
-            // Try to set component property
-            var componentProp = animType.GetProperty("component") ?? animType.GetProperty("Component");
-            if (componentProp != null && componentProp.CanWrite && targetComponent != null)
-            {
-                try
-                {
-                    componentProp.SetValue(animInputSettings, targetComponent);
-                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Set component to {targetComponent.GetType().Name}");
-                }
-                catch (Exception ex)
-                {
-                    BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Could not set component: {ex.Message}");
-                }
+                BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] AddComponentToRecord method not found on AnimationInputSettings");
             }
             
             // Set basic properties

@@ -1285,6 +1285,31 @@ namespace BatchRenderingTool
                                     // ターゲットが設定されていない場合は再設定
                                     gameObjectProp.SetValue(animInput, fbxTargetGameObject);
                                     BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Set FBX Target GameObject to: {fbxTargetGameObject.name}");
+                                    
+                                    // Also add component to record
+                                    var addComponentMethod = animType.GetMethod("AddComponentToRecord");
+                                    if (addComponentMethod != null)
+                                    {
+                                        Type componentType = typeof(Transform);
+                                        if (fbxRecordedComponent == FBXRecordedComponent.Camera)
+                                        {
+                                            var camera = fbxTargetGameObject.GetComponent<Camera>();
+                                            if (camera != null)
+                                            {
+                                                componentType = typeof(Camera);
+                                            }
+                                        }
+                                        
+                                        try
+                                        {
+                                            addComponentMethod.Invoke(animInput, new object[] { componentType });
+                                            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Added {componentType.Name} to FBX recorded components");
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to add component: {ex.Message}");
+                                        }
+                                    }
                                 }
                             }
                         }
