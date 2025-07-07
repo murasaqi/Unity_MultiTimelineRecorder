@@ -1202,22 +1202,11 @@ namespace BatchRenderingTool
             
             recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
             
-            // FBXレコーダーの場合、特別なタイミング調整
-            if (recorderType == RecorderSettingsType.FBX)
-            {
-                // FBXレコーダーは開始時に初期化時間が必要なため
-                // ControlClipより少し後に開始し、少し前に終了する
-                float fbxOffset = 0.1f; // 100ms
-                recorderClip.start = preRollTime + fbxOffset;
-                recorderClip.duration = originalTimeline.duration - (fbxOffset * 2);
-                
-                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX RecorderClip timing adjusted: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s");
-            }
-            else
-            {
-                recorderClip.start = preRollTime;
-                recorderClip.duration = originalTimeline.duration;
-            }
+            // すべてのレコーダーで同じタイミングを使用（TODO-101: FBX Recorder ClipがTimelineの尺と違う問題の修正）
+            recorderClip.start = preRollTime;
+            recorderClip.duration = originalTimeline.duration;
+            
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] RecorderClip timing: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s");
             
             var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             if (recorderAsset == null)
