@@ -1,0 +1,14 @@
+{
+  "mcps": {
+    "unity-natural": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@notargs/unity-natural-mcp"
+      ],
+      "env": {
+        "UNITY_PROJECT_PATH": "/mnt/d/Works/Unity_BatchRecorderTool/Unity_BatchRenderingExample"
+      }
+    }
+  }
+}
