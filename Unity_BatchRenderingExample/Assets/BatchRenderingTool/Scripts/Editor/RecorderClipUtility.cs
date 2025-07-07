@@ -304,40 +304,12 @@ namespace BatchRenderingTool
                             case "fbxrecorder":
                                 BatchRenderingToolLogger.Log("[RecorderClipUtility] Looking for FBX recorder type...");
                                 
-                                // Try multiple possible type names for FBX recorder
-                                var typeNames = new string[]
+                                // Search for FBX recorder type in assemblies
+                                foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
                                 {
-                                    "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor",
-                                    "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                                    "UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                                    "Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime",
-                                    "UnityEditor.Formats.Fbx.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                                    "UnityEditor.Formats.Fbx.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                                    "UnityEditor.Recorder.FbxRecorderSettings, Unity.Recorder.Editor"
-                                };
-                                
-                                foreach (var tn in typeNames)
-                                {
-                                    settingsType = System.Type.GetType(tn);
-                                    if (settingsType != null)
+                                    if (assembly.FullName.Contains("Fbx"))
                                     {
-                                        BatchRenderingToolLogger.Log($"[RecorderClipUtility] Found FBX type: {tn}");
-                                        break;
-                                    }
-                                }
-                                
-                                if (settingsType == null)
-                                {
-                                    BatchRenderingToolLogger.Log("[RecorderClipUtility] None of the hardcoded FBX types found, searching assemblies...");
-                                }
-                                
-                                if (settingsType == null)
-                                {
-                                    // Try to find by searching through all loaded assemblies
-                                    BatchRenderingToolLogger.LogWarning("[RecorderClipUtility] Failed to find FbxRecorderSettings type, searching assemblies...");
-                                    foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
-                                    {
-                                        if (assembly.FullName.Contains("Fbx") || assembly.FullName.Contains("Recorder"))
+                                        try
                                         {
                                             var types = assembly.GetTypes();
                                             foreach (var type in types)
@@ -345,21 +317,19 @@ namespace BatchRenderingTool
                                                 if (type.Name == "FbxRecorderSettings" && typeof(RecorderSettings).IsAssignableFrom(type))
                                                 {
                                                     settingsType = type;
-                                                    BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Found FbxRecorderSettings: {type.FullName} in {assembly.FullName}");
+                                                    BatchRenderingToolLogger.Log($"[RecorderClipUtility] Found FBX type: {type.FullName}");
                                                     break;
                                                 }
                                             }
-                                            if (settingsType != null) break;
                                         }
+                                        catch { }
+                                        if (settingsType != null) break;
                                     }
                                 }
                                 
                                 if (settingsType == null)
                                 {
-                                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to find FbxRecorderSettings type. Make sure Unity FBX Exporter package is installed.");
-                                    
-                                    // CRITICAL: Do not fallback to AnimationRecorderSettings for FBX
-                                    // Otherwise it will create .anim files instead of .fbx files
+                                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] FbxRecorderSettings not found. Install Unity FBX Exporter package.");
                                     return null;
                                 }
                                 break;
@@ -427,42 +397,25 @@ namespace BatchRenderingTool
                     
                 case "fbxrecordersettings":
                 case "fbxrecorder":
-                    // Try multiple possible type names for FBX recorder
-                    recorderType = System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor") ??
-                                   System.Type.GetType("UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                   System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                   System.Type.GetType("Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime") ??
-                                   System.Type.GetType("UnityEditor.Formats.Fbx.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                   System.Type.GetType("UnityEditor.Formats.Fbx.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor") ??
-                                   System.Type.GetType("UnityEditor.Recorder.FbxRecorderSettings, Unity.Recorder.Editor");
-                    
-                    // If not found, search through all loaded assemblies
-                    if (recorderType == null)
+                    // Search for FBX recorder type in assemblies
+                    foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
                     {
-                        foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                        if (assembly.FullName.Contains("Fbx"))
                         {
-                            if (assembly.FullName.Contains("Fbx") || assembly.FullName.Contains("Recorder"))
+                            try
                             {
-                                try
+                                var types = assembly.GetTypes();
+                                foreach (var type in types)
                                 {
-                                    var types = assembly.GetTypes();
-                                    foreach (var type in types)
+                                    if (type.Name == "FbxRecorderSettings" && typeof(RecorderSettings).IsAssignableFrom(type))
                                     {
-                                        if (type.Name == "FbxRecorderSettings" && typeof(RecorderSettings).IsAssignableFrom(type))
-                                        {
-                                            recorderType = type;
-                                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Found FbxRecorderSettings in fallback: {type.FullName} in {assembly.FullName}");
-                                            break;
-                                        }
+                                        recorderType = type;
+                                        break;
                                     }
                                 }
-                                catch (System.Exception ex)
-                                {
-                                    // Some assemblies might not be accessible
-                                    BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Could not search assembly {assembly.FullName}: {ex.Message}");
-                                }
-                                if (recorderType != null) break;
                             }
+                            catch { }
+                            if (recorderType != null) break;
                         }
                     }
                     
@@ -472,47 +425,15 @@ namespace BatchRenderingTool
                         if (fbxSettings != null)
                         {
                             fbxSettings.name = typeName;
-                            fbxSettings.hideFlags = HideFlags.None;
-                            
-                            // Initialize default values
                             fbxSettings.RecordMode = RecordMode.Manual;
                             fbxSettings.FrameRatePlayback = FrameRatePlayback.Constant;
-                            // Don't set FrameRate here - let it be configured later
-                            // fbxSettings.FrameRate = 24;
                             fbxSettings.CapFrameRate = true;
-                            
                             EditorUtility.SetDirty(fbxSettings);
-                            
-                            BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created FbxRecorderSettings directly of type: {recorderType.FullName}");
                             return fbxSettings;
                         }
                     }
-                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to create FbxRecorderSettings. Make sure Unity FBX Exporter package (com.unity.formats.fbx) is installed.");
                     
-                    // IMPORTANT: Do not fallback to AnimationRecorderSettings - return null instead
-                    // This prevents confusion where FBX export creates Animation clips instead of FBX files
-                    
-                    // Log available FBX-related types for debugging
-                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] Searching for available FBX-related types...");
-                    foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        if (assembly.FullName.Contains("Fbx"))
-                        {
-                            BatchRenderingToolLogger.LogError($"  Found FBX assembly: {assembly.FullName}");
-                            try
-                            {
-                                var types = assembly.GetTypes();
-                                foreach (var type in types)
-                                {
-                                    if (type.Name.Contains("Recorder") && type.Name.Contains("Settings"))
-                                    {
-                                        BatchRenderingToolLogger.LogError($"    - {type.FullName}");
-                                    }
-                                }
-                            }
-                            catch { }
-                        }
-                    }
+                    BatchRenderingToolLogger.LogError("[RecorderClipUtility] FbxRecorderSettings not found. Install Unity FBX Exporter package.");
                     return null;
                     
                 case "aovrecordersettings":
@@ -529,59 +450,11 @@ namespace BatchRenderingTool
         /// </summary>
         public static RecorderSettings CreateProperFBXRecorderSettings(string name)
         {
-            BatchRenderingToolLogger.LogVerbose("[RecorderClipUtility] CreateProperFBXRecorderSettings called");
-            
-            // Use RecordersInventory to create default settings if available
-            var inventoryType = System.Type.GetType("UnityEditor.Recorder.RecordersInventory, Unity.Recorder.Editor");
-            if (inventoryType != null)
-            {
-                var createMethod = inventoryType.GetMethod("CreateDefaultRecorderSettings", BindingFlags.Public | BindingFlags.Static);
-                if (createMethod != null)
-                {
-                    try
-                    {
-                        // Try to find FbxRecorderSettings type
-                        var fbxTypes = new string[]
-                        {
-                            "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Runtime.Editor",
-                            "UnityEditor.Formats.Fbx.Exporter.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                            "UnityEditor.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                            "Unity.Formats.Fbx.Runtime.FbxRecorderSettings, Unity.Formats.Fbx.Runtime",
-                            "UnityEditor.Formats.Fbx.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                            "UnityEditor.Formats.Fbx.Recorder.FbxRecorderSettings, Unity.Formats.Fbx.Editor",
-                            "UnityEditor.Recorder.FbxRecorderSettings, Unity.Recorder.Editor"
-                        };
-                        
-                        System.Type fbxType = null;
-                        foreach (var typeName in fbxTypes)
-                        {
-                            fbxType = System.Type.GetType(typeName);
-                            if (fbxType != null) break;
-                        }
-                        
-                        if (fbxType != null)
-                        {
-                            var settings = createMethod.Invoke(null, new object[] { fbxType }) as RecorderSettings;
-                            if (settings != null)
-                            {
-                                settings.name = name;
-                                BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created FbxRecorderSettings using RecordersInventory: {fbxType.FullName}");
-                                return settings;
-                            }
-                        }
-                    }
-                    catch (System.Exception e)
-                    {
-                        BatchRenderingToolLogger.LogWarning($"[RecorderClipUtility] Failed to use RecordersInventory for FBX: {e.Message}");
-                    }
-                }
-            }
-            
-            // If RecordersInventory failed, search for FBX type in assemblies
+            // Search for FBX recorder type in assemblies
             System.Type fbxRecorderType = null;
             foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
             {
-                if (assembly.FullName.Contains("Fbx") || assembly.FullName.Contains("Recorder"))
+                if (assembly.FullName.Contains("Fbx"))
                 {
                     try
                     {
@@ -591,7 +464,6 @@ namespace BatchRenderingTool
                             if (type.Name == "FbxRecorderSettings" && typeof(RecorderSettings).IsAssignableFrom(type))
                             {
                                 fbxRecorderType = type;
-                                BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Found FbxRecorderSettings type: {type.FullName} in {assembly.FullName}");
                                 break;
                             }
                         }
@@ -607,23 +479,15 @@ namespace BatchRenderingTool
                 if (fbxSettings != null)
                 {
                     fbxSettings.name = name;
-                    fbxSettings.hideFlags = HideFlags.None;
-                    
-                    // Initialize default values
                     fbxSettings.RecordMode = RecordMode.Manual;
                     fbxSettings.FrameRatePlayback = FrameRatePlayback.Constant;
-                    // Don't set FrameRate here - let it be configured later
-                    // fbxSettings.FrameRate = 24;
                     fbxSettings.CapFrameRate = true;
-                    
                     EditorUtility.SetDirty(fbxSettings);
-                    
-                    BatchRenderingToolLogger.LogVerbose($"[RecorderClipUtility] Created FbxRecorderSettings directly: {fbxSettings.GetType().FullName}");
                     return fbxSettings;
                 }
             }
             
-            BatchRenderingToolLogger.LogError("[RecorderClipUtility] Failed to create FbxRecorderSettings. Make sure Unity FBX Exporter package (com.unity.formats.fbx) is installed.");
+            BatchRenderingToolLogger.LogError("[RecorderClipUtility] FbxRecorderSettings not found. Install Unity FBX Exporter package.");
             return null;
         }
     }

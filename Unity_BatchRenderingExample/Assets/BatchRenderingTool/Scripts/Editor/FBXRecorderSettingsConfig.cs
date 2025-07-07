@@ -1,5 +1,7 @@
+using System;
 using System.Reflection;
 using UnityEngine;
+using UnityEditor.Recorder;
 
 namespace BatchRenderingTool
 {
@@ -9,6 +11,7 @@ namespace BatchRenderingTool
     public class FBXRecorderSettingsConfig
     {
         public GameObject targetGameObject = null;
+        public FBXRecordedComponent recordedComponent = FBXRecordedComponent.Camera;
         public bool recordHierarchy = true;
         public bool clampedTangents = true;
         public FBXAnimationCompressionLevel animationCompression = FBXAnimationCompressionLevel.Lossy;
@@ -74,6 +77,7 @@ namespace BatchRenderingTool
                     return new FBXRecorderSettingsConfig
                     {
                         targetGameObject = null,
+                        recordedComponent = FBXRecordedComponent.Camera,
                         recordHierarchy = true,
                         clampedTangents = true,
                         animationCompression = FBXAnimationCompressionLevel.Lossy,
@@ -87,6 +91,7 @@ namespace BatchRenderingTool
                     return new FBXRecorderSettingsConfig
                     {
                         targetGameObject = null,
+                        recordedComponent = FBXRecordedComponent.Transform,
                         recordHierarchy = true,
                         clampedTangents = true,
                         animationCompression = FBXAnimationCompressionLevel.Lossy,
@@ -100,6 +105,7 @@ namespace BatchRenderingTool
                     return new FBXRecorderSettingsConfig
                     {
                         targetGameObject = null,
+                        recordedComponent = FBXRecordedComponent.Camera,
                         recordHierarchy = true,
                         clampedTangents = true,
                         animationCompression = FBXAnimationCompressionLevel.Lossy,
@@ -113,6 +119,7 @@ namespace BatchRenderingTool
                     return new FBXRecorderSettingsConfig
                     {
                         targetGameObject = null,
+                        recordedComponent = FBXRecordedComponent.Camera,
                         recordHierarchy = true,
                         clampedTangents = true,
                         animationCompression = FBXAnimationCompressionLevel.Lossy,
@@ -157,8 +164,14 @@ namespace BatchRenderingTool
                 
                 BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] FBX Recorder Settings created successfully: {settings.GetType().FullName}");
                 
-                // Apply configuration using reflection
+                // IMPORTANT: First, we need to ensure the AnimationInputSettings is properly initialized
                 var settingsType = settings.GetType();
+                
+                // NOTE: Unity's FBX Recorder does not have a direct RecordedComponent property
+                // Instead, the component type is determined by what component is set in AnimationInputSettings
+                // So we'll skip trying to set RecordedComponent directly and let the AnimationInputSettings handle it
+                
+                // Apply configuration using reflection
                 
                 // IMPORTANT: Initialize InputSettings first
                 // FBX Recorder requires proper initialization of input settings
@@ -177,7 +190,7 @@ namespace BatchRenderingTool
                     if (animInputSettings != null)
                     {
                         BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Found AnimationInputSettings via property: {animInputSettings.GetType().FullName}");
-                        ConfigureAnimationInputSettings(animInputSettings, targetGameObject, recordHierarchy, clampedTangents);
+                        ConfigureAnimationInputSettings(animInputSettings, targetGameObject, recordedComponent, recordHierarchy, clampedTangents);
                     }
                     else
                     {
@@ -214,7 +227,7 @@ namespace BatchRenderingTool
                         if (animInputSettings != null)
                         {
                             BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Found AnimationInputSettings via field: {animInputSettings.GetType().FullName}");
-                            ConfigureAnimationInputSettings(animInputSettings, targetGameObject, recordHierarchy, clampedTangents);
+                            ConfigureAnimationInputSettings(animInputSettings, targetGameObject, recordedComponent, recordHierarchy, clampedTangents);
                             
                             // Set SimplyCurves (Animation Compression) - not handled in ConfigureAnimationInputSettings
                             var animType = animInputSettings.GetType();
@@ -254,26 +267,6 @@ namespace BatchRenderingTool
                     else
                     {
                         BatchRenderingToolLogger.LogError("[FBXRecorderSettingsConfig] Could not find m_AnimationInputSettings field");
-                        
-                        // Debug: List all fields and properties
-                        BatchRenderingToolLogger.Log("[FBXRecorderSettingsConfig] === Debugging FBX Recorder Structure ===");
-                        
-                        var allFields = settingsType.GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                        BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Total fields: {allFields.Length}");
-                        foreach (var field in allFields)
-                        {
-                            if (field.Name.ToLower().Contains("input") || field.Name.ToLower().Contains("anim") || field.Name.ToLower().Contains("target"))
-                            {
-                                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Relevant field: {field.Name} ({field.FieldType.Name})");
-                            }
-                        }
-                        
-                        var allProps = settingsType.GetProperties();
-                        BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Total properties: {allProps.Length}");
-                        foreach (var prop in allProps)
-                        {
-                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Property: {prop.Name} ({prop.PropertyType.Name})");
-                        }
                     }
                 }
                 
@@ -314,6 +307,9 @@ namespace BatchRenderingTool
                 
                 BatchRenderingToolLogger.LogVerbose("[FBXRecorderSettingsConfig] FBX recorder settings created successfully");
                 
+                // Debug the structure to understand how Unity's FBX Recorder works
+                DebugFBXRecorderStructure(settings);
+                
                 return settings;
             }
             catch (System.Exception e)
@@ -326,7 +322,7 @@ namespace BatchRenderingTool
         /// <summary>
         /// Configure AnimationInputSettings with proper values
         /// </summary>
-        private static void ConfigureAnimationInputSettings(object animInputSettings, GameObject targetGameObject, bool recordHierarchy, bool clampedTangents)
+        private static void ConfigureAnimationInputSettings(object animInputSettings, GameObject targetGameObject, FBXRecordedComponent recordedComponent, bool recordHierarchy, bool clampedTangents)
         {
             if (animInputSettings == null || targetGameObject == null)
                 return;
@@ -338,27 +334,59 @@ namespace BatchRenderingTool
             if (gameObjectProp != null && gameObjectProp.CanWrite)
             {
                 gameObjectProp.SetValue(animInputSettings, targetGameObject);
-                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set target GameObject to {targetGameObject.name}");
+                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Set target GameObject to {targetGameObject.name}");
+            }
+            
+            // Try to set the actual component instead of enum
+            Component targetComponent = null;
+            if (recordedComponent == FBXRecordedComponent.Camera)
+            {
+                targetComponent = targetGameObject.GetComponent<Camera>();
+                if (targetComponent == null)
+                {
+                    BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Camera not found on {targetGameObject.name}, using Transform");
+                    targetComponent = targetGameObject.transform;
+                }
             }
             else
             {
-                BatchRenderingToolLogger.LogError($"[FBXRecorderSettingsConfig] Could not find or write to 'gameObject' property on {animType.Name}");
+                targetComponent = targetGameObject.transform;
             }
             
-            // Set Recursive
-            var recursiveProp = animType.GetProperty("Recursive");
-            if (recursiveProp != null && recursiveProp.CanWrite)
+            // Try to set component property
+            var componentProp = animType.GetProperty("component") ?? animType.GetProperty("Component");
+            if (componentProp != null && componentProp.CanWrite && targetComponent != null)
             {
-                recursiveProp.SetValue(animInputSettings, recordHierarchy);
-                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set Recursive to {recordHierarchy}");
+                try
+                {
+                    componentProp.SetValue(animInputSettings, targetComponent);
+                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Set component to {targetComponent.GetType().Name}");
+                }
+                catch (Exception ex)
+                {
+                    BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Could not set component: {ex.Message}");
+                }
             }
             
-            // Set ClampedTangents
-            var clampedTangentsProp = animType.GetProperty("ClampedTangents");
-            if (clampedTangentsProp != null && clampedTangentsProp.CanWrite)
+            // Set basic properties
+            SetPropertyIfExists(animInputSettings, "Recursive", recordHierarchy);
+            SetPropertyIfExists(animInputSettings, "ClampedTangents", clampedTangents);
+        }
+        
+        private static void SetPropertyIfExists(object obj, string propertyName, object value)
+        {
+            var prop = obj.GetType().GetProperty(propertyName);
+            if (prop != null && prop.CanWrite)
             {
-                clampedTangentsProp.SetValue(animInputSettings, clampedTangents);
-                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set ClampedTangents to {clampedTangents}");
+                try
+                {
+                    prop.SetValue(obj, value);
+                    BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Set {propertyName} to {value}");
+                }
+                catch (Exception ex)
+                {
+                    BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Could not set {propertyName}: {ex.Message}");
+                }
             }
         }
         
@@ -370,6 +398,7 @@ namespace BatchRenderingTool
             return new FBXRecorderSettingsConfig
             {
                 targetGameObject = this.targetGameObject,
+                recordedComponent = this.recordedComponent,
                 recordHierarchy = this.recordHierarchy,
                 clampedTangents = this.clampedTangents,
                 animationCompression = this.animationCompression,
@@ -378,6 +407,73 @@ namespace BatchRenderingTool
                 transferAnimationDest = this.transferAnimationDest,
                 frameRate = this.frameRate
             };
+        }
+        
+        /// <summary>
+        /// Debug method to analyze FBX Recorder structure
+        /// </summary>
+        public static void DebugFBXRecorderStructure(RecorderSettings settings)
+        {
+            if (settings == null)
+                return;
+                
+            BatchRenderingToolLogger.Log("[FBXRecorderSettingsConfig] === DEBUG: Analyzing FBX Recorder Structure ===");
+            
+            var settingsType = settings.GetType();
+            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Settings Type: {settingsType.FullName}");
+            
+            // Check for RecordedComponent at settings level
+            var allSettingsProps = settingsType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            foreach (var prop in allSettingsProps)
+            {
+                if (prop.Name.ToLower().Contains("recorded") || prop.Name.ToLower().Contains("component"))
+                {
+                    try
+                    {
+                        var value = prop.GetValue(settings);
+                        BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Settings Property {prop.Name}: {value} (Type: {prop.PropertyType.Name})");
+                    }
+                    catch { }
+                }
+            }
+            
+            // Check AnimationInputSettings
+            var animInputProp = settingsType.GetProperty("AnimationInputSettings");
+            if (animInputProp != null)
+            {
+                var animInput = animInputProp.GetValue(settings);
+                if (animInput != null)
+                {
+                    var animType = animInput.GetType();
+                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] AnimationInputSettings Type: {animType.FullName}");
+                    
+                    // Check all properties
+                    var animProps = animType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    foreach (var prop in animProps)
+                    {
+                        try
+                        {
+                            var value = prop.GetValue(animInput);
+                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] AnimInputSettings.{prop.Name}: {value} (Type: {prop.PropertyType.Name})");
+                        }
+                        catch { }
+                    }
+                    
+                    // Check fields too
+                    var animFields = animType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    foreach (var field in animFields)
+                    {
+                        try
+                        {
+                            var value = field.GetValue(animInput);
+                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] AnimInputSettings Field {field.Name}: {value} (Type: {field.FieldType.Name})");
+                        }
+                        catch { }
+                    }
+                }
+            }
+            
+            BatchRenderingToolLogger.Log("[FBXRecorderSettingsConfig] === END DEBUG ===");
         }
     }
 }
