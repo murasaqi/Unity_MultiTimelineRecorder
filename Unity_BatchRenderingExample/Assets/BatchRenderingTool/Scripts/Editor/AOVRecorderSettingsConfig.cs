@@ -57,13 +57,6 @@ namespace BatchRenderingTool
         {
             errorMessage = string.Empty;
             
-            // Check if HDRP is available
-            if (!AOVTypeInfo.IsHDRPAvailable())
-            {
-                errorMessage = "AOV Recorder requires HDRP (High Definition Render Pipeline) package";
-                return false;
-            }
-            
             // Check if any AOV is selected
             if (selectedAOVs == AOVType.None)
             {
@@ -96,6 +89,13 @@ namespace BatchRenderingTool
                 string.IsNullOrEmpty(customPassName))
             {
                 errorMessage = "Custom pass name is required when Custom Pass AOV is selected";
+                return false;
+            }
+            
+            // Check if HDRP is available (check this last so other validations can run first)
+            if (!AOVTypeInfo.IsHDRPAvailable())
+            {
+                errorMessage = "AOV Recorder requires HDRP (High Definition Render Pipeline) package";
                 return false;
             }
             

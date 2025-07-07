@@ -16,8 +16,11 @@ namespace BatchRenderingTool.RecorderEditors
         
         protected override void DrawInputSettings()
         {
-            // Source
-            EditorGUILayout.LabelField("Source", "GameObject");
+            // Source label (matches Unity Recorder UI)
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Source", GUILayout.Width(EditorGUIUtility.labelWidth));
+            EditorGUILayout.LabelField("GameObject", EditorStyles.label);
+            EditorGUILayout.EndHorizontal();
             
             // GameObject selection
             host.fbxTargetGameObject = (GameObject)EditorGUILayout.ObjectField(
@@ -25,6 +28,13 @@ namespace BatchRenderingTool.RecorderEditors
                 host.fbxTargetGameObject, 
                 typeof(GameObject), 
                 true);
+            
+            // Recorded Components dropdown (currently Camera only)
+            EditorGUI.BeginDisabledGroup(true); // Disable for now as only Camera is supported
+            host.fbxRecordedComponent = (FBXRecordedComponent)EditorGUILayout.EnumPopup(
+                "Recorded Components", 
+                FBXRecordedComponent.Camera);
+            EditorGUI.EndDisabledGroup();
             
             // Record Hierarchy checkbox
             host.fbxRecordHierarchy = EditorGUILayout.Toggle("Record Hierarchy", host.fbxRecordHierarchy);
@@ -40,15 +50,20 @@ namespace BatchRenderingTool.RecorderEditors
         
         protected override void DrawOutputFormatSettings()
         {
-            // Format display
-            EditorGUILayout.LabelField("Format", "FBX");
+            // Format label (matches Unity Recorder UI)
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Format", GUILayout.Width(EditorGUIUtility.labelWidth));
+            EditorGUILayout.LabelField("FBX", EditorStyles.label);
+            EditorGUILayout.EndHorizontal();
             
             // Export Geometry checkbox
             host.fbxExportGeometry = EditorGUILayout.Toggle("Export Geometry", host.fbxExportGeometry);
             
-            // Transfer Animation section
+            // Transfer Animation section with indentation
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Transfer Animation", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Transfer Animation");
+            
+            EditorGUI.indentLevel++;
             
             host.fbxTransferAnimationSource = (Transform)EditorGUILayout.ObjectField(
                 "Source", 
@@ -61,6 +76,8 @@ namespace BatchRenderingTool.RecorderEditors
                 host.fbxTransferAnimationDest, 
                 typeof(Transform), 
                 true);
+            
+            EditorGUI.indentLevel--;
         }
         
         public override bool ValidateSettings(out string errorMessage)

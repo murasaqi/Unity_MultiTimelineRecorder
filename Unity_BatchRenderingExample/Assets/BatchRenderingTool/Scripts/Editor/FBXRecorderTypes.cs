@@ -30,4 +30,13 @@ namespace BatchRenderingTool
         Lossless,    // Only removes keyframes from constant curves
         Disabled     // No compression, keeps all keyframes
     }
+    
+    /// <summary>
+    /// FBX Recorded Component type
+    /// </summary>
+    public enum FBXRecordedComponent
+    {
+        Camera,
+        Transform
+    }
 }

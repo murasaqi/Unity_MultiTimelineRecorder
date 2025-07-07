@@ -308,7 +308,9 @@ namespace BatchRenderingTool
                 }
                 
                 // Set frame rate
+                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] Before setting frame rate: {settings.FrameRate}");
                 settings.FrameRate = frameRate;
+                BatchRenderingToolLogger.LogVerbose($"[FBXRecorderSettingsConfig] After setting frame rate: {settings.FrameRate} (expected: {frameRate})");
                 
                 BatchRenderingToolLogger.LogVerbose("[FBXRecorderSettingsConfig] FBX recorder settings created successfully");
                 

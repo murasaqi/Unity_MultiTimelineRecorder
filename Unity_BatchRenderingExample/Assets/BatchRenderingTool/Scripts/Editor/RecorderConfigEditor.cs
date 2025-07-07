@@ -1,5 +1,9 @@
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEditor;
+using UnityEditor.Recorder;
+using UnityEditor.Recorder.Input;
+using UnityEditor.Recorder.Encoder;
 using BatchRenderingTool.RecorderEditors;
 
 namespace BatchRenderingTool
@@ -268,6 +272,7 @@ namespace BatchRenderingTool
             
             // FBX settings
             public GameObject fbxTargetGameObject { get => config.fbxTargetGameObject; set => config.fbxTargetGameObject = value; }
+            public FBXRecordedComponent fbxRecordedComponent { get => config.fbxRecordedComponent; set => config.fbxRecordedComponent = value; }
             public bool fbxRecordHierarchy { get => config.fbxRecordHierarchy; set => config.fbxRecordHierarchy = value; }
             public bool fbxClampedTangents { get => config.fbxClampedTangents; set => config.fbxClampedTangents = value; }
             public FBXAnimationCompressionLevel fbxAnimationCompression { get => config.fbxAnimationCompression; set => config.fbxAnimationCompression = value; }

@@ -477,7 +477,8 @@ namespace BatchRenderingTool
                             // Initialize default values
                             fbxSettings.RecordMode = RecordMode.Manual;
                             fbxSettings.FrameRatePlayback = FrameRatePlayback.Constant;
-                            fbxSettings.FrameRate = 24;
+                            // Don't set FrameRate here - let it be configured later
+                            // fbxSettings.FrameRate = 24;
                             fbxSettings.CapFrameRate = true;
                             
                             EditorUtility.SetDirty(fbxSettings);
@@ -611,7 +612,8 @@ namespace BatchRenderingTool
                     // Initialize default values
                     fbxSettings.RecordMode = RecordMode.Manual;
                     fbxSettings.FrameRatePlayback = FrameRatePlayback.Constant;
-                    fbxSettings.FrameRate = 24;
+                    // Don't set FrameRate here - let it be configured later
+                    // fbxSettings.FrameRate = 24;
                     fbxSettings.CapFrameRate = true;
                     
                     EditorUtility.SetDirty(fbxSettings);

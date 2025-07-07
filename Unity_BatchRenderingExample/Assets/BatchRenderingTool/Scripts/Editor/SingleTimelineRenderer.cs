@@ -112,6 +112,7 @@ namespace BatchRenderingTool
         
         // FBX recorder settings
         public GameObject fbxTargetGameObject = null;
+        public FBXRecordedComponent fbxRecordedComponent = FBXRecordedComponent.Camera;
         public bool fbxRecordHierarchy = true;
         public bool fbxClampedTangents = true;
         public FBXAnimationCompressionLevel fbxAnimationCompression = FBXAnimationCompressionLevel.Lossy;
@@ -185,6 +186,7 @@ namespace BatchRenderingTool
         AnimationExportPreset IRecorderSettingsHost.animationPreset { get => animationPreset; set => animationPreset = value; }
         bool IRecorderSettingsHost.useAnimationPreset { get => useAnimationPreset; set => useAnimationPreset = value; }
         GameObject IRecorderSettingsHost.fbxTargetGameObject { get => fbxTargetGameObject; set => fbxTargetGameObject = value; }
+        FBXRecordedComponent IRecorderSettingsHost.fbxRecordedComponent { get => fbxRecordedComponent; set => fbxRecordedComponent = value; }
         bool IRecorderSettingsHost.fbxRecordHierarchy { get => fbxRecordHierarchy; set => fbxRecordHierarchy = value; }
         bool IRecorderSettingsHost.fbxClampedTangents { get => fbxClampedTangents; set => fbxClampedTangents = value; }
         FBXAnimationCompressionLevel IRecorderSettingsHost.fbxAnimationCompression { get => fbxAnimationCompression; set => fbxAnimationCompression = value; }

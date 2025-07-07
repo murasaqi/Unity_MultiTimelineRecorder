@@ -418,6 +418,10 @@ namespace BatchRenderingTool
             if (settings != null)
             {
                 ConfigureCommonSettings(settings);
+                // Reapply frame rate after common settings to ensure it's not overwritten
+                BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Before reapplying frame rate: {settings.FrameRate}");
+                settings.FrameRate = config.frameRate;
+                BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] After reapplying frame rate: {settings.FrameRate} (expected: {config.frameRate})");
                 BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Created FBX recorder settings of actual type: {settings.GetType().FullName}");
             }
             else
@@ -448,6 +452,9 @@ namespace BatchRenderingTool
             // Don't override FrameRate here - it should be set by the specific config
             // settings.FrameRate = 24;
             settings.CapFrameRate = true;
+            
+            // Log current frame rate to debug
+            BatchRenderingToolLogger.LogVerbose($"[ConfigureCommonSettings] Current FrameRate after common settings: {settings.FrameRate}");
         }
         
         /// <summary>

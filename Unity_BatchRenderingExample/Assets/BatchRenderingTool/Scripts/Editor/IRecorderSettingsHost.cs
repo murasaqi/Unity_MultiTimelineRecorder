@@ -69,6 +69,7 @@ namespace BatchRenderingTool
         
         // FBX settings
         GameObject fbxTargetGameObject { get; set; }
+        FBXRecordedComponent fbxRecordedComponent { get; set; }
         bool fbxRecordHierarchy { get; set; }
         bool fbxClampedTangents { get; set; }
         FBXAnimationCompressionLevel fbxAnimationCompression { get; set; }

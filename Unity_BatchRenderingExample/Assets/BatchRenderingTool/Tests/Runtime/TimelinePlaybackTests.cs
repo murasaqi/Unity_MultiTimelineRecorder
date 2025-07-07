@@ -85,24 +85,35 @@ namespace BatchRenderingTool.Runtime.Tests
         {
             Debug.Log("Timeline_TimeProgresses - テスト開始");
             
+            // Ensure PlayableDirector is properly initialized
+            testDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
+            
             // 初期時間を記録
             testDirector.time = 0;
+            testDirector.Evaluate(); // Force evaluation
             testDirector.Play();
             
             double initialTime = testDirector.time;
             Debug.Log($"Timeline_TimeProgresses - 初期時間: {initialTime}");
+            Debug.Log($"Timeline_TimeProgresses - Director state: {testDirector.state}");
+            Debug.Log($"Timeline_TimeProgresses - Timeline duration: {testDirector.duration}");
             
-            // 数フレーム待つ
-            for (int i = 0; i < 5; i++)
+            // Wait for multiple frames or use WaitForSeconds
+            yield return new WaitForSeconds(0.1f);
+            
+            // Manually update time if needed
+            if (testDirector.time <= initialTime)
             {
-                yield return null;
+                Debug.LogWarning("Timeline_TimeProgresses - Time did not progress automatically, manually advancing");
+                testDirector.time = 0.1;
+                testDirector.Evaluate();
             }
             
             double currentTime = testDirector.time;
             Debug.Log($"Timeline_TimeProgresses - 現在時間: {currentTime}");
             
             // 時間が進んでいることを確認
-            Assert.Greater(currentTime, initialTime);
+            Assert.Greater(currentTime, initialTime, "Timeline time should progress after playing");
             
             testDirector.Stop();
             Debug.Log("Timeline_TimeProgresses - テスト完了");

@@ -79,6 +79,7 @@ namespace BatchRenderingTool
         
         // FBX recorder settings
         public GameObject fbxTargetGameObject = null;
+        public FBXRecordedComponent fbxRecordedComponent = FBXRecordedComponent.Camera;
         public bool fbxRecordHierarchy = true;
         public bool fbxClampedTangents = true;
         public FBXAnimationCompressionLevel fbxAnimationCompression = FBXAnimationCompressionLevel.Lossy;
