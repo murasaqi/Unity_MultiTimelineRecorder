@@ -901,6 +901,19 @@ namespace BatchRenderingTool
                 yield break;
             }
             
+            // FBX Recorder specific validation
+            if (recorderType == RecorderSettingsType.FBX)
+            {
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX Recorder validation - Target GameObject: {(fbxTargetGameObject != null ? fbxTargetGameObject.name : "NULL")}");
+                if (fbxTargetGameObject == null)
+                {
+                    currentState = RenderState.Error;
+                    statusMessage = "FBX Recorder requires a Target GameObject.\nPlease select a GameObject to record animations from.";
+                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] FBX Recorder requires a Target GameObject to be set");
+                    yield break;
+                }
+            }
+            
             // Store original Play On Awake setting and disable it
             bool originalPlayOnAwake = selectedDirector.playOnAwake;
             selectedDirector.playOnAwake = false;
@@ -999,7 +1012,7 @@ namespace BatchRenderingTool
                             {
                                 if (clip.asset is ControlPlayableAsset controlAsset)
                                 {
-                                    EditorPrefs.SetString("STR_ExposedName", controlAsset.sourceGameObject.exposedName);
+                                    EditorPrefs.SetString("STR_ExposedName", controlAsset.sourceGameObject.exposedName.ToString());
                                     break;
                                 }
                             }
@@ -1496,9 +1509,9 @@ namespace BatchRenderingTool
                         AssetDatabase.SaveAssets();
                         
                         // Update the path after rename
-                        string directory = Path.GetDirectoryName(tempAssetPath);
-                        string extension = Path.GetExtension(tempAssetPath);
-                        lastGeneratedAssetPath = Path.Combine(directory, newName + extension);
+                        string directory = System.IO.Path.GetDirectoryName(tempAssetPath);
+                        string extension = System.IO.Path.GetExtension(tempAssetPath);
+                        lastGeneratedAssetPath = System.IO.Path.Combine(directory, newName + extension);
                     }
                 }
                 else

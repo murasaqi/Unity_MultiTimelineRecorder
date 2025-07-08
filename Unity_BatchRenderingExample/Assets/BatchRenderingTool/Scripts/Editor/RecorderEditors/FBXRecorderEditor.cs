@@ -22,12 +22,25 @@ namespace BatchRenderingTool.RecorderEditors
             EditorGUILayout.LabelField("GameObject", EditorStyles.label);
             EditorGUILayout.EndHorizontal();
             
-            // GameObject selection
+            // GameObject selection with highlighting when null
+            if (host.fbxTargetGameObject == null)
+            {
+                EditorGUILayout.HelpBox("FBX Recorder requires a Target GameObject. Please select the GameObject to record animations from.", MessageType.Error);
+            }
+            
+            var previousColor = GUI.backgroundColor;
+            if (host.fbxTargetGameObject == null)
+            {
+                GUI.backgroundColor = new Color(1f, 0.5f, 0.5f); // Light red for missing GameObject
+            }
+            
             host.fbxTargetGameObject = (GameObject)EditorGUILayout.ObjectField(
                 "GameObject", 
                 host.fbxTargetGameObject, 
                 typeof(GameObject), 
                 true);
+            
+            GUI.backgroundColor = previousColor;
             
             // Recorded Components dropdown
             host.fbxRecordedComponent = (FBXRecordedComponent)EditorGUILayout.EnumPopup(
@@ -86,7 +99,9 @@ namespace BatchRenderingTool.RecorderEditors
             // FBX-specific validation
             if (host.fbxTargetGameObject == null)
             {
-                errorMessage = "Target GameObject must be set for FBX recording";
+                errorMessage = "FBX Recorder Error: No Target GameObject selected.\n\n" +
+                               "Please select a GameObject to record animations from.\n" +
+                               "The selected GameObject's Transform or Camera component will be recorded.";
                 return false;
             }
             

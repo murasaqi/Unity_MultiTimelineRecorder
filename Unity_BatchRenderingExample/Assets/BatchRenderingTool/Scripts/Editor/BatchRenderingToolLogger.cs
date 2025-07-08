@@ -7,9 +7,29 @@ namespace BatchRenderingTool
     /// </summary>
     public static class BatchRenderingToolLogger
     {
-        public static void LogVerbose(string message) { /* Disabled for production */ }
-        public static void Log(string message) => Debug.Log(message);
-        public static void LogWarning(string message) => Debug.LogWarning(message);
-        public static void LogError(string message) => Debug.LogError(message);
+        private const string PREFIX = "[BatchRenderingTool] ";
+        
+        public static void LogVerbose(string message) 
+        { 
+            /* Disabled for production */ 
+        }
+        
+        public static void Log(string message) 
+        {
+            if (!string.IsNullOrEmpty(message))
+                Debug.Log(PREFIX + message);
+        }
+        
+        public static void LogWarning(string message) 
+        {
+            if (!string.IsNullOrEmpty(message))
+                Debug.LogWarning(PREFIX + message);
+        }
+        
+        public static void LogError(string message) 
+        {
+            if (!string.IsNullOrEmpty(message))
+                Debug.LogError(PREFIX + message);
+        }
     }
 }

@@ -114,16 +114,43 @@ namespace BatchRenderingTool
             {
                 UnityEngine.Debug.Log("[PlayModeTimelineRenderer] FBX Recorder detected - applying special initialization");
                 
+                // ターゲットDirectorの状態を詳細にログ出力
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director: {targetDirector.gameObject.name}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director playableAsset: {targetDirector.playableAsset}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director time: {targetDirector.time}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director duration: {targetDirector.duration}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director state: {targetDirector.state}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director playOnAwake: {targetDirector.playOnAwake}");
+                
+                // バインディング情報をログ出力
+                if (targetDirector.playableAsset != null)
+                {
+                    foreach (var output in targetDirector.playableAsset.outputs)
+                    {
+                        var binding = targetDirector.GetGenericBinding(output.sourceObject);
+                        UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target binding: {output.sourceObject} -> {binding}");
+                    }
+                }
+                
                 // ターゲットDirectorの初期状態を確保
                 targetDirector.time = 0;
                 targetDirector.Evaluate();
+                UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Target Director evaluated at time 0");
                 
                 // 1フレーム待機してUnityの初期化を完了させる
                 yield return null;
                 
+                // レンダリングDirectorの状態を詳細にログ出力
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Director: {renderingDirector.gameObject.name}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Director playableAsset: {renderingDirector.playableAsset}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Director time: {renderingDirector.time}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Director duration: {renderingDirector.duration}");
+                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Director state: {renderingDirector.state}");
+                
                 // レンダリングDirectorも初期化
                 renderingDirector.time = 0;
                 renderingDirector.Evaluate();
+                UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Rendering Director evaluated at time 0");
                 
                 // もう1フレーム待機
                 yield return null;
@@ -136,11 +163,15 @@ namespace BatchRenderingTool
             // RenderingDataにDirectorの参照を保存
             data.renderingDirector = renderingDirector;
             
-            UnityEngine.Debug.Log("[PlayModeTimelineRenderer] Started rendering");
+            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Started rendering - Director state: {renderingDirector.state}");
+            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Timeline duration: {renderingDirector.duration}");
+            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Expected duration from data: {data.duration}");
             
             // レンダリング進行状況を監視 - シンプルにDirectorの状態のみを監視
             float timeout = data.duration + 10f;
             float elapsedTime = 0f;
+            int frameCount = 0;
+            float lastLogTime = 0f;
             
             while (renderingDirector != null && renderingDirector.state == PlayState.Playing && elapsedTime < timeout)
             {
@@ -151,6 +182,21 @@ namespace BatchRenderingTool
                 
                 progress = data.progress;
                 elapsedTime += Time.deltaTime;
+                frameCount++;
+                
+                // 1秒ごとに詳細なログを出力
+                if (elapsedTime - lastLogTime >= 1f)
+                {
+                    UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Progress Update - Frame: {frameCount}, Time: {renderingDirector.time:F3}/{renderingDirector.duration:F3}, Progress: {data.progress:P1}, State: {renderingDirector.state}");
+                    
+                    // FBX Recorderの場合、ターゲットDirectorの状態も確認
+                    if (data.recorderType == RecorderSettingsType.FBX)
+                    {
+                        UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target Director - Time: {targetDirector.time:F3}, State: {targetDirector.state}");
+                    }
+                    
+                    lastLogTime = elapsedTime;
+                }
                 
                 yield return null;
             }
@@ -212,6 +258,31 @@ namespace BatchRenderingTool
                     
                     // ターゲットDirectorのPlayOnAwakeを確実にfalseに
                     targetDirector.playOnAwake = false;
+                    
+                    // レンダリングTimelineの内容を詳細に確認
+                    UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Rendering Timeline track count: {data.renderTimeline.GetRootTracks().Count()}");
+                    foreach (var track in data.renderTimeline.GetRootTracks())
+                    {
+                        UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Track: {track.GetType().Name} - {track.name}");
+                        
+                        // RecorderTrackのチェックはEditorでのみ実行可能
+                        #if UNITY_EDITOR
+                        if (track is UnityEditor.Recorder.Timeline.RecorderTrack recorderTrack)
+                        {
+                            var clips = track.GetClips();
+                            foreach (var clip in clips)
+                            {
+                                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Recorder Clip: {clip.displayName} - Start: {clip.start:F3}, Duration: {clip.duration:F3}");
+                                
+                                if (clip.asset is UnityEditor.Recorder.Timeline.RecorderClip recorderClip)
+                                {
+                                    UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Recorder Settings: {recorderClip.settings?.GetType().Name ?? "null"}");
+                                    UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Recorder Enabled: {recorderClip.settings?.Enabled ?? false}");
+                                }
+                            }
+                        }
+                        #endif
+                    }
                     
                     // バインディングを再確認
                     foreach (var output in targetDirector.playableAsset.outputs)

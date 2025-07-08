@@ -339,8 +339,19 @@ namespace BatchRenderingTool
         /// </summary>
         private static void ConfigureAnimationInputSettings(object animInputSettings, GameObject targetGameObject, FBXRecordedComponent recordedComponent, bool recordHierarchy, bool clampedTangents)
         {
-            if (animInputSettings == null || targetGameObject == null)
+            BatchRenderingToolLogger.Log($"[ConfigureAnimationInputSettings] Called with targetGameObject: {(targetGameObject != null ? targetGameObject.name : "NULL")}");
+            
+            if (animInputSettings == null)
+            {
+                BatchRenderingToolLogger.LogError("[ConfigureAnimationInputSettings] animInputSettings is null!");
                 return;
+            }
+            
+            if (targetGameObject == null)
+            {
+                BatchRenderingToolLogger.LogError("[ConfigureAnimationInputSettings] targetGameObject is null! FBX recording will fail!");
+                return;
+            }
                 
             var animType = animInputSettings.GetType();
             
