@@ -138,6 +138,10 @@ namespace BatchRenderingTool
         private EditorCoroutine renderCoroutine;
         private string tempAssetPath;
         
+        // Progress tracking
+        private float renderStartTime;
+        private float lastReportedProgress = -1f;
+        
         // UI Editor instances
         private RecorderSettingsEditorBase currentRecorderEditor;
         
@@ -580,13 +584,46 @@ namespace BatchRenderingTool
             EditorGUILayout.LabelField($"Message: {statusMessage}");
             
             // Progress bar
-            if (currentState == RenderState.Rendering)
+            if (currentState == RenderState.Rendering || currentState == RenderState.PreparingAssets || currentState == RenderState.WaitingForPlayMode)
             {
-                EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(GUILayout.Height(20)), renderProgress, $"{(int)(renderProgress * 100)}%");
+                // 美しいプログレスバー
+                var rect = EditorGUILayout.GetControlRect(GUILayout.Height(25));
+                EditorGUI.ProgressBar(rect, renderProgress, $"{(int)(renderProgress * 100)}%");
                 
-                if (renderingDirector != null)
+                // 詳細な時間情報
+                if (EditorApplication.isPlaying)
                 {
-                    EditorGUILayout.LabelField($"Time: {renderingDirector.time:F2}/{renderingDirector.duration:F2}");
+                    float currentTime = EditorPrefs.GetFloat("STR_CurrentTime", 0f);
+                    float duration = EditorPrefs.GetFloat("STR_Duration", 0f);
+                    
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField($"Time: {currentTime:F2}s / {duration:F2}s", EditorStyles.miniBoldLabel);
+                    
+                    // 残り時間の推定
+                    if (renderProgress > 0.01f && renderProgress < 1f)
+                    {
+                        float elapsedTime = Time.realtimeSinceStartup - renderStartTime;
+                        float estimatedTotal = elapsedTime / renderProgress;
+                        float remainingTime = estimatedTotal - elapsedTime;
+                        EditorGUILayout.LabelField($"Remaining: ~{remainingTime:F0}s", EditorStyles.miniLabel);
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    
+                    // PlayableDirectorの状態表示（デバッグモード時）
+                    if (debugMode)
+                    {
+                        var renderingDataGO = GameObject.Find("[RenderingData]");
+                        if (renderingDataGO != null)
+                        {
+                            var renderingData = renderingDataGO.GetComponent<RenderingData>();
+                            if (renderingData != null && renderingData.renderingDirector != null)
+                            {
+                                var director = renderingData.renderingDirector;
+                                EditorGUILayout.LabelField($"Director State: {director.state}", EditorStyles.miniLabel);
+                                EditorGUILayout.LabelField($"Frame: {(int)(currentTime * renderingData.frameRate)} / {(int)(duration * renderingData.frameRate)}", EditorStyles.miniLabel);
+                            }
+                        }
+                    }
                 }
             }
             
@@ -1722,6 +1759,7 @@ namespace BatchRenderingTool
                     BatchRenderingToolLogger.Log("[SingleTimelineRenderer] Creating PlayModeTimelineRenderer GameObject");
                     currentState = RenderState.Rendering;
                     statusMessage = "Rendering in Play Mode...";
+                    renderStartTime = Time.realtimeSinceStartup;
                     
                     // レンダリングデータを準備
                     string directorName = EditorPrefs.GetString("STR_DirectorName", "");
@@ -1815,33 +1853,75 @@ namespace BatchRenderingTool
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Rendering progress monitoring ended");
                 EditorApplication.update -= OnRenderingProgressUpdate;
+                
+                // Play Mode終了時の最終状態チェック
+                if (EditorPrefs.GetBool("STR_IsRenderingComplete", false))
+                {
+                    currentState = RenderState.Complete;
+                    statusMessage = "Rendering complete!";
+                    renderProgress = 1f;
+                    EditorPrefs.DeleteKey("STR_IsRenderingComplete");
+                }
+                
                 return;
             }
             
-            // RenderingDataオブジェクトを直接監視
+            // EditorPrefsから進捗情報を取得（PlayModeTimelineRendererから送信される）
+            if (EditorPrefs.GetBool("STR_IsRenderingInProgress", false))
+            {
+                float progress = EditorPrefs.GetFloat("STR_Progress", 0f);
+                string status = EditorPrefs.GetString("STR_Status", "Rendering...");
+                float currentTime = EditorPrefs.GetFloat("STR_CurrentTime", 0f);
+                
+                // 進捗を更新
+                renderProgress = progress;
+                statusMessage = status;
+                
+                // デバッグ情報
+                if (debugMode && Mathf.Abs(progress - lastReportedProgress) > 0.01f)
+                {
+                    lastReportedProgress = progress;
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Progress update: {progress:F3} - {status}");
+                }
+                
+                // UIを更新
+                Repaint();
+            }
+            else if (EditorPrefs.GetBool("STR_IsRenderingComplete", false))
+            {
+                // レンダリング完了
+                currentState = RenderState.Complete;
+                statusMessage = "Rendering complete!";
+                renderProgress = 1f;
+                
+                // UIを更新
+                Repaint();
+                
+                // 監視を停止
+                EditorApplication.update -= OnRenderingProgressUpdate;
+            }
+            
+            // フォールバック: RenderingDataオブジェクトを直接監視
             var renderingDataGO = GameObject.Find("[RenderingData]");
             if (renderingDataGO != null)
             {
                 var renderingData = renderingDataGO.GetComponent<RenderingData>();
-                if (renderingData != null)
+                if (renderingData != null && renderingData.renderingDirector != null)
                 {
-                    // 進捗を更新
-                    renderProgress = renderingData.progress;
+                    // PlayableDirectorの状態も確認
+                    var director = renderingData.renderingDirector;
                     
-                    // 状態を更新
-                    if (renderingData.isComplete)
-                    {
-                        currentState = RenderState.Complete;
-                        statusMessage = "Rendering complete!";
-                        renderProgress = 1f;
-                    }
-                    else if (renderingData.isPlaying)
-                    {
-                        statusMessage = $"Rendering... {(renderingData.progress * 100f):F1}%";
-                    }
+                    // DirectorのステータスをUIに表示
+                    string directorState = director.state.ToString();
+                    statusMessage = $"{statusMessage} (Director: {directorState})";
                     
-                    // UIを更新
-                    Repaint();
+                    // デバッグ情報
+                    if (debugMode)
+                    {
+                        double directorTime = director.time;
+                        double duration = renderingData.renderTimeline != null ? renderingData.renderTimeline.duration : 0;
+                        statusMessage = $"{statusMessage} [{directorTime:F2}/{duration:F2}s]";
+                    }
                 }
             }
         }
