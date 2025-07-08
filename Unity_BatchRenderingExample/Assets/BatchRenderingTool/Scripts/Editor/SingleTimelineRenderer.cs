@@ -617,7 +617,6 @@ namespace BatchRenderingTool
                     EditorPrefs.DeleteKey("STR_DirectorName");
                     EditorPrefs.DeleteKey("STR_TempAssetPath");
                     EditorPrefs.DeleteKey("STR_Duration");
-                    EditorPrefs.DeleteKey("STR_ExposedName");
                     EditorPrefs.DeleteKey("STR_TakeNumber");
                     EditorPrefs.DeleteKey("STR_OutputFile");
                     EditorPrefs.DeleteKey("STR_RecorderType");
@@ -1010,11 +1009,8 @@ namespace BatchRenderingTool
                             var clips = track.GetClips();
                             foreach (var clip in clips)
                             {
-                                if (clip.asset is ControlPlayableAsset controlAsset)
-                                {
-                                    EditorPrefs.SetString("STR_ExposedName", controlAsset.sourceGameObject.exposedName.ToString());
-                                    break;
-                                }
+                                // ExposedReferenceは使用しない
+                                break;
                             }
                             break;
                         }
@@ -1082,7 +1078,6 @@ namespace BatchRenderingTool
             
             // Calculate pre-roll time
             float preRollTime = preRollFrames > 0 ? preRollFrames / (float)frameRate : 0f;
-            string exposedName = UnityEditor.GUID.Generate().ToString();
             
             if (preRollFrames > 0)
             {
@@ -1106,7 +1101,7 @@ namespace BatchRenderingTool
                 preRollClip.duration = preRollTime;
                 
                 var preRollAsset = preRollClip.asset as ControlPlayableAsset;
-                preRollAsset.sourceGameObject.exposedName = exposedName;
+                // ExposedReferenceは使わず、実行時にGameObject名で解決
                 preRollAsset.sourceGameObject.defaultValue = originalDirector.gameObject;
                 preRollAsset.updateDirector = true;
                 preRollAsset.updateParticle = true;
@@ -1137,13 +1132,8 @@ namespace BatchRenderingTool
             
             var controlAsset = controlClip.asset as ControlPlayableAsset;
             
-            // CRITICAL: Set up the exposed name for runtime binding
-            // Set exposedName directly, same as pre-roll clip
-            controlAsset.sourceGameObject.exposedName = exposedName;
+            // ExposedReferenceは使わず、実行時にGameObject名で解決
             controlAsset.sourceGameObject.defaultValue = originalDirector.gameObject;
-            
-            // Store the exposed name for later use in Play Mode
-            EditorPrefs.SetString("STR_ExposedName", exposedName);
             
             // Configure control asset properties
             controlAsset.updateDirector = true;
@@ -1732,7 +1722,6 @@ namespace BatchRenderingTool
                     string directorName = EditorPrefs.GetString("STR_DirectorName", "");
                     string tempAssetPath = EditorPrefs.GetString("STR_TempAssetPath", "");
                     float duration = EditorPrefs.GetFloat("STR_Duration", 0f);
-                    string exposedName = EditorPrefs.GetString("STR_ExposedName", "");
                     int frameRate = EditorPrefs.GetInt("STR_FrameRate", 24);
                     int preRollFrames = EditorPrefs.GetInt("STR_PreRollFrames", 0);
                     
@@ -1753,8 +1742,6 @@ namespace BatchRenderingTool
                     renderingData.renderTimeline = renderTimeline;
                     
                     renderingData.duration = duration;
-                    
-                    renderingData.exposedName = exposedName;
                     renderingData.frameRate = frameRate;
                     renderingData.preRollFrames = preRollFrames;
                     renderingData.recorderType = (RecorderSettingsType)EditorPrefs.GetInt("STR_RecorderType", 0);
