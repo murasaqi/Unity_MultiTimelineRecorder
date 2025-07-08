@@ -20,7 +20,7 @@ namespace BatchRenderingTool
     /// <summary>
     /// Single Timeline Renderer - Renders one timeline at a time with a simple UI
     /// </summary>
-    public class SingleTimelineRenderer : EditorWindow, IRecorderSettingsHost
+    public partial class SingleTimelineRenderer : EditorWindow, IRecorderSettingsHost
     {
         // Static instance tracking
         private static SingleTimelineRenderer instance;
@@ -543,7 +543,9 @@ namespace BatchRenderingTool
             EditorGUILayout.EndVertical();
             
             // Separator
-            GUILayout.Box("", GUILayout.Width(1), GUILayout.ExpandHeight(true));
+            EditorGUILayout.BeginVertical(GUILayout.Width(1));
+            GUILayout.Box("", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            EditorGUILayout.EndVertical();
             
             // Center column - Recorder list (②Recorder の追加)
             EditorGUILayout.BeginVertical(GUILayout.Width(250));
@@ -551,7 +553,9 @@ namespace BatchRenderingTool
             EditorGUILayout.EndVertical();
             
             // Separator
-            GUILayout.Box("", GUILayout.Width(1), GUILayout.ExpandHeight(true));
+            EditorGUILayout.BeginVertical(GUILayout.Width(1));
+            GUILayout.Box("", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            EditorGUILayout.EndVertical();
             
             // Right column - Recorder details (③各Recorder の設定)
             EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true));
@@ -1146,3 +1150,787 @@ namespace BatchRenderingTool
                 EditorGUILayout.EnumPopup("Time Sampling:", item.alembicConfig.timeSamplingType);
         }
         
+        // ========== 欠落していたメソッドの復元 ==========
+        
+        private void ScanTimelines()
+        {
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] ScanTimelines called");
+            availableDirectors.Clear();
+            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Found {allDirectors.Length} total PlayableDirectors");
+            
+            foreach (var director in allDirectors)
+            {
+                if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
+                {
+                    availableDirectors.Add(director);
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Added director: {director.name}");
+                }
+                else if (director != null)
+                {
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Skipped director: {director.name} (asset: {director.playableAsset?.GetType().Name ?? "null"})");
+                }
+            }
+            
+            // Remove any null entries that might have been destroyed
+            availableDirectors.RemoveAll(d => d == null || d.gameObject == null);
+            
+            availableDirectors.Sort((a, b) => {
+                if (a == null || a.gameObject == null) return 1;
+                if (b == null || b.gameObject == null) return -1;
+                return a.gameObject.name.CompareTo(b.gameObject.name);
+            });
+            
+            if (selectedDirectorIndex >= availableDirectors.Count)
+            {
+                selectedDirectorIndex = 0;
+            }
+            
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] ScanTimelines completed - Found {availableDirectors.Count} valid directors");
+        }
+        
+        private void OnEditorUpdate()
+        {
+            // OnPlayModeStateChanged handles Play Mode transitions now
+            // This method can be used for other update tasks if needed
+        }
+        
+        private void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Play Mode state changed: {state}");
+            
+            if (state == PlayModeStateChange.EnteredPlayMode)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Entered Play Mode");
+                
+                // レンダリングが進行中の場合、PlayModeTimelineRendererを作成
+                bool isRendering = EditorPrefs.GetBool("STR_IsRendering", false);
+                
+                BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] STR_IsRendering: {isRendering}");
+                
+                if (isRendering)
+                {
+                    BatchRenderingToolLogger.Log("[SingleTimelineRenderer] Creating PlayModeTimelineRenderer GameObject");
+                    currentState = RenderState.Rendering;
+                    statusMessage = "Rendering in Play Mode...";
+                    
+                    // レンダリングデータを準備
+                    string directorName = EditorPrefs.GetString("STR_DirectorName", "");
+                    string tempAssetPath = EditorPrefs.GetString("STR_TempAssetPath", "");
+                    float duration = EditorPrefs.GetFloat("STR_Duration", 0f);
+                    int frameRate = EditorPrefs.GetInt("STR_FrameRate", 24);
+                    int preRollFrames = EditorPrefs.GetInt("STR_PreRollFrames", 0);
+                    
+                    // 診断情報をログ出力
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Play Mode diagnostic info:");
+                    BatchRenderingToolLogger.Log($"  - DirectorName: {directorName}");
+                    BatchRenderingToolLogger.Log($"  - TempAssetPath: {tempAssetPath}");
+                    BatchRenderingToolLogger.Log($"  - Duration: {duration}");
+                    BatchRenderingToolLogger.Log($"  - FrameRate: {frameRate}");
+                    BatchRenderingToolLogger.Log($"  - PreRollFrames: {preRollFrames}");
+                    
+                    // Render Timelineをロード
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Attempting to load timeline from: {tempAssetPath}");
+                    
+                    // AssetDatabase refresh to ensure latest state
+                    AssetDatabase.Refresh();
+                    
+                    var renderTimeline = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
+                    if (renderTimeline == null)
+                    {
+                        BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to load timeline from: {tempAssetPath}");
+                        
+                        // Check if file exists
+                        if (System.IO.File.Exists(tempAssetPath))
+                        {
+                            BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] File exists but couldn't load as TimelineAsset");
+                        }
+                        else
+                        {
+                            BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] File does not exist at path: {tempAssetPath}");
+                        }
+                        
+                        currentState = RenderState.Error;
+                        statusMessage = "Failed to load render timeline";
+                        
+                        // Clear rendering flag
+                        EditorPrefs.SetBool("STR_IsRendering", false);
+                        EditorPrefs.SetBool("STR_IsRenderingInProgress", false);
+                        EditorPrefs.SetString("STR_Status", "Error: Timeline load failed");
+                        
+                        return;
+                    }
+                    
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Successfully loaded timeline: {renderTimeline.name}");
+                    
+                    // レンダリングデータを持つGameObjectを作成
+                    var dataGO = new GameObject("[RenderingData]");
+                    var renderingData = dataGO.AddComponent<RenderingData>();
+                    renderingData.directorName = directorName;
+                    renderingData.renderTimeline = renderTimeline;
+                    
+                    renderingData.duration = duration;
+                    renderingData.frameRate = frameRate;
+                    renderingData.preRollFrames = preRollFrames;
+                    renderingData.recorderType = (RecorderSettingsType)EditorPrefs.GetInt("STR_RecorderType", 0);
+                    
+                    // PlayModeTimelineRenderer GameObjectを作成
+                    var rendererGO = new GameObject("[PlayModeTimelineRenderer]");
+                    var renderer = rendererGO.AddComponent<PlayModeTimelineRenderer>();
+                    
+                    // 作成確認
+                    if (renderer != null)
+                    {
+                        BatchRenderingToolLogger.Log("[SingleTimelineRenderer] PlayModeTimelineRenderer successfully created");
+                    }
+                    else
+                    {
+                        BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create PlayModeTimelineRenderer");
+                    }
+                    
+                    // EditorPrefsをクリア
+                    EditorPrefs.SetBool("STR_IsRendering", false);
+                    
+                    // このEditorWindowでは進行状況の監視のみ行う
+                    MonitorRenderingProgress();
+                }
+                else
+                {
+                    BatchRenderingToolLogger.LogWarning("[SingleTimelineRenderer] STR_IsRendering is false - PlayModeTimelineRenderer will not be created");
+                }
+            }
+            else if (state == PlayModeStateChange.ExitingPlayMode)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Exiting Play Mode");
+                
+                // 状態はすでにOnRenderingProgressUpdateで更新されているため、
+                // ここでは最終的なクリーンアップのみ行う
+                
+                // 監視を停止
+                EditorApplication.update -= OnRenderingProgressUpdate;
+                
+                // クリーンアップ
+                if (renderCoroutine != null)
+                {
+                    EditorCoroutineUtility.StopCoroutine(renderCoroutine);
+                    renderCoroutine = null;
+                }
+                
+                CleanupRendering();
+                
+                // EditorPrefsのクリーンアップ
+                EditorPrefs.SetBool("STR_IsRendering", false);
+            }
+        }
+        
+        private void UpdateRecorderEditor()
+        {
+            currentRecorderEditor = recorderType switch
+            {
+                RecorderSettingsType.Image => new ImageRecorderEditor(this),
+                RecorderSettingsType.Movie => new MovieRecorderEditor(this),
+                RecorderSettingsType.AOV => new AOVRecorderEditor(this),
+                RecorderSettingsType.Alembic => new AlembicRecorderEditor(this),
+                RecorderSettingsType.Animation => new AnimationRecorderEditor(this),
+                RecorderSettingsType.FBX => new FBXRecorderEditor(this),
+                _ => null
+            };
+        }
+        
+        private void MonitorRenderingProgress()
+        {
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Starting rendering progress monitoring");
+            
+            // EditorWindowではコルーチンは使用できないため、
+            // EditorApplication.updateを使用して進行状況を監視
+            EditorApplication.update += OnRenderingProgressUpdate;
+        }
+        
+        private void DrawRenderControls()
+        {
+            EditorGUILayout.BeginHorizontal();
+            
+            bool canRender = currentState == RenderState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying;
+            
+            // Additional validation for multi-recorder mode
+            if (useMultiRecorder)
+            {
+                canRender = canRender && multiRecorderConfig.GetEnabledRecorders().Count > 0;
+            }
+            else
+            {
+                canRender = canRender && RecorderSettingsFactory.IsRecorderTypeSupported(recorderType);
+            }
+            
+            // Add Reset button if stuck in WaitingForPlayMode
+            if (currentState == RenderState.WaitingForPlayMode && !EditorApplication.isPlaying)
+            {
+                EditorGUILayout.HelpBox("Renderer is stuck in WaitingForPlayMode state. Click Reset to fix.", MessageType.Warning);
+                if (GUILayout.Button("Reset State", GUILayout.Height(25)))
+                {
+                    currentState = RenderState.Idle;
+                    renderCoroutine = null;
+                    statusMessage = "State reset to Idle";
+                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] State manually reset to Idle");
+                }
+            }
+            
+            GUI.enabled = canRender;
+            if (GUILayout.Button("Start Rendering", GUILayout.Height(30)))
+            {
+                StartRendering();
+            }
+            
+            GUI.enabled = currentState == RenderState.Rendering || EditorApplication.isPlaying;
+            if (GUILayout.Button("Stop Rendering", GUILayout.Height(30)))
+            {
+                StopRendering();
+            }
+            
+            GUI.enabled = true;
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        private void DrawStatusSection()
+        {
+            EditorGUILayout.LabelField("Status", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            // Status message
+            Color originalColor = GUI.color;
+            switch (currentState)
+            {
+                case RenderState.Error:
+                    GUI.color = Color.red;
+                    break;
+                case RenderState.Complete:
+                    GUI.color = Color.green;
+                    break;
+                case RenderState.Rendering:
+                    GUI.color = Color.yellow;
+                    break;
+            }
+            
+            EditorGUILayout.LabelField($"State: {currentState}");
+            GUI.color = originalColor;
+            
+            EditorGUILayout.LabelField($"Message: {statusMessage}");
+            
+            // Progress bar
+            if (currentState == RenderState.Rendering || currentState == RenderState.PreparingAssets || currentState == RenderState.WaitingForPlayMode)
+            {
+                // 美しいプログレスバー
+                var rect = EditorGUILayout.GetControlRect(GUILayout.Height(25));
+                EditorGUI.ProgressBar(rect, renderProgress, $"{(int)(renderProgress * 100)}%");
+                
+                // 詳細な時間情報
+                if (EditorApplication.isPlaying)
+                {
+                    float currentTime = EditorPrefs.GetFloat("STR_CurrentTime", 0f);
+                    float duration = EditorPrefs.GetFloat("STR_Duration", 0f);
+                    
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField($"Time: {currentTime:F2}s / {duration:F2}s", EditorStyles.miniBoldLabel);
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        private void DrawDebugSettings()
+        {
+            EditorGUILayout.LabelField("Debug Settings", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            // Debug mode toggle
+            EditorGUI.BeginChangeCheck();
+            debugMode = EditorGUILayout.Toggle("Keep Generated Assets", debugMode);
+            if (EditorGUI.EndChangeCheck())
+            {
+                // Save preference
+                EditorPrefs.SetBool("STR_DebugMode", debugMode);
+            }
+            
+            if (debugMode)
+            {
+                EditorGUILayout.HelpBox("Debug Mode Active: Generated Timeline assets and GameObjects will not be deleted after rendering.", MessageType.Info);
+                
+                // Show last generated asset if available
+                if (!string.IsNullOrEmpty(lastGeneratedAssetPath))
+                {
+                    EditorGUILayout.Space(5);
+                    EditorGUILayout.LabelField("Last Generated Asset:", EditorStyles.miniBoldLabel);
+                    
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField(lastGeneratedAssetPath);
+                    
+                    if (GUILayout.Button("Select", GUILayout.Width(60)))
+                    {
+                        var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(lastGeneratedAssetPath);
+                        if (asset != null)
+                        {
+                            Selection.activeObject = asset;
+                            EditorGUIUtility.PingObject(asset);
+                        }
+                        else
+                        {
+                            BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Could not find asset at: {lastGeneratedAssetPath}");
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                
+                // Clean up debug assets button
+                EditorGUILayout.Space(10);
+                EditorGUILayout.BeginHorizontal();
+                
+                if (GUILayout.Button("Clean Debug Assets", GUILayout.Height(25)))
+                {
+                    CleanDebugAssets();
+                }
+                
+                if (GUILayout.Button("Open Temp Folder", GUILayout.Height(25)))
+                {
+                    string tempPath = Application.dataPath + "/BatchRenderingTool/Temp";
+                    if (Directory.Exists(tempPath))
+                    {
+                        EditorUtility.RevealInFinder(tempPath);
+                    }
+                    else
+                    {
+                        BatchRenderingToolLogger.LogWarning("[SingleTimelineRenderer] Temp folder does not exist.");
+                    }
+                }
+                
+                EditorGUILayout.EndHorizontal();
+            }
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        // ========== その他の必要なメソッド ==========
+        
+        private void CleanDebugAssets()
+        {
+            if (EditorUtility.DisplayDialog("Clean Debug Assets",
+                "This will delete all [DEBUG] prefixed assets in the Temp folder. Continue?",
+                "Yes", "Cancel"))
+            {
+                string tempDir = "Assets/BatchRenderingTool/Temp";
+                if (AssetDatabase.IsValidFolder(tempDir))
+                {
+                    var guids = AssetDatabase.FindAssets("t:Object", new[] { tempDir });
+                    int deletedCount = 0;
+                    
+                    foreach (var guid in guids)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
+                        
+                        if (asset != null && asset.name.StartsWith("[DEBUG]"))
+                        {
+                            AssetDatabase.DeleteAsset(path);
+                            deletedCount++;
+                        }
+                    }
+                    
+                    // Also clean up debug GameObjects in the scene
+                    var debugObjects = GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
+                        .Where(go => go.name.StartsWith("[DEBUG]"))
+                        .ToArray();
+                    
+                    foreach (var obj in debugObjects)
+                    {
+                        DestroyImmediate(obj);
+                        deletedCount++;
+                    }
+                    
+                    AssetDatabase.Refresh();
+                    
+                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Cleaned {deletedCount} debug assets and objects.");
+                    
+                    // Clear the last generated asset path if it was deleted
+                    if (!string.IsNullOrEmpty(lastGeneratedAssetPath) && 
+                        AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(lastGeneratedAssetPath) == null)
+                    {
+                        lastGeneratedAssetPath = null;
+                    }
+                }
+            }
+        }
+        
+        private void StartRendering()
+        {
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === StartRendering called ===");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Current state: {currentState}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Is Playing: {EditorApplication.isPlaying}");
+            
+            if (renderCoroutine != null)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping existing coroutine");
+                EditorCoroutineUtility.StopCoroutine(renderCoroutine);
+            }
+            
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Starting new coroutine");
+            renderCoroutine = EditorCoroutineUtility.StartCoroutine(RenderTimelineCoroutine(), this);
+        }
+        
+        private void StopRendering()
+        {
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRendering called");
+            
+            if (renderCoroutine != null)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping render coroutine");
+                EditorCoroutineUtility.StopCoroutine(renderCoroutine);
+                renderCoroutine = null;
+            }
+            
+            if (renderingDirector != null)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping rendering director");
+                try
+                {
+                    renderingDirector.Stop();
+                }
+                catch (System.Exception e)
+                {
+                    BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Error stopping director: {e.Message}");
+                }
+            }
+            
+            // Exit Play Mode if active
+            if (EditorApplication.isPlaying)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Exiting play mode");
+                EditorApplication.isPlaying = false;
+            }
+            
+            // CleanupRenderingを安全に実行
+            try
+            {
+                CleanupRendering();
+            }
+            catch (System.Exception e)
+            {
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Error during cleanup: {e.Message}");
+            }
+            
+            currentState = RenderState.Idle;
+            statusMessage = "Rendering stopped by user";
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRendering completed");
+        }
+        
+        private void OnRenderingProgressUpdate()
+        {
+            if (!EditorApplication.isPlaying)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Rendering progress monitoring ended");
+                EditorApplication.update -= OnRenderingProgressUpdate;
+                
+                // Play Mode終了時の最終状態チェック
+                if (EditorPrefs.GetBool("STR_IsRenderingComplete", false))
+                {
+                    currentState = RenderState.Complete;
+                    statusMessage = "Rendering complete!";
+                    renderProgress = 1f;
+                    EditorPrefs.DeleteKey("STR_IsRenderingComplete");
+                }
+                
+                return;
+            }
+            
+            // EditorPrefsから進捗情報を取得（PlayModeTimelineRendererから送信される）
+            if (EditorPrefs.GetBool("STR_IsRenderingInProgress", false))
+            {
+                float progress = EditorPrefs.GetFloat("STR_Progress", 0f);
+                string status = EditorPrefs.GetString("STR_Status", "Rendering...");
+                float currentTime = EditorPrefs.GetFloat("STR_CurrentTime", 0f);
+                
+                // 進捗を更新
+                renderProgress = progress;
+                statusMessage = status;
+                
+                // デバッグ情報
+                if (debugMode && Mathf.Abs(progress - lastReportedProgress) > 0.01f)
+                {
+                    lastReportedProgress = progress;
+                    BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Progress update: {progress:F3} - {status}");
+                }
+                
+                // UIを更新
+                Repaint();
+            }
+            else if (EditorPrefs.GetBool("STR_IsRenderingComplete", false))
+            {
+                // レンダリング完了
+                currentState = RenderState.Complete;
+                statusMessage = "Rendering complete!";
+                renderProgress = 1f;
+                
+                // UIを更新
+                Repaint();
+                
+                // 監視を停止
+                EditorApplication.update -= OnRenderingProgressUpdate;
+            }
+            
+            // フォールバック: RenderingDataオブジェクトを直接監視
+            var renderingDataGO = GameObject.Find("[RenderingData]");
+            if (renderingDataGO != null)
+            {
+                var renderingData = renderingDataGO.GetComponent<RenderingData>();
+                if (renderingData != null && renderingData.renderingDirector != null)
+                {
+                    // PlayableDirectorの状態も確認
+                    var director = renderingData.renderingDirector;
+                    if (director.time > 0)
+                    {
+                        float duration = renderingData.duration;
+                        float progress = duration > 0 ? (float)(director.time / duration) : 0f;
+                        renderProgress = Mathf.Clamp01(progress);
+                        
+                        // UIを更新
+                        Repaint();
+                    }
+                }
+            }
+        }
+        
+        private void CleanupRendering()
+        {
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] CleanupRendering started");
+            
+            // renderTimelineのクリーンアップ
+            if (renderTimeline != null && !debugMode)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Deleting render timeline asset");
+                string path = AssetDatabase.GetAssetPath(renderTimeline);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    AssetDatabase.DeleteAsset(path);
+                }
+                renderTimeline = null;
+            }
+            
+            // renderingDirectorのクリーンアップ
+            if (renderingDirector != null)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Destroying rendering director");
+                if (renderingDirector.gameObject != null)
+                {
+                    DestroyImmediate(renderingDirector.gameObject);
+                }
+                renderingDirector = null;
+            }
+            
+            // クリーンアップ: RenderingDataオブジェクトを削除
+            var renderingDataGO = GameObject.Find("[RenderingData]");
+            if (renderingDataGO != null)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Destroying RenderingData GameObject");
+                DestroyImmediate(renderingDataGO);
+            }
+            
+            // クリーンアップ: PlayModeTimelineRendererオブジェクトを削除
+            var rendererGO = GameObject.Find("[PlayModeTimelineRenderer]");
+            if (rendererGO != null)
+            {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Destroying PlayModeTimelineRenderer GameObject");
+                DestroyImmediate(rendererGO);
+            }
+            
+            // EditorPrefsのクリーンアップ
+            EditorPrefs.DeleteKey("STR_DirectorName");
+            EditorPrefs.DeleteKey("STR_TempAssetPath");
+            EditorPrefs.DeleteKey("STR_Duration");
+            EditorPrefs.DeleteKey("STR_IsRendering");
+            EditorPrefs.DeleteKey("STR_IsRenderingInProgress");
+            EditorPrefs.DeleteKey("STR_IsRenderingComplete");
+            EditorPrefs.DeleteKey("STR_Progress");
+            EditorPrefs.DeleteKey("STR_Status");
+            EditorPrefs.DeleteKey("STR_CurrentTime");
+            
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] CleanupRendering completed");
+        }
+        
+        private IEnumerator RenderTimelineCoroutine()
+        {
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] RenderTimelineCoroutine started");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
+            
+            currentState = RenderState.Preparing;
+            statusMessage = "Preparing...";
+            renderProgress = 0f;
+            
+            // Validate selection
+            if (availableDirectors.Count == 0)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "No timelines available";
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No timelines available");
+                yield break;
+            }
+            
+            if (selectedDirectorIndex < 0 || selectedDirectorIndex >= availableDirectors.Count)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Invalid timeline selection";
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Invalid selection index: {selectedDirectorIndex} (count: {availableDirectors.Count})");
+                yield break;
+            }
+            
+            var selectedDirector = availableDirectors[selectedDirectorIndex];
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected director: {selectedDirector?.name ?? "null"}");
+            
+            if (selectedDirector == null || selectedDirector.gameObject == null)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Selected director is null or destroyed";
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Selected director is null or destroyed");
+                yield break;
+            }
+            
+            // Get original timeline
+            var originalTimeline = selectedDirector.playableAsset as TimelineAsset;
+            if (originalTimeline == null)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Selected director has no timeline";
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Selected director has no timeline asset");
+                yield break;
+            }
+            
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Starting render for: {selectedDirector.gameObject.name} ===");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Timeline duration: {originalTimeline.duration}");
+            
+            // Store original values
+            bool originalPlayOnAwake = selectedDirector.playOnAwake;
+            selectedDirector.playOnAwake = false;
+            
+            // Track timeline duration
+            float timelineDuration = (float)originalTimeline.duration;
+            
+            // Create render timeline
+            currentState = RenderState.PreparingAssets;
+            statusMessage = "Creating render timeline...";
+            yield return null; // Allow UI to update
+            
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating render timeline...");
+            renderTimeline = null;
+            try
+            {
+                renderTimeline = CreateRenderTimeline(selectedDirector, originalTimeline);
+            }
+            catch (System.Exception e)
+            {
+                currentState = RenderState.Error;
+                statusMessage = $"Failed to create timeline: {e.Message}";
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create render timeline: {e}");
+                selectedDirector.playOnAwake = originalPlayOnAwake;
+                yield break;
+            }
+            
+            if (renderTimeline == null)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Failed to create render timeline";
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] CreateRenderTimeline returned null");
+                selectedDirector.playOnAwake = originalPlayOnAwake;
+                yield break;
+            }
+            
+            // Save assets and verify
+            currentState = RenderState.SavingAssets;
+            statusMessage = "Saving timeline asset...";
+            yield return null; // Allow UI to update
+            
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Saving assets...");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(tempAssetPath, ImportAssetOptions.ForceUpdate);
+            AssetDatabase.Refresh();
+            
+            // Verify asset was saved
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Verifying saved asset...");
+            var verifyAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
+            if (verifyAsset == null)
+            {
+                currentState = RenderState.Error;
+                statusMessage = "Failed to save Timeline asset";
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to verify saved asset at: {tempAssetPath}");
+                selectedDirector.playOnAwake = originalPlayOnAwake;
+                yield break;
+            }
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Asset verified successfully: {verifyAsset.name}");
+            
+            // Wait to ensure asset is fully saved
+            yield return new WaitForSeconds(0.5f);
+            
+            // Enter Play Mode
+            currentState = RenderState.WaitingForPlayMode;
+            statusMessage = "Starting Unity Play Mode...";
+            
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
+            
+            if (!EditorApplication.isPlaying)
+            {
+                BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Entering Play Mode... ===");
+                
+                // アセットパスが有効か確認
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Saving tempAssetPath to EditorPrefs: {tempAssetPath}");
+                if (string.IsNullOrEmpty(tempAssetPath))
+                {
+                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] tempAssetPath is null or empty!");
+                    currentState = RenderState.Error;
+                    statusMessage = "Timeline asset path is invalid";
+                    selectedDirector.playOnAwake = originalPlayOnAwake;
+                    yield break;
+                }
+                
+                // Store necessary data for Play Mode
+                EditorPrefs.SetString("STR_DirectorName", selectedDirector.gameObject.name);
+                EditorPrefs.SetString("STR_TempAssetPath", tempAssetPath);
+                EditorPrefs.SetFloat("STR_Duration", timelineDuration);
+                EditorPrefs.SetBool("STR_IsRendering", true);
+                EditorPrefs.SetInt("STR_TakeNumber", takeNumber);
+                EditorPrefs.SetString("STR_OutputFile", fileName);
+                EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
+                EditorPrefs.SetInt("STR_FrameRate", frameRate);
+                EditorPrefs.SetInt("STR_PreRollFrames", preRollFrames);
+                // exposedNameも保存（CreateRenderTimelineで生成されたもの）
+                if (renderTimeline != null)
+                {
+                    // ControlTrackのexposedNameを探す
+                    foreach (var output in renderTimeline.outputs)
+                    {
+                        if (output.sourceObject is ControlTrack track)
+                        {
+                            var clips = track.GetClips();
+                            foreach (var clip in clips)
+                            {
+                                // ExposedReferenceは使用しない
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // AssetDatabaseがPlay Mode移行前に最新の状態になるようにする
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                
+                // EditorPrefsの値を再確認
+                string verifyPath = EditorPrefs.GetString("STR_TempAssetPath", "");
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Verified EditorPrefs STR_TempAssetPath before Play Mode: {verifyPath}");
+                
+                EditorApplication.isPlaying = true;
+                // Play Modeに入ると、PlayModeTimelineRendererが自動的に処理を引き継ぐ
+            }
+        }
+    }
+}
