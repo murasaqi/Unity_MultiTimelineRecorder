@@ -265,23 +265,12 @@ namespace BatchRenderingTool
                     {
                         UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Track: {track.GetType().Name} - {track.name}");
                         
-                        // RecorderTrackのチェックはEditorでのみ実行可能
-                        #if UNITY_EDITOR
-                        if (track is UnityEditor.Recorder.Timeline.RecorderTrack recorderTrack)
+                        // PlayModeではRecorderTrackの詳細情報にアクセスできないため、基本情報のみログ出力
+                        var clips = track.GetClips();
+                        foreach (var clip in clips)
                         {
-                            var clips = track.GetClips();
-                            foreach (var clip in clips)
-                            {
-                                UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Recorder Clip: {clip.displayName} - Start: {clip.start:F3}, Duration: {clip.duration:F3}");
-                                
-                                if (clip.asset is UnityEditor.Recorder.Timeline.RecorderClip recorderClip)
-                                {
-                                    UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Recorder Settings: {recorderClip.settings?.GetType().Name ?? "null"}");
-                                    UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Recorder Enabled: {recorderClip.settings?.Enabled ?? false}");
-                                }
-                            }
+                            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Clip: {clip.displayName} - Start: {clip.start:F3}, Duration: {clip.duration:F3}");
                         }
-                        #endif
                     }
                     
                     // バインディングを再確認
