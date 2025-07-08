@@ -1418,7 +1418,7 @@ namespace BatchRenderingTool
             AssetDatabase.Refresh();
             
             // Log for debugging
-            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Created timeline with ControlTrack, exposed name: {exposedName}");
+            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Created timeline with ControlTrack");
             
             return timeline;
             }
@@ -1824,12 +1824,7 @@ namespace BatchRenderingTool
                     renderProgress = renderingData.progress;
                     
                     // 状態を更新
-                    if (renderingData.hasError)
-                    {
-                        currentState = RenderState.Error;
-                        statusMessage = renderingData.errorMessage;
-                    }
-                    else if (renderingData.isComplete)
+                    if (renderingData.isComplete)
                     {
                         currentState = RenderState.Complete;
                         statusMessage = "Rendering complete!";
