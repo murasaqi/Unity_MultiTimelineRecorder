@@ -1137,11 +1137,11 @@ namespace BatchRenderingTool
             
             var controlAsset = controlClip.asset as ControlPlayableAsset;
             
-            // CRITICAL: Set up the exposed name for runtime binding
-            controlAsset.sourceGameObject.exposedName = exposedName;
+            // CRITICAL: Store the exposed name for runtime binding
+            // Do NOT set exposedName directly on the asset as it causes SerializedProperty errors
+            // The binding will be established at runtime through PlayableDirector.SetReferenceValue
             
-            // IMPORTANT: We need to set the source game object reference for the UI to work properly
-            // This will be serialized with the asset
+            // Set the default value for the UI to work properly
             controlAsset.sourceGameObject.defaultValue = originalDirector.gameObject;
             
             // Store the exposed name for later use in Play Mode
