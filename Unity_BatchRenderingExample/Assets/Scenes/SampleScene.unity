@@ -1711,6 +1711,13 @@ MonoBehaviour:
     - 2756e81fdbabc894c8bcd13a4ddb88fa
     - f6bdf014dd68e894abecf8dbfaff1529
     - ba3b08c5f0d52dc42b8ecea2c5e2e8a8
+    - 73fd43e7e707447449e8b58a6b0512d2
+    - 89b31ce2fcba5bd4ba38cb439da3bc8f
+    - d636c700403e13e4384c4efb916c5134
+    - 473a93266aeff6f45a45b22912f5eda9
+    - 26f5bbe91dcdbbf46b7b5449dc31f591
+    - a8a4a974e9adcb149b11043718758e8a
+    - b169dfa9510772f4799e679e09515c51
     m_Values:
     - {fileID: 1922889286}
     - {fileID: 1922889286}
@@ -1734,6 +1741,13 @@ MonoBehaviour:
     - {fileID: 1922889286}
     - {fileID: 1726496849}
     - {fileID: 1726496849}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
+    - {fileID: 1922889286}
     - {fileID: 1922889286}
     - {fileID: 1922889286}
     - {fileID: 1922889286}
@@ -1986,7 +2000,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1.4
@@ -6851,7 +6865,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -7182,7 +7196,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -7541,7 +7555,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -8460,7 +8474,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -9943,7 +9957,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1.4
@@ -10343,7 +10357,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -11770,7 +11784,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 100
     ShutterSpeed: 60
     Aperture: 1.2
@@ -13225,7 +13239,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_Aperture
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_BladeCount
@@ -13233,7 +13247,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: field of view
-      value: 61.927517
+      value: 33.085964
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_Anamorphism
@@ -13245,7 +13259,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocalLength
-      value: 15.549999
+      value: 31.411003
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_GateFitMode
@@ -13265,7 +13279,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocusDistance
-      value: 3.6708124
+      value: 37.840336
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: near clip plane
@@ -13289,31 +13303,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.69552046
+      value: -1.3400223
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.5022149
+      value: -2.5606003
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 62.76994
+      value: 43.781002
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.6958584
+      value: -0.00000016858739
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.1256246
+      value: -0.000000009219623
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.69585776
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.12562495
+      value: 0.000000051366467
       objectReference: {fileID: 0}
     - target: {fileID: 2702308875592398683, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -18493,7 +18507,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1.4
@@ -19377,7 +19391,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1.4
@@ -20036,7 +20050,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -20194,7 +20208,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -20415,7 +20429,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1.4
@@ -20666,7 +20680,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -21323,7 +21337,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1.4
@@ -21910,7 +21924,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 1
@@ -22213,7 +22227,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -23580,7 +23594,7 @@ Camera:
   m_Iso: 200
   m_ShutterSpeed: 0.005
   m_Aperture: 2
-  m_FocusDistance: 5.5168514
+  m_FocusDistance: 5.5757003
   m_FocalLength: 40
   m_BladeCount: 9
   m_Curvature: {x: 2, y: 11}
@@ -23679,7 +23693,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 100
     ShutterSpeed: 60
     Aperture: 1.2
@@ -26656,7 +26670,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -27183,7 +27197,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -27552,7 +27566,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -31591,9 +31605,9 @@ Camera:
   m_FOVAxisMode: 0
   m_Iso: 200
   m_ShutterSpeed: 0.005
-  m_Aperture: 2
-  m_FocusDistance: 3.6708124
-  m_FocalLength: 15.549999
+  m_Aperture: 1
+  m_FocusDistance: 37.840336
+  m_FocalLength: 31.411003
   m_BladeCount: 9
   m_Curvature: {x: 2, y: 11}
   m_BarrelClipping: 0.25
@@ -31608,7 +31622,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 61.927517
+  field of view: 33.085964
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -31634,8 +31648,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1922889286}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.17766027, y: -0.00000046938658, z: 0.00000025192276, w: -0.98409194}
-  m_LocalPosition: {x: 56.76993, y: 2.6077852, z: -0.69552803}
+  m_LocalRotation: {x: -0.000000069383525, y: -0.707107, z: -0.0000000745058, w: 0.70710665}
+  m_LocalPosition: {x: 37.781, y: 1.5493999, z: 1.3400184}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -31744,7 +31758,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
@@ -34398,7 +34412,7 @@ MonoBehaviour:
     LensShift: {x: 0, y: 0}
     GateFit: 1
     FocusDistance: 10
-    m_SensorSize: {x: 24.89, y: 18.66}
+    m_SensorSize: {x: 36, y: 24}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 2
