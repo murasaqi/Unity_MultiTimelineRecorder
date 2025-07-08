@@ -197,10 +197,12 @@ namespace BatchRenderingTool.RecorderEditors
         {
             return host.aovOutputFormat switch
             {
+                AOVOutputFormat.PNG => "png",
                 AOVOutputFormat.PNG16 => "png",
                 AOVOutputFormat.EXR16 => "exr",
                 AOVOutputFormat.EXR32 => "exr",
                 AOVOutputFormat.TGA => "tga",
+                AOVOutputFormat.JPEG => "jpg",
                 _ => "exr"
             };
         }

@@ -54,7 +54,9 @@ namespace BatchRenderingTool
         EXR16 = 0,  // 16-bit float EXR
         EXR32 = 1,  // 32-bit float EXR
         PNG = 2,    // PNG format (with alpha support)
-        JPEG = 3    // JPEG format (no alpha support)
+        JPEG = 3,   // JPEG format (no alpha support)
+        PNG16 = 4,  // 16-bit PNG format
+        TGA = 5     // TGA format
     }
     
     /// <summary>

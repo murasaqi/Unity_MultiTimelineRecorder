@@ -156,12 +156,13 @@ namespace BatchRenderingTool
                 case AOVOutputFormat.EXR32:
                     settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.EXR;
                     break;
+                case AOVOutputFormat.PNG:
                 case AOVOutputFormat.PNG16:
-                    // PNG is not available in ImageRecorderSettings, use JPEG as fallback
-                    settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.JPEG;
+                    settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
                     break;
                 case AOVOutputFormat.TGA:
-                    settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.JPEG;
+                    // TGA is not available in ImageRecorderSettings, use PNG as fallback
+                    settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
                     break;
             }
             

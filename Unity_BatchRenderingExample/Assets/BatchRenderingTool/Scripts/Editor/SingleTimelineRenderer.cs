@@ -1493,7 +1493,14 @@ namespace BatchRenderingTool
                     return movieOutputFormat.ToString().ToLower();
                     
                 case RecorderSettingsType.AOV:
-                    return aovOutputFormat == AOVOutputFormat.PNG16 ? "png" : "exr";
+                    return aovOutputFormat switch
+                    {
+                        AOVOutputFormat.PNG => "png",
+                        AOVOutputFormat.PNG16 => "png",
+                        AOVOutputFormat.TGA => "tga",
+                        AOVOutputFormat.JPEG => "jpg",
+                        _ => "exr"
+                    };
                     
                 case RecorderSettingsType.Alembic:
                     return "abc";
