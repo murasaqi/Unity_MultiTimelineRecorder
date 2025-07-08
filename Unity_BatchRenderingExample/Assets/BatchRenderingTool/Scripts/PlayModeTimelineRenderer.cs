@@ -21,51 +21,37 @@ namespace BatchRenderingTool
         [SerializeField] private PlayableDirector renderingDirector;
         [SerializeField] private PlayableDirector targetDirector;
         
-        private Coroutine renderingCoroutine;
         private float originalCaptureFramerate;
         private bool originalRunInBackground;
         
         void Start()
         {
-            Debug.Log("[PlayModeTimelineRenderer] Started");
-            StartCoroutine(InitializeAndRender());
+            Debug.Log("[PlayModeTimelineRenderer] Started - Simple version with playOnAwake");
+            InitializeSimple();
         }
         
-        IEnumerator InitializeAndRender()
+        void InitializeSimple()
         {
-            // 1フレーム待機して初期化
-            yield return null;
-            
             // RenderingDataを探す
             var renderingData = FindObjectOfType<RenderingData>();
             if (renderingData == null)
             {
                 Debug.LogError("[PlayModeTimelineRenderer] RenderingData not found!");
-                yield break;
+                return;
             }
             
             Debug.Log($"[PlayModeTimelineRenderer] Found RenderingData - Director: {renderingData.directorName}");
             Debug.Log($"[PlayModeTimelineRenderer] RenderingData.renderTimeline: {renderingData.renderTimeline?.name ?? "NULL"}");
-            Debug.Log($"[PlayModeTimelineRenderer] RenderingData.frameRate: {renderingData.frameRate}");
-            Debug.Log($"[PlayModeTimelineRenderer] RenderingData.duration: {renderingData.duration}");
             
             // ターゲットDirectorを名前で探す
             targetDirector = GameObject.Find(renderingData.directorName)?.GetComponent<PlayableDirector>();
             if (targetDirector == null)
             {
                 Debug.LogError($"[PlayModeTimelineRenderer] Target director not found: {renderingData.directorName}");
-                yield break;
+                return;
             }
             
             Debug.Log($"[PlayModeTimelineRenderer] Found target director: {targetDirector.gameObject.name}");
-            
-            // ターゲットDirectorを初期化
-            if (targetDirector.playableAsset != null)
-            {
-                targetDirector.time = 0;
-                targetDirector.Evaluate();
-                Debug.Log($"[PlayModeTimelineRenderer] Initialized target director - time: {targetDirector.time}, asset: {targetDirector.playableAsset.name}");
-            }
             
             // 設定を保存
             originalCaptureFramerate = Time.captureFramerate;
@@ -75,156 +61,115 @@ namespace BatchRenderingTool
             Time.captureFramerate = renderingData.frameRate;
             Application.runInBackground = true;
             
-            // レンダリング用Directorをセットアップ
-            SetupRenderingDirector(renderingData);
+            // レンダリング用Directorをセットアップ（シンプル版）
+            SetupSimpleRenderingDirector(renderingData);
             
-            // レンダリング開始
-            yield return StartCoroutine(RenderTimeline(renderingData));
-            
-            // クリーンアップ
-            Cleanup();
+            // ステータス監視を開始
+            StartCoroutine(MonitorRendering());
         }
         
-        void SetupRenderingDirector(RenderingData data)
+        void SetupSimpleRenderingDirector(RenderingData data)
         {
             // レンダリング用Director作成
             var renderingGO = new GameObject("RenderingDirector");
             renderingGO.transform.SetParent(transform);
             renderingDirector = renderingGO.AddComponent<PlayableDirector>();
+            
+            // タイムラインを設定してplayOnAwakeをtrueにする
             renderingDirector.playableAsset = data.renderTimeline;
-            renderingDirector.playOnAwake = false;
+            renderingDirector.playOnAwake = true;  // 自動再生を有効にする
+            renderingDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
             
             Debug.Log($"[PlayModeTimelineRenderer] Created rendering director with timeline: {data.renderTimeline.name}");
-            Debug.Log($"[PlayModeTimelineRenderer] Timeline asset is null?: {data.renderTimeline == null}");
-            Debug.Log($"[PlayModeTimelineRenderer] Timeline duration: {data.renderTimeline?.duration ?? 0}");
-            Debug.Log($"[PlayModeTimelineRenderer] Timeline output count: {data.renderTimeline?.outputs.Count() ?? 0}");
-            
-            // Timelineの詳細をログ
-            if (data.renderTimeline != null)
-            {
-                var tracks = data.renderTimeline.GetRootTracks();
-                Debug.Log($"[PlayModeTimelineRenderer] Timeline track count: {tracks.Count()}");
-                foreach (var track in tracks)
-                {
-                    Debug.Log($"[PlayModeTimelineRenderer] Track: {track.name} - Type: {track.GetType().Name}");
-                }
-            }
+            Debug.Log($"[PlayModeTimelineRenderer] Set playOnAwake = true for automatic playback");
+            Debug.Log($"[PlayModeTimelineRenderer] Timeline duration: {data.renderTimeline.duration}");
             
             // ControlTrackのバインディング設定
-            bool foundControlTrack = false;
             foreach (var output in data.renderTimeline.outputs)
             {
                 if (output.sourceObject is ControlTrack controlTrack)
                 {
                     // ControlTrackを見つけたら、ターゲットDirectorをバインド
                     renderingDirector.SetGenericBinding(controlTrack, targetDirector.gameObject);
-                    foundControlTrack = true;
                     Debug.Log($"[PlayModeTimelineRenderer] Bound ControlTrack to {targetDirector.gameObject.name}");
-                    Debug.Log($"[PlayModeTimelineRenderer] Target Director playOnAwake: {targetDirector.playOnAwake}");
-                    Debug.Log($"[PlayModeTimelineRenderer] Target Director state: {targetDirector.state}");
-                    Debug.Log($"[PlayModeTimelineRenderer] Target Director time: {targetDirector.time}");
-                    Debug.Log($"[PlayModeTimelineRenderer] Target Director playableAsset: {targetDirector.playableAsset?.name ?? "NULL"}");
-                    
-                    // クリップ情報をログ
-                    var clips = controlTrack.GetClips();
-                    foreach (var clip in clips)
-                    {
-                        Debug.Log($"[PlayModeTimelineRenderer] ControlClip: {clip.displayName}, Start: {clip.start}, Duration: {clip.duration}");
-                    }
+                    break;
                 }
             }
             
-            if (!foundControlTrack)
-            {
-                Debug.LogWarning("[PlayModeTimelineRenderer] No ControlTrack found in timeline!");
-            }
+            // データを保存
+            data.renderingDirector = renderingDirector;
+            data.isPlaying = true;
             
-            // ターゲットDirectorの準備
-            targetDirector.time = 0;
-            targetDirector.playOnAwake = false;
-            targetDirector.Stop();
-            targetDirector.Evaluate();
+            // 初期化と再生
+            renderingDirector.time = 0;
+            renderingDirector.RebuildGraph(); // グラフを再構築
             
-            Debug.Log($"[PlayModeTimelineRenderer] Target director prepared - Timeline: {targetDirector.playableAsset?.name ?? "null"}");
+            Debug.Log("[PlayModeTimelineRenderer] Setup complete - Timeline should start playing automatically");
+            Debug.Log($"[PlayModeTimelineRenderer] Initial state: {renderingDirector.state}");
         }
         
-        IEnumerator RenderTimeline(RenderingData data)
+        IEnumerator MonitorRendering()
         {
             isRendering = true;
-            statusMessage = "Starting render...";
+            statusMessage = "Monitoring automatic playback...";
             
-            // DirectorをEvaluate
-            renderingDirector.time = 0;
-            renderingDirector.Evaluate();
+            // 少し待機してから監視開始
+            yield return new WaitForSeconds(0.1f);
             
-            // 初期化のために数フレーム待機
-            Debug.Log("[PlayModeTimelineRenderer] Waiting for initialization...");
-            for (int i = 0; i < 3; i++)
+            if (renderingDirector == null)
             {
-                yield return null;
-                renderingDirector.Evaluate();
-                Debug.Log($"[PlayModeTimelineRenderer] Init frame {i} - Director state: {renderingDirector.state}, time: {renderingDirector.time}");
+                Debug.LogError("[PlayModeTimelineRenderer] RenderingDirector is null!");
+                yield break;
             }
             
-            // 再生開始
-            Debug.Log("[PlayModeTimelineRenderer] Starting playback...");
-            Debug.Log($"[PlayModeTimelineRenderer] Before Play - Director state: {renderingDirector.state}");
-            Debug.Log($"[PlayModeTimelineRenderer] Before Play - Director time: {renderingDirector.time}");
-            Debug.Log($"[PlayModeTimelineRenderer] Before Play - Timeline asset: {renderingDirector.playableAsset?.name ?? "NULL"}");
-            
-            renderingDirector.Play();
-            
-            Debug.Log($"[PlayModeTimelineRenderer] After Play - Director state: {renderingDirector.state}");
-            Debug.Log($"[PlayModeTimelineRenderer] After Play - Director time: {renderingDirector.time}");
-            Debug.Log($"[PlayModeTimelineRenderer] After Play - playableGraph valid: {renderingDirector.playableGraph.IsValid()}");
-            
-            // もう一度Evaluateを呼んでみる
-            yield return null;
-            renderingDirector.Evaluate();
-            Debug.Log($"[PlayModeTimelineRenderer] After Evaluate - Director state: {renderingDirector.state}");
-            
-            // ターゲットDirectorの状態を確認
-            Debug.Log($"[PlayModeTimelineRenderer] Rendering director state: {renderingDirector.state}");
-            Debug.Log($"[PlayModeTimelineRenderer] Target director state: {targetDirector.state}");
-            Debug.Log($"[PlayModeTimelineRenderer] Target director time: {targetDirector.time}");
+            Debug.Log($"[PlayModeTimelineRenderer] Monitoring started - Director state: {renderingDirector.state}");
+            Debug.Log($"[PlayModeTimelineRenderer] Director time: {renderingDirector.time}");
+            Debug.Log($"[PlayModeTimelineRenderer] Director duration: {renderingDirector.duration}");
             
             float startTime = Time.time;
             float duration = (float)renderingDirector.duration;
             int frameCount = 0;
+            bool hasStartedPlaying = false;
             
-            statusMessage = "Rendering...";
-            
-            // レンダリングループ
-            Debug.Log($"[PlayModeTimelineRenderer] Entering render loop - Director state: {renderingDirector.state}");
-            
-            // Director が Playing 状態になるまで少し待つ
-            int waitFrames = 0;
-            while (renderingDirector != null && renderingDirector.state != PlayState.Playing && waitFrames < 10)
-            {
-                Debug.Log($"[PlayModeTimelineRenderer] Waiting for Playing state... Frame {waitFrames}, State: {renderingDirector.state}");
-                yield return null;
-                waitFrames++;
-            }
-            
-            if (renderingDirector.state != PlayState.Playing)
-            {
-                Debug.LogError($"[PlayModeTimelineRenderer] Director failed to start playing! Final state: {renderingDirector.state}");
-                Debug.LogError($"[PlayModeTimelineRenderer] Director time: {renderingDirector.time}");
-                Debug.LogError($"[PlayModeTimelineRenderer] Director duration: {renderingDirector.duration}");
-                Debug.LogError($"[PlayModeTimelineRenderer] Director playableAsset: {renderingDirector.playableAsset?.name ?? "NULL"}");
-            }
-            
-            while (renderingDirector != null && renderingDirector.state == PlayState.Playing)
+            // レンダリング監視ループ
+            while (renderingDirector != null)
             {
                 frameCount++;
-                progress = (float)(renderingDirector.time / renderingDirector.duration);
+                var currentState = renderingDirector.state;
+                var currentTime = renderingDirector.time;
                 
-                // 定期的にステータスをログ
-                if (frameCount % 30 == 0)
+                if (currentState == PlayState.Playing)
                 {
-                    Debug.Log($"[PlayModeTimelineRenderer] Frame {frameCount}, Progress: {progress:P}, " +
-                            $"Rendering time: {renderingDirector.time:F2}/{duration:F2}, " +
-                            $"Target time: {targetDirector.time:F2}");
+                    if (!hasStartedPlaying)
+                    {
+                        hasStartedPlaying = true;
+                        Debug.Log("[PlayModeTimelineRenderer] Playback started!");
+                    }
+                    
+                    progress = (float)(currentTime / duration);
+                    statusMessage = "Rendering...";
+                    
+                    // 定期的にステータスをログ
+                    if (frameCount % 30 == 0)
+                    {
+                        Debug.Log($"[PlayModeTimelineRenderer] Frame {frameCount}, Progress: {progress:P}, " +
+                                $"Time: {currentTime:F2}/{duration:F2}, State: {currentState}");
+                    }
+                }
+                else if (hasStartedPlaying && currentState == PlayState.Paused && currentTime >= duration - 0.1f)
+                {
+                    // 完了
+                    Debug.Log($"[PlayModeTimelineRenderer] Rendering complete! Total frames: {frameCount}");
+                    statusMessage = "Complete!";
+                    progress = 1f;
+                    isRendering = false;
+                    break;
+                }
+                else if (!hasStartedPlaying && frameCount > 10)
+                {
+                    // 10フレーム待っても再生が始まらない場合は手動で開始
+                    Debug.LogWarning("[PlayModeTimelineRenderer] Timeline not auto-playing, starting manually...");
+                    renderingDirector.Play();
                 }
                 
                 // タイムアウトチェック
@@ -237,14 +182,9 @@ namespace BatchRenderingTool
                 yield return null;
             }
             
-            // 完了
-            Debug.Log($"[PlayModeTimelineRenderer] Rendering complete! Total frames: {frameCount}");
-            statusMessage = "Complete!";
-            progress = 1f;
-            isRendering = false;
-            
-            // 少し待機
+            // 少し待機してからクリーンアップ
             yield return new WaitForSeconds(1f);
+            Cleanup();
         }
         
         void Cleanup()
@@ -286,10 +226,7 @@ namespace BatchRenderingTool
         
         void OnDestroy()
         {
-            if (renderingCoroutine != null)
-            {
-                StopCoroutine(renderingCoroutine);
-            }
+            // クリーンアップ処理
         }
     }
 }
