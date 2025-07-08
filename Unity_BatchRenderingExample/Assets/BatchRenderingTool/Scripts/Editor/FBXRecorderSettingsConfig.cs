@@ -369,25 +369,116 @@ namespace BatchRenderingTool
             {
                 try
                 {
-                    // Determine which component to record
-                    Type componentType = typeof(Transform); // Default to Transform
-                    
-                    if (recordedComponent == FBXRecordedComponent.Camera)
+                    // Check if no components are selected
+                    if (recordedComponent == FBXRecordedComponent.None)
                     {
-                        var camera = targetGameObject.GetComponent<Camera>();
-                        if (camera != null)
-                        {
-                            componentType = typeof(Camera);
-                        }
-                        else
-                        {
-                            BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Camera not found on {targetGameObject.name}, recording Transform instead");
-                        }
+                        BatchRenderingToolLogger.LogWarning("[FBXRecorderSettingsConfig] No components selected for recording. Defaulting to Transform.");
+                        addComponentMethod.Invoke(animInputSettings, new object[] { typeof(Transform) });
+                        BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added Transform to recorded components (default)");
                     }
-                    
-                    // Call AddComponentToRecord(Type componentType)
-                    addComponentMethod.Invoke(animInputSettings, new object[] { componentType });
-                    BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added {componentType.Name} to recorded components");
+                    else
+                    {
+                        // Process each selected component flag
+                        int addedComponents = 0;
+                        
+                        // Transform
+                        if ((recordedComponent & FBXRecordedComponent.Transform) != 0)
+                        {
+                            addComponentMethod.Invoke(animInputSettings, new object[] { typeof(Transform) });
+                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added Transform to recorded components");
+                            addedComponents++;
+                        }
+                        
+                        // Camera
+                        if ((recordedComponent & FBXRecordedComponent.Camera) != 0)
+                        {
+                            var camera = targetGameObject.GetComponent<Camera>();
+                            if (camera != null)
+                            {
+                                addComponentMethod.Invoke(animInputSettings, new object[] { typeof(Camera) });
+                                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added Camera to recorded components");
+                                addedComponents++;
+                            }
+                            else
+                            {
+                                BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Camera component not found on {targetGameObject.name}");
+                            }
+                        }
+                        
+                        // Light
+                        if ((recordedComponent & FBXRecordedComponent.Light) != 0)
+                        {
+                            var light = targetGameObject.GetComponent<Light>();
+                            if (light != null)
+                            {
+                                addComponentMethod.Invoke(animInputSettings, new object[] { typeof(Light) });
+                                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added Light to recorded components");
+                                addedComponents++;
+                            }
+                            else
+                            {
+                                BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Light component not found on {targetGameObject.name}");
+                            }
+                        }
+                        
+                        // MeshRenderer
+                        if ((recordedComponent & FBXRecordedComponent.MeshRenderer) != 0)
+                        {
+                            var meshRenderer = targetGameObject.GetComponent<MeshRenderer>();
+                            if (meshRenderer != null)
+                            {
+                                addComponentMethod.Invoke(animInputSettings, new object[] { typeof(MeshRenderer) });
+                                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added MeshRenderer to recorded components");
+                                addedComponents++;
+                            }
+                            else
+                            {
+                                BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] MeshRenderer component not found on {targetGameObject.name}");
+                            }
+                        }
+                        
+                        // SkinnedMeshRenderer
+                        if ((recordedComponent & FBXRecordedComponent.SkinnedMeshRenderer) != 0)
+                        {
+                            var skinnedMeshRenderer = targetGameObject.GetComponent<SkinnedMeshRenderer>();
+                            if (skinnedMeshRenderer != null)
+                            {
+                                addComponentMethod.Invoke(animInputSettings, new object[] { typeof(SkinnedMeshRenderer) });
+                                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added SkinnedMeshRenderer to recorded components");
+                                addedComponents++;
+                            }
+                            else
+                            {
+                                BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] SkinnedMeshRenderer component not found on {targetGameObject.name}");
+                            }
+                        }
+                        
+                        // Animator
+                        if ((recordedComponent & FBXRecordedComponent.Animator) != 0)
+                        {
+                            var animator = targetGameObject.GetComponent<Animator>();
+                            if (animator != null)
+                            {
+                                addComponentMethod.Invoke(animInputSettings, new object[] { typeof(Animator) });
+                                BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added Animator to recorded components");
+                                addedComponents++;
+                            }
+                            else
+                            {
+                                BatchRenderingToolLogger.LogWarning($"[FBXRecorderSettingsConfig] Animator component not found on {targetGameObject.name}");
+                            }
+                        }
+                        
+                        // If no components were added (all selected components were missing), add Transform as fallback
+                        if (addedComponents == 0)
+                        {
+                            BatchRenderingToolLogger.LogWarning("[FBXRecorderSettingsConfig] No selected components found on target. Adding Transform as fallback.");
+                            addComponentMethod.Invoke(animInputSettings, new object[] { typeof(Transform) });
+                            BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Added Transform to recorded components (fallback)");
+                        }
+                        
+                        BatchRenderingToolLogger.Log($"[FBXRecorderSettingsConfig] Total components added: {addedComponents}");
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -919,7 +919,9 @@ namespace BatchRenderingTool
             
             // Store director info for later use in Play Mode
             string directorName = selectedDirector.gameObject.name;
-            float timelineDuration = (float)originalTimeline.duration;
+            // Add one frame to ensure the last frame is included
+            float oneFrameDuration = 1.0f / frameRate;
+            float timelineDuration = (float)originalTimeline.duration + oneFrameDuration;
             
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Timeline duration: {timelineDuration}, PlayOnAwake was: {originalPlayOnAwake}");
             
@@ -1128,7 +1130,9 @@ namespace BatchRenderingTool
             BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Main ControlClip created successfully");
             controlClip.displayName = originalDirector.gameObject.name;
             controlClip.start = preRollTime;
-            controlClip.duration = originalTimeline.duration;
+            // Add one frame to ensure the last frame is included
+            float oneFrameDuration = 1.0f / frameRate;
+            controlClip.duration = originalTimeline.duration + oneFrameDuration;
             
             var controlAsset = controlClip.asset as ControlPlayableAsset;
             
@@ -1257,9 +1261,10 @@ namespace BatchRenderingTool
             
             // すべてのレコーダーで同じタイミングを使用（TODO-101: FBX Recorder ClipがTimelineの尺と違う問題の修正）
             recorderClip.start = preRollTime;
-            recorderClip.duration = originalTimeline.duration;
+            // Add one frame to ensure the last frame is included
+            recorderClip.duration = originalTimeline.duration + oneFrameDuration;
             
-            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] RecorderClip timing: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] RecorderClip timing: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s (includes +1 frame = {oneFrameDuration:F3}s)");
             
             var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             if (recorderAsset == null)

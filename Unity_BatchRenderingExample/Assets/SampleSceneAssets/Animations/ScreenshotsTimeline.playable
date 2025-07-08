@@ -67,7 +67,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &-7318707438537784122
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -91,7 +90,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &-5361689237702786821
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -115,7 +113,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &-4968326275070788037
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -631,7 +628,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &-1378530507966805372
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -655,7 +651,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!74 &-1280669347555107029
 AnimationClip:
   m_ObjectHideFlags: 0
@@ -1022,11 +1017,11 @@ MonoBehaviour:
   m_Tracks:
   - {fileID: 7206989897909045908}
   - {fileID: -4968326275070788037}
-  m_FixedDuration: 7.566666666666666
+  m_FixedDuration: 0
   m_EditorSettings:
     m_Framerate: 30
     m_ScenePreview: 1
-  m_DurationMode: 1
+  m_DurationMode: 0
   m_MarkerTrack: {fileID: 9076127134632802600}
 --- !u!114 &1754946704183319906
 MonoBehaviour:
@@ -1073,7 +1068,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &2000278883325589059
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1097,7 +1091,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &2987344365405500798
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1121,7 +1114,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &3427665510104522246
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1145,7 +1137,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &3603172187632139588
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1366,7 +1357,6 @@ MonoBehaviour:
   searchHierarchy: 0
   active: 1
   postPlayback: 2
-  directorOnClipEnd: 0
 --- !u!114 &7206989897909045908
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -32,11 +32,18 @@ namespace BatchRenderingTool
     }
     
     /// <summary>
-    /// FBX Recorded Component type
+    /// FBX Recorded Component type (Flags for multiple selection)
     /// </summary>
+    [System.Flags]
     public enum FBXRecordedComponent
     {
-        Camera,
-        Transform
+        None = 0,
+        Transform = 1 << 0,
+        Camera = 1 << 1,
+        Light = 1 << 2,
+        MeshRenderer = 1 << 3,
+        SkinnedMeshRenderer = 1 << 4,
+        Animator = 1 << 5,
+        All = Transform | Camera | Light | MeshRenderer | SkinnedMeshRenderer | Animator
     }
 }

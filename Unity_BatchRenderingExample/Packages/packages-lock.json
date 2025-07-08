@@ -7,20 +7,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.cysharp.unitask": {
-      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f213ff497e4ff462a77319cf677cf20cc0860ca9"
-    },
-    "com.github-glitchenzo.nugetforunity": {
-      "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f789083c31250c83082da9b29be0c976152d699b"
-    },
     "com.unity.bindings.openimageio": {
       "version": "1.0.0",
       "depth": 1,
@@ -70,7 +56,7 @@
     },
     "com.unity.editorcoroutines": {
       "version": "1.0.0",
-      "depth": 0,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -94,17 +80,6 @@
         "com.unity.test-framework": "1.4.6",
         "com.unity.testtools.codecoverage": "1.2.6"
       }
-    },
-    "com.unity.formats.alembic": {
-      "version": "2.4.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.timeline": "1.0.0",
-        "com.unity.modules.cloth": "1.0.0",
-        "com.unity.modules.unityanalytics": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
     },
     "com.unity.formats.fbx": {
       "version": "5.1.3",
@@ -333,13 +308,6 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
-    },
-    "jp.notargs.unity-natural-mcp": {
-      "version": "https://github.com/notargs/UnityNaturalMCP.git?path=/UnityNaturalMCPServer",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "481d4d0e610c4b7ae3bb922e3d0826859c1181a4"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

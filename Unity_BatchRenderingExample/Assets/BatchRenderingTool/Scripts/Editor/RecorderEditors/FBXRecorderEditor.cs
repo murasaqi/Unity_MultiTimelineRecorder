@@ -42,8 +42,8 @@ namespace BatchRenderingTool.RecorderEditors
             
             GUI.backgroundColor = previousColor;
             
-            // Recorded Components dropdown
-            host.fbxRecordedComponent = (FBXRecordedComponent)EditorGUILayout.EnumPopup(
+            // Recorded Components multiple selection
+            host.fbxRecordedComponent = (FBXRecordedComponent)EditorGUILayout.EnumFlagsField(
                 "Recorded Components", 
                 host.fbxRecordedComponent);
             
