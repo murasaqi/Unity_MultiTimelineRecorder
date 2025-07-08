@@ -45,15 +45,28 @@ namespace BatchRenderingTool
             director = directorGO.AddComponent<PlayableDirector>();
             
             // Timelineを設定
-            director.playableAsset = renderingData.renderTimeline;
+            if (renderingData.renderTimeline != null)
+            {
+                director.playableAsset = renderingData.renderTimeline;
+            }
+            else
+            {
+                Debug.LogError("[PlayModeTimelineRenderer] renderTimeline is null!");
+                #if UNITY_EDITOR
+                EditorPrefs.SetString("STR_Status", "Error: Timeline is null");
+                EditorPrefs.SetFloat("STR_Progress", 0f);
+                EditorPrefs.SetBool("STR_IsRenderingInProgress", false);
+                #endif
+                return;
+            }
             
             // RenderingDataにdirectorを設定
             renderingData.renderingDirector = director;
             
-            // 自動再生を有効化
-            director.playOnAwake = true;
+            // 自動再生を無効化 (手動でPlayを呼ぶので)
+            director.playOnAwake = false;
             
-            Debug.Log($"[PlayModeTimelineRenderer] Created director with playOnAwake = true");
+            Debug.Log($"[PlayModeTimelineRenderer] Created director with playOnAwake = false");
             Debug.Log($"[PlayModeTimelineRenderer] Director state: {director.state}");
             
             // レンダリング開始

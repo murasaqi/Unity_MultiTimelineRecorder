@@ -2268,12 +2268,14 @@ MonoBehaviour:
     - 4b7a15182e8238644b6315394df099bb
     - 056e81c261fac624a85fbb6d3525a9b2
     - 7ba4bb4867948d74895cde74bff270ed
+    - 603af4966dbdb0e43bf63afbaca0c07d
     m_Values:
     - {fileID: 1594496557}
     - {fileID: 1594496557}
     - {fileID: 1922889286}
     - {fileID: 1594496557}
     - {fileID: 1594496557}
+    - {fileID: 1922889286}
     - {fileID: 1922889286}
 --- !u!4 &252021914
 Transform:
@@ -13129,19 +13131,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_Aperture
-      value: 2
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_BladeCount
-      value: 9
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: field of view
-      value: 33.39849
+      value: 50.0181
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_Anamorphism
-      value: 0.7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FOVAxisMode
@@ -13149,7 +13151,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocalLength
-      value: 31.099998
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_GateFitMode
@@ -13157,7 +13159,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: far clip plane
-      value: 1000
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_SensorSize.x
@@ -13169,15 +13171,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_FocusDistance
-      value: 0.5
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: near clip plane
-      value: 0.3
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: orthographic size
-      value: 5
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683266, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_projectionMatrixMode
@@ -13189,31 +13191,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.505271
+      value: 0.3200001
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.40976477
+      value: 0.5450001
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.5106199
+      value: -1.6000006
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.5078573
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.29364276
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.6568711
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2650234582257683269, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.47368273
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2702308875592398683, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -16301,7 +16303,7 @@ PlayableDirector:
   m_Enabled: 1
   serializedVersion: 3
   m_PlayableAsset: {fileID: 11400000, guid: 5a54d61bc58f43341aa47f398b54ed14, type: 2}
-  m_InitialState: 1
+  m_InitialState: 0
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
   m_InitialTime: 0
