@@ -281,14 +281,15 @@ namespace BatchRenderingTool
                 // Configure multi-part EXR
                 aovSettings.IsMultiPartEXR = aovTypeList.Count > 1;
                 
-                // Configure resolution
-                var imageInputSettings = new UnityEditor.Recorder.Input.GameViewInputSettings
+                // Configure resolution using AOVCameraInputSettings
+                var aovInputSettings = new UnityEditor.Recorder.Input.AOVCameraInputSettings
                 {
                     OutputWidth = config.width,
                     OutputHeight = config.height,
-                    FlipFinalOutput = config.flipVertical
+                    FlipFinalOutput = config.flipVertical,
+                    RecordTransparency = false
                 };
-                aovSettings.imageInputSettings = imageInputSettings;
+                aovSettings.imageInputSettings = aovInputSettings;
                 
                 // Configure frame rate
                 aovSettings.FrameRate = config.frameRate;
