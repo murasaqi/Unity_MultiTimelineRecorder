@@ -10,7 +10,8 @@ namespace BatchRenderingTool
     {
         Low,
         Medium,
-        High
+        High,
+        Custom
     }
     /// <summary>
     /// Configuration class for MovieRecorderSettings
@@ -36,7 +37,7 @@ namespace BatchRenderingTool
         // Audio settings
         public bool captureAudio = false;
         // Note: Unity Recorder API doesn't expose detailed audio settings
-        public int audioBitrate = 192; // in kbps
+        public AudioBitRateMode audioBitrate = AudioBitRateMode.High;
         
         // Alpha channel
         public bool captureAlpha = false;

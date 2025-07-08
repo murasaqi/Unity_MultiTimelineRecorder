@@ -23,6 +23,9 @@ namespace BatchRenderingTool
         public float frameRate = 30f;
         public AnimationInterpolationMode interpolationMode = AnimationInterpolationMode.Linear;
         public bool recordInWorldSpace = false;
+        public bool includeChildren = true;
+        public bool clampedTangents = true;
+        public bool recordBlendShapes = false;
         
         // Compression settings
         public AnimationCompressionLevel compressionLevel = AnimationCompressionLevel.Medium;

@@ -221,7 +221,7 @@ namespace BatchRenderingTool.RecorderConfigEditors
             movieConfig.captureAudio = EditorGUILayout.Toggle("Capture Audio", movieConfig.captureAudio);
             if (movieConfig.captureAudio)
             {
-                movieConfig.audioBitrate = EditorGUILayout.IntField("Audio Bitrate (kbps)", movieConfig.audioBitrate);
+                movieConfig.audioBitrate = (AudioBitRateMode)EditorGUILayout.EnumPopup("Audio Quality", movieConfig.audioBitrate);
             }
         }
         

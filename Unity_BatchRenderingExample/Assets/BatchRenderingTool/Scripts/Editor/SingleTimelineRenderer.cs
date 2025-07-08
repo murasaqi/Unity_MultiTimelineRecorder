@@ -55,6 +55,8 @@ namespace BatchRenderingTool
         private MultiRecorderConfig multiRecorderConfig = new MultiRecorderConfig();
         private bool useMultiRecorder = false;
         private Vector2 multiRecorderScrollPos;
+        private int selectedRecorderIndex = -1; // Currently selected recorder for detail editing
+        private Vector2 detailPanelScrollPos;
         public int frameRate = 24;
         public int width = 1920;
         public int height = 1080;
@@ -152,6 +154,12 @@ namespace BatchRenderingTool
         
         // Scroll position for the UI
         private Vector2 scrollPosition;
+        
+        // Cut List management
+        private CutListData cutListData = new CutListData();
+        private bool useCutList = false;
+        private Vector2 cutListScrollPos;
+        private int selectedCutIndex = -1;
         
         // Properties for easy access
         public PlayableDirector selectedDirector => 
@@ -331,6 +339,9 @@ namespace BatchRenderingTool
             try
             {
                 DrawTimelineSelection();
+                EditorGUILayout.Space(10);
+                
+                DrawCutListSection();
                 EditorGUILayout.Space(10);
                 
                 DrawRenderSettings();
@@ -572,11 +583,114 @@ namespace BatchRenderingTool
             
             EditorGUILayout.Space(10);
             
-            // Recorder list
-            EditorGUILayout.LabelField("Recorders", EditorStyles.miniBoldLabel);
-            
-            // Add recorder button
+            // Two-panel layout
             EditorGUILayout.BeginHorizontal();
+            
+            // Left panel - Detail settings
+            EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.5f - 10));
+            DrawRecorderDetailPanel();
+            EditorGUILayout.EndVertical();
+            
+            // Separator
+            GUILayout.Box("", GUILayout.Width(2), GUILayout.ExpandHeight(true));
+            
+            // Right panel - Recorder list
+            EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.5f - 10));
+            DrawRecorderListPanel();
+            EditorGUILayout.EndVertical();
+            
+            EditorGUILayout.EndHorizontal();
+            
+            // Pre-roll frames
+            EditorGUILayout.Space(5);
+            preRollFrames = EditorGUILayout.IntField("Pre-roll Frames:", preRollFrames);
+            if (preRollFrames < 0) preRollFrames = 0;
+            
+            if (preRollFrames > 0)
+            {
+                float preRollSeconds = preRollFrames / (float)frameRate;
+                EditorGUILayout.HelpBox($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts.", MessageType.Info);
+            }
+        }
+        
+        private void DrawRecorderDetailPanel()
+        {
+            EditorGUILayout.LabelField("Recorder Details", EditorStyles.boldLabel);
+            
+            if (selectedRecorderIndex < 0 || selectedRecorderIndex >= multiRecorderConfig.RecorderItems.Count)
+            {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.LabelField("Select a recorder from the list to edit its settings.", EditorStyles.wordWrappedLabel);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+            
+            var item = multiRecorderConfig.RecorderItems[selectedRecorderIndex];
+            
+            detailPanelScrollPos = EditorGUILayout.BeginScrollView(detailPanelScrollPos);
+            
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            // Basic settings
+            EditorGUILayout.LabelField($"Editing: {item.name}", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+            
+            item.enabled = EditorGUILayout.Toggle("Enabled", item.enabled);
+            item.name = EditorGUILayout.TextField("Name:", item.name);
+            item.fileName = EditorGUILayout.TextField("File Name:", item.fileName);
+            item.takeNumber = EditorGUILayout.IntField("Take Number:", item.takeNumber);
+            
+            EditorGUILayout.Space(10);
+            
+            // Resolution settings
+            if (!multiRecorderConfig.useGlobalResolution)
+            {
+                EditorGUILayout.LabelField("Resolution", EditorStyles.miniBoldLabel);
+                item.width = EditorGUILayout.IntField("Width:", item.width);
+                item.height = EditorGUILayout.IntField("Height:", item.height);
+                EditorGUILayout.Space(10);
+            }
+            
+            // Type-specific detailed settings
+            EditorGUILayout.LabelField("Recorder Settings", EditorStyles.miniBoldLabel);
+            
+            switch (item.recorderType)
+            {
+                case RecorderSettingsType.Image:
+                    DrawImageRecorderDetailSettings(item);
+                    break;
+                    
+                case RecorderSettingsType.Movie:
+                    DrawMovieRecorderDetailSettings(item);
+                    break;
+                    
+                case RecorderSettingsType.AOV:
+                    DrawAOVRecorderDetailSettings(item);
+                    break;
+                    
+                case RecorderSettingsType.FBX:
+                    DrawFBXRecorderDetailSettings(item);
+                    break;
+                    
+                case RecorderSettingsType.Animation:
+                    DrawAnimationRecorderDetailSettings(item);
+                    break;
+                    
+                case RecorderSettingsType.Alembic:
+                    DrawAlembicRecorderDetailSettings(item);
+                    break;
+            }
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndScrollView();
+        }
+        
+        private void DrawRecorderListPanel()
+        {
+            // Recorder list header
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Recorders", EditorStyles.boldLabel);
+            
             if (GUILayout.Button("Add Recorder", GUILayout.Height(25)))
             {
                 GenericMenu menu = new GenericMenu();
@@ -591,103 +705,75 @@ namespace BatchRenderingTool
             EditorGUILayout.EndHorizontal();
             
             // Recorder items
-            multiRecorderScrollPos = EditorGUILayout.BeginScrollView(multiRecorderScrollPos, GUILayout.MaxHeight(300));
+            multiRecorderScrollPos = EditorGUILayout.BeginScrollView(multiRecorderScrollPos);
             
             for (int i = 0; i < multiRecorderConfig.RecorderItems.Count; i++)
             {
                 var item = multiRecorderConfig.RecorderItems[i];
                 
+                // Highlight selected item
+                if (i == selectedRecorderIndex)
+                {
+                    GUI.backgroundColor = new Color(0.3f, 0.5f, 0.8f, 0.3f);
+                }
+                
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 
                 // Header
                 EditorGUILayout.BeginHorizontal();
+                
+                // Click to select
+                if (GUILayout.Button($"{i + 1}. {item.name}", EditorStyles.label, GUILayout.ExpandWidth(true)))
+                {
+                    selectedRecorderIndex = i;
+                }
+                
                 item.enabled = EditorGUILayout.Toggle(item.enabled, GUILayout.Width(20));
-                
-                EditorGUI.BeginDisabledGroup(!item.enabled);
-                
-                EditorGUILayout.LabelField($"{i + 1}. {item.name} ({item.recorderType})", EditorStyles.boldLabel);
                 
                 if (GUILayout.Button("↑", GUILayout.Width(25)) && i > 0)
                 {
                     multiRecorderConfig.MoveRecorder(i, i - 1);
+                    if (selectedRecorderIndex == i) selectedRecorderIndex = i - 1;
+                    else if (selectedRecorderIndex == i - 1) selectedRecorderIndex = i;
                     break;
                 }
                 
                 if (GUILayout.Button("↓", GUILayout.Width(25)) && i < multiRecorderConfig.RecorderItems.Count - 1)
                 {
                     multiRecorderConfig.MoveRecorder(i, i + 1);
+                    if (selectedRecorderIndex == i) selectedRecorderIndex = i + 1;
+                    else if (selectedRecorderIndex == i + 1) selectedRecorderIndex = i;
                     break;
                 }
                 
                 if (GUILayout.Button("X", GUILayout.Width(25)))
                 {
                     multiRecorderConfig.RemoveRecorder(i);
+                    if (selectedRecorderIndex >= multiRecorderConfig.RecorderItems.Count)
+                        selectedRecorderIndex = multiRecorderConfig.RecorderItems.Count - 1;
                     break;
                 }
                 
-                EditorGUI.EndDisabledGroup();
-                
                 EditorGUILayout.EndHorizontal();
                 
-                // Basic settings
-                if (item.enabled)
-                {
-                    EditorGUI.indentLevel++;
-                    
-                    item.name = EditorGUILayout.TextField("Name:", item.name);
-                    item.fileName = EditorGUILayout.TextField("File Name:", item.fileName);
-                    
-                    if (!multiRecorderConfig.useGlobalResolution)
-                    {
-                        item.width = EditorGUILayout.IntField("Width:", item.width);
-                        item.height = EditorGUILayout.IntField("Height:", item.height);
-                    }
-                    
-                    // Type-specific settings (simplified)
-                    switch (item.recorderType)
-                    {
-                        case RecorderSettingsType.Image:
-                            item.imageFormat = (ImageRecorderSettings.ImageRecorderOutputFormat)
-                                EditorGUILayout.EnumPopup("Format:", item.imageFormat);
-                            break;
-                            
-                        case RecorderSettingsType.Movie:
-                            EditorGUILayout.LabelField("Movie Settings", EditorStyles.miniLabel);
-                            break;
-                            
-                        case RecorderSettingsType.AOV:
-                            EditorGUILayout.LabelField("AOV Settings", EditorStyles.miniLabel);
-                            break;
-                            
-                        case RecorderSettingsType.FBX:
-                            if (item.fbxConfig.targetGameObject == null)
-                            {
-                                EditorGUILayout.HelpBox("FBX requires a target GameObject", MessageType.Warning);
-                            }
-                            item.fbxConfig.targetGameObject = (GameObject)EditorGUILayout.ObjectField(
-                                "Target GameObject:", item.fbxConfig.targetGameObject, typeof(GameObject), true);
-                            break;
-                    }
-                    
-                    EditorGUI.indentLevel--;
-                }
+                // Summary info
+                EditorGUI.indentLevel++;
+                EditorGUILayout.LabelField($"Type: {item.recorderType}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"File: {item.fileName}", EditorStyles.miniLabel);
+                EditorGUI.indentLevel--;
                 
                 EditorGUILayout.EndVertical();
-                EditorGUILayout.Space(5);
+                
+                // Reset background color
+                if (i == selectedRecorderIndex)
+                {
+                    GUI.backgroundColor = Color.white;
+                }
+                
+                EditorGUILayout.Space(3);
             }
             
             EditorGUILayout.EndScrollView();
-            
-            // Pre-roll frames
-            EditorGUILayout.Space(5);
-            preRollFrames = EditorGUILayout.IntField("Pre-roll Frames:", preRollFrames);
-            if (preRollFrames < 0) preRollFrames = 0;
-            
-            if (preRollFrames > 0)
-            {
-                float preRollSeconds = preRollFrames / (float)frameRate;
-                EditorGUILayout.HelpBox($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts.", MessageType.Info);
-            }
         }
         
         private void AddRecorder(RecorderSettingsType type)
@@ -703,6 +789,173 @@ namespace BatchRenderingTool
             item.frameRate = frameRate;
             
             multiRecorderConfig.AddRecorder(item);
+        }
+        
+        private void DrawImageRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
+        {
+            item.imageFormat = (ImageRecorderSettings.ImageRecorderOutputFormat)
+                EditorGUILayout.EnumPopup("Output Format:", item.imageFormat);
+            
+            item.captureAlpha = EditorGUILayout.Toggle("Capture Alpha", item.captureAlpha);
+            
+            if (item.imageFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
+            {
+                item.jpegQuality = EditorGUILayout.IntSlider("JPEG Quality:", item.jpegQuality, 1, 100);
+            }
+            else if (item.imageFormat == ImageRecorderSettings.ImageRecorderOutputFormat.EXR)
+            {
+                item.exrCompression = (CompressionUtility.EXRCompressionType)
+                    EditorGUILayout.EnumPopup("EXR Compression:", item.exrCompression);
+            }
+        }
+        
+        private void DrawMovieRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
+        {
+            item.movieConfig.outputFormat = (MovieRecorderSettings.VideoRecorderOutputFormat)
+                EditorGUILayout.EnumPopup("Output Format:", item.movieConfig.outputFormat);
+            
+            item.movieConfig.videoBitrateMode = (VideoBitrateMode)
+                EditorGUILayout.EnumPopup("Quality:", item.movieConfig.videoBitrateMode);
+            
+            if (item.movieConfig.videoBitrateMode == VideoBitrateMode.Custom)
+            {
+                item.movieConfig.customBitrate = EditorGUILayout.IntField("Bitrate (Mbps):", item.movieConfig.customBitrate);
+            }
+            
+            item.movieConfig.captureAudio = EditorGUILayout.Toggle("Capture Audio", item.movieConfig.captureAudio);
+            
+            if (item.movieConfig.captureAudio)
+            {
+                item.movieConfig.audioBitrate = (AudioBitRateMode)
+                    EditorGUILayout.EnumPopup("Audio Quality:", item.movieConfig.audioBitrate);
+            }
+            
+            item.movieConfig.captureAlpha = EditorGUILayout.Toggle("Capture Alpha", item.movieConfig.captureAlpha);
+        }
+        
+        private void DrawAOVRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
+        {
+            EditorGUILayout.LabelField("AOV Types:", EditorStyles.miniBoldLabel);
+            
+            item.aovConfig.includeBeauty = EditorGUILayout.Toggle("Beauty", item.aovConfig.includeBeauty);
+            item.aovConfig.includeDepth = EditorGUILayout.Toggle("Depth", item.aovConfig.includeDepth);
+            item.aovConfig.includeNormal = EditorGUILayout.Toggle("Normal", item.aovConfig.includeNormal);
+            item.aovConfig.includeAlbedo = EditorGUILayout.Toggle("Albedo", item.aovConfig.includeAlbedo);
+            item.aovConfig.includeSpecular = EditorGUILayout.Toggle("Specular", item.aovConfig.includeSpecular);
+            item.aovConfig.includeSmoothness = EditorGUILayout.Toggle("Smoothness", item.aovConfig.includeSmoothness);
+            item.aovConfig.includeAmbientOcclusion = EditorGUILayout.Toggle("Ambient Occlusion", item.aovConfig.includeAmbientOcclusion);
+            item.aovConfig.includeMotionVectors = EditorGUILayout.Toggle("Motion Vectors", item.aovConfig.includeMotionVectors);
+            
+            EditorGUILayout.Space(5);
+            
+            item.aovConfig.outputFormat = (AOVOutputFormat)
+                EditorGUILayout.EnumPopup("Output Format:", item.aovConfig.outputFormat);
+            
+            item.aovConfig.useMultiPartEXR = EditorGUILayout.Toggle("Multi-Part EXR", item.aovConfig.useMultiPartEXR);
+            
+            item.aovConfig.colorSpace = (AOVColorSpace)
+                EditorGUILayout.EnumPopup("Color Space:", item.aovConfig.colorSpace);
+            
+            item.aovConfig.compression = (AOVCompression)
+                EditorGUILayout.EnumPopup("Compression:", item.aovConfig.compression);
+        }
+        
+        private void DrawFBXRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
+        {
+            item.fbxConfig.targetGameObject = (GameObject)EditorGUILayout.ObjectField(
+                "Target GameObject:", item.fbxConfig.targetGameObject, typeof(GameObject), true);
+            
+            if (item.fbxConfig.targetGameObject == null)
+            {
+                EditorGUILayout.HelpBox("FBX requires a target GameObject to record.", MessageType.Warning);
+            }
+            
+            item.fbxConfig.recordedComponent = (FBXRecordedComponent)
+                EditorGUILayout.EnumPopup("Recorded Component:", item.fbxConfig.recordedComponent);
+            
+            item.fbxConfig.recordHierarchy = EditorGUILayout.Toggle("Record Hierarchy", item.fbxConfig.recordHierarchy);
+            item.fbxConfig.clampedTangents = EditorGUILayout.Toggle("Clamped Tangents", item.fbxConfig.clampedTangents);
+            
+            item.fbxConfig.animationCompression = (FBXAnimationCompressionLevel)
+                EditorGUILayout.EnumPopup("Anim. Compression:", item.fbxConfig.animationCompression);
+            
+            item.fbxConfig.exportGeometry = EditorGUILayout.Toggle("Export Geometry", item.fbxConfig.exportGeometry);
+            
+            if (item.fbxConfig.exportGeometry)
+            {
+                EditorGUILayout.LabelField("Transfer Animation", EditorStyles.miniBoldLabel);
+                EditorGUI.indentLevel++;
+                
+                item.fbxConfig.transferAnimationSource = (Transform)EditorGUILayout.ObjectField(
+                    "Source:", item.fbxConfig.transferAnimationSource, typeof(Transform), true);
+                
+                item.fbxConfig.transferAnimationDest = (Transform)EditorGUILayout.ObjectField(
+                    "Destination:", item.fbxConfig.transferAnimationDest, typeof(Transform), true);
+                
+                EditorGUI.indentLevel--;
+            }
+        }
+        
+        private void DrawAnimationRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
+        {
+            item.animationConfig.targetGameObject = (GameObject)EditorGUILayout.ObjectField(
+                "Target GameObject:", item.animationConfig.targetGameObject, typeof(GameObject), true);
+            
+            if (item.animationConfig.targetGameObject == null)
+            {
+                EditorGUILayout.HelpBox("Animation requires a target GameObject to record.", MessageType.Warning);
+            }
+            
+            item.animationConfig.recordingProperties = (AnimationRecordingProperties)
+                EditorGUILayout.EnumPopup("Recording Properties:", item.animationConfig.recordingProperties);
+            
+            item.animationConfig.recordingScope = (AnimationRecordingScope)
+                EditorGUILayout.EnumPopup("Recording Scope:", item.animationConfig.recordingScope);
+            
+            item.animationConfig.includeChildren = EditorGUILayout.Toggle("Include Children", item.animationConfig.includeChildren);
+            item.animationConfig.clampedTangents = EditorGUILayout.Toggle("Clamped Tangents", item.animationConfig.clampedTangents);
+            item.animationConfig.recordBlendShapes = EditorGUILayout.Toggle("Record Blend Shapes", item.animationConfig.recordBlendShapes);
+            
+            item.animationConfig.interpolationMode = (AnimationInterpolationMode)
+                EditorGUILayout.EnumPopup("Interpolation:", item.animationConfig.interpolationMode);
+            
+            item.animationConfig.compressionLevel = (AnimationCompressionLevel)
+                EditorGUILayout.EnumPopup("Compression:", item.animationConfig.compressionLevel);
+        }
+        
+        private void DrawAlembicRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
+        {
+            item.alembicConfig.exportScope = (AlembicExportScope)
+                EditorGUILayout.EnumPopup("Export Scope:", item.alembicConfig.exportScope);
+            
+            if (item.alembicConfig.exportScope == AlembicExportScope.TargetGameObject)
+            {
+                item.alembicConfig.targetGameObject = (GameObject)EditorGUILayout.ObjectField(
+                    "Target GameObject:", item.alembicConfig.targetGameObject, typeof(GameObject), true);
+                
+                if (item.alembicConfig.targetGameObject == null)
+                {
+                    EditorGUILayout.HelpBox("Target GameObject is required for this export scope.", MessageType.Warning);
+                }
+            }
+            
+            item.alembicConfig.exportTargets = (AlembicExportTargets)
+                EditorGUILayout.EnumFlagsField("Export Targets:", item.alembicConfig.exportTargets);
+            
+            item.alembicConfig.includeChildren = EditorGUILayout.Toggle("Include Children", item.alembicConfig.includeChildren);
+            item.alembicConfig.flattenHierarchy = EditorGUILayout.Toggle("Flatten Hierarchy", item.alembicConfig.flattenHierarchy);
+            
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Transform Settings", EditorStyles.miniBoldLabel);
+            
+            item.alembicConfig.handedness = (AlembicHandedness)
+                EditorGUILayout.EnumPopup("Handedness:", item.alembicConfig.handedness);
+            
+            item.alembicConfig.scaleFactor = EditorGUILayout.FloatField("Scale Factor:", item.alembicConfig.scaleFactor);
+            item.alembicConfig.worldScale = EditorGUILayout.FloatField("World Scale:", item.alembicConfig.worldScale);
+            
+            item.alembicConfig.timeSamplingType = (AlembicTimeSamplingType)
+                EditorGUILayout.EnumPopup("Time Sampling:", item.alembicConfig.timeSamplingType);
         }
         
         private void UpdateRecorderEditor()
@@ -2829,6 +3082,127 @@ namespace BatchRenderingTool
             }
             
             return settings;
+        }
+        
+        private void DrawCutListSection()
+        {
+            EditorGUILayout.LabelField("Cut List", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            useCutList = EditorGUILayout.Toggle("Use Cut List", useCutList);
+            
+            if (useCutList)
+            {
+                EditorGUILayout.Space(5);
+                
+                // Header with Add button
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("Cuts", EditorStyles.miniBoldLabel);
+                
+                // Add button with dropdown
+                if (GUILayout.Button("+", GUILayout.Width(25)))
+                {
+                    var menu = new GenericMenu();
+                    
+                    var selectedDir = selectedDirector;
+                    if (selectedDir != null)
+                    {
+                        double currentTime = selectedDir.time;
+                        menu.AddItem(new GUIContent("Add at Current"), false, () => 
+                        {
+                            cutListData.AddCutAtCurrent(currentTime);
+                        });
+                    }
+                    
+                    menu.AddItem(new GUIContent("Add at End"), false, () => 
+                    {
+                        var timeline = selectedDirector?.playableAsset as TimelineAsset;
+                        cutListData.AddCutAtEnd(timeline);
+                    });
+                    
+                    menu.ShowAsContext();
+                }
+                EditorGUILayout.EndHorizontal();
+                
+                if (cutListData.Cuts.Count == 0)
+                {
+                    EditorGUILayout.HelpBox("No cuts added. Click + to add a cut.", MessageType.Info);
+                }
+                else
+                {
+                    // Cut list
+                    cutListScrollPos = EditorGUILayout.BeginScrollView(cutListScrollPos, GUILayout.MaxHeight(200));
+                    
+                    for (int i = 0; i < cutListData.Cuts.Count; i++)
+                    {
+                        var cut = cutListData.Cuts[i];
+                        
+                        EditorGUILayout.BeginHorizontal();
+                        
+                        // Enable checkbox
+                        cut.enabled = EditorGUILayout.Toggle(cut.enabled, GUILayout.Width(20));
+                        
+                        // Selection highlight
+                        bool isSelected = (selectedCutIndex == i);
+                        if (isSelected)
+                        {
+                            GUI.backgroundColor = new Color(0.5f, 0.7f, 1f, 0.3f);
+                        }
+                        
+                        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                        
+                        // Cut name
+                        EditorGUILayout.BeginHorizontal();
+                        cut.name = EditorGUILayout.TextField(cut.name);
+                        
+                        // Delete button
+                        if (GUILayout.Button("×", GUILayout.Width(20)))
+                        {
+                            cutListData.RemoveCut(i);
+                            if (selectedCutIndex >= i) selectedCutIndex--;
+                            break;
+                        }
+                        EditorGUILayout.EndHorizontal();
+                        
+                        // Time range
+                        EditorGUILayout.BeginHorizontal();
+                        EditorGUILayout.LabelField("Start:", GUILayout.Width(40));
+                        cut.startTime = EditorGUILayout.DoubleField(cut.startTime, GUILayout.Width(60));
+                        EditorGUILayout.LabelField("End:", GUILayout.Width(35));
+                        cut.endTime = EditorGUILayout.DoubleField(cut.endTime, GUILayout.Width(60));
+                        EditorGUILayout.LabelField($"Duration: {cut.Duration:F2}s", GUILayout.ExpandWidth(true));
+                        EditorGUILayout.EndHorizontal();
+                        
+                        EditorGUILayout.EndVertical();
+                        
+                        if (isSelected)
+                        {
+                            GUI.backgroundColor = Color.white;
+                        }
+                        
+                        // Handle selection
+                        if (Event.current.type == EventType.MouseDown && 
+                            GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                        {
+                            selectedCutIndex = i;
+                            Event.current.Use();
+                        }
+                        
+                        EditorGUILayout.EndHorizontal();
+                        
+                        EditorGUILayout.Space(2);
+                    }
+                    
+                    EditorGUILayout.EndScrollView();
+                    
+                    // Summary
+                    EditorGUILayout.Space(5);
+                    EditorGUILayout.LabelField($"Total Duration: {cutListData.GetTotalDuration():F2} seconds", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField($"Enabled Cuts: {cutListData.GetEnabledCutCount()} / {cutListData.Cuts.Count}", EditorStyles.miniLabel);
+                }
+            }
+            
+            EditorGUILayout.EndVertical();
         }
         
     }

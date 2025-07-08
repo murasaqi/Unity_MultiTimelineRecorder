@@ -29,6 +29,9 @@ namespace BatchRenderingTool
             // Image Recorder
             public ImageRecorderSettings.ImageRecorderOutputFormat imageFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
             public int imageQuality = 75;
+            public bool captureAlpha = false;
+            public int jpegQuality = 75;
+            public CompressionUtility.EXRCompressionType exrCompression = CompressionUtility.EXRCompressionType.None;
             
             // Movie Recorder
             public MovieRecorderSettingsConfig movieConfig = new MovieRecorderSettingsConfig();

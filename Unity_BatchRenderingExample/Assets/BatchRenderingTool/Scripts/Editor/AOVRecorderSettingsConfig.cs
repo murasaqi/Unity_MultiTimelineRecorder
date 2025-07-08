@@ -16,9 +16,22 @@ namespace BatchRenderingTool
         // Selected AOV types (using flags for multiple selection)
         public AOVType selectedAOVs = AOVType.None;
         
+        // Individual AOV flags for UI
+        public bool includeBeauty = true;
+        public bool includeDepth = false;
+        public bool includeNormal = false;
+        public bool includeAlbedo = false;
+        public bool includeSpecular = false;
+        public bool includeSmoothness = false;
+        public bool includeAmbientOcclusion = false;
+        public bool includeMotionVectors = false;
+        
         // Output settings
         public AOVOutputFormat outputFormat = AOVOutputFormat.EXR16;
         public bool compressionEnabled = true;
+        public bool useMultiPartEXR = true;
+        public AOVColorSpace colorSpace = AOVColorSpace.Linear;
+        public AOVCompression compression = AOVCompression.Zip;
         
         // Resolution settings
         public int width = 1920;

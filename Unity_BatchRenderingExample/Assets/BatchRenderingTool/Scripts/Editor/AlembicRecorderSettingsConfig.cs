@@ -31,8 +31,11 @@ namespace BatchRenderingTool
         // Transform settings
         public AlembicHandedness handedness = AlembicHandedness.Left;
         public float scaleFactor = 1f;
+        public float worldScale = 1f;
         public bool swapYZ = false;
         public bool flipFaces = false;
+        public bool includeChildren = true;
+        public AlembicTimeSamplingType timeSamplingType = AlembicTimeSamplingType.Uniform;
         
         // Geometry settings
         public bool exportUVs = true;
