@@ -155,12 +155,6 @@ namespace BatchRenderingTool
         // Scroll position for the UI
         private Vector2 scrollPosition;
         
-        // Cut List management
-        private CutListData cutListData = new CutListData();
-        private bool useCutList = false;
-        private Vector2 cutListScrollPos;
-        private int selectedCutIndex = -1;
-        
         // Properties for easy access
         public PlayableDirector selectedDirector => 
             availableDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count 
@@ -339,9 +333,6 @@ namespace BatchRenderingTool
             try
             {
                 DrawTimelineSelection();
-                EditorGUILayout.Space(10);
-                
-                DrawCutListSection();
                 EditorGUILayout.Space(10);
                 
                 DrawRenderSettings();
@@ -586,17 +577,17 @@ namespace BatchRenderingTool
             // Two-panel layout
             EditorGUILayout.BeginHorizontal();
             
-            // Left panel - Detail settings
+            // Left panel - Recorder list
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.5f - 10));
-            DrawRecorderDetailPanel();
+            DrawRecorderListPanel();
             EditorGUILayout.EndVertical();
             
             // Separator
             GUILayout.Box("", GUILayout.Width(2), GUILayout.ExpandHeight(true));
             
-            // Right panel - Recorder list
+            // Right panel - Detail settings
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.5f - 10));
-            DrawRecorderListPanel();
+            DrawRecorderDetailPanel();
             EditorGUILayout.EndVertical();
             
             EditorGUILayout.EndHorizontal();
@@ -704,6 +695,12 @@ namespace BatchRenderingTool
             }
             EditorGUILayout.EndHorizontal();
             
+            // Auto-select first item if nothing is selected
+            if (selectedRecorderIndex < 0 && multiRecorderConfig.RecorderItems.Count > 0)
+            {
+                selectedRecorderIndex = 0;
+            }
+            
             // Recorder items
             multiRecorderScrollPos = EditorGUILayout.BeginScrollView(multiRecorderScrollPos);
             
@@ -722,10 +719,19 @@ namespace BatchRenderingTool
                 // Header
                 EditorGUILayout.BeginHorizontal();
                 
-                // Click to select
-                if (GUILayout.Button($"{i + 1}. {item.name}", EditorStyles.label, GUILayout.ExpandWidth(true)))
+                // Click to select - make the entire row clickable
+                bool isSelected = (i == selectedRecorderIndex);
+                GUIStyle buttonStyle = new GUIStyle(EditorStyles.label);
+                buttonStyle.alignment = TextAnchor.MiddleLeft;
+                if (isSelected)
+                {
+                    buttonStyle.fontStyle = FontStyle.Bold;
+                }
+                
+                if (GUILayout.Button($"{i + 1}. {item.name} ({item.recorderType})", buttonStyle, GUILayout.ExpandWidth(true)))
                 {
                     selectedRecorderIndex = i;
+                    GUI.FocusControl(null); // Remove focus to update immediately
                 }
                 
                 item.enabled = EditorGUILayout.Toggle(item.enabled, GUILayout.Width(20));
@@ -789,6 +795,9 @@ namespace BatchRenderingTool
             item.frameRate = frameRate;
             
             multiRecorderConfig.AddRecorder(item);
+            
+            // Auto-select the newly added recorder
+            selectedRecorderIndex = multiRecorderConfig.RecorderItems.Count - 1;
         }
         
         private void DrawImageRecorderDetailSettings(MultiRecorderConfig.RecorderConfigItem item)
@@ -3082,127 +3091,6 @@ namespace BatchRenderingTool
             }
             
             return settings;
-        }
-        
-        private void DrawCutListSection()
-        {
-            EditorGUILayout.LabelField("Cut List", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            
-            useCutList = EditorGUILayout.Toggle("Use Cut List", useCutList);
-            
-            if (useCutList)
-            {
-                EditorGUILayout.Space(5);
-                
-                // Header with Add button
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Cuts", EditorStyles.miniBoldLabel);
-                
-                // Add button with dropdown
-                if (GUILayout.Button("+", GUILayout.Width(25)))
-                {
-                    var menu = new GenericMenu();
-                    
-                    var selectedDir = selectedDirector;
-                    if (selectedDir != null)
-                    {
-                        double currentTime = selectedDir.time;
-                        menu.AddItem(new GUIContent("Add at Current"), false, () => 
-                        {
-                            cutListData.AddCutAtCurrent(currentTime);
-                        });
-                    }
-                    
-                    menu.AddItem(new GUIContent("Add at End"), false, () => 
-                    {
-                        var timeline = selectedDirector?.playableAsset as TimelineAsset;
-                        cutListData.AddCutAtEnd(timeline);
-                    });
-                    
-                    menu.ShowAsContext();
-                }
-                EditorGUILayout.EndHorizontal();
-                
-                if (cutListData.Cuts.Count == 0)
-                {
-                    EditorGUILayout.HelpBox("No cuts added. Click + to add a cut.", MessageType.Info);
-                }
-                else
-                {
-                    // Cut list
-                    cutListScrollPos = EditorGUILayout.BeginScrollView(cutListScrollPos, GUILayout.MaxHeight(200));
-                    
-                    for (int i = 0; i < cutListData.Cuts.Count; i++)
-                    {
-                        var cut = cutListData.Cuts[i];
-                        
-                        EditorGUILayout.BeginHorizontal();
-                        
-                        // Enable checkbox
-                        cut.enabled = EditorGUILayout.Toggle(cut.enabled, GUILayout.Width(20));
-                        
-                        // Selection highlight
-                        bool isSelected = (selectedCutIndex == i);
-                        if (isSelected)
-                        {
-                            GUI.backgroundColor = new Color(0.5f, 0.7f, 1f, 0.3f);
-                        }
-                        
-                        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                        
-                        // Cut name
-                        EditorGUILayout.BeginHorizontal();
-                        cut.name = EditorGUILayout.TextField(cut.name);
-                        
-                        // Delete button
-                        if (GUILayout.Button("×", GUILayout.Width(20)))
-                        {
-                            cutListData.RemoveCut(i);
-                            if (selectedCutIndex >= i) selectedCutIndex--;
-                            break;
-                        }
-                        EditorGUILayout.EndHorizontal();
-                        
-                        // Time range
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField("Start:", GUILayout.Width(40));
-                        cut.startTime = EditorGUILayout.DoubleField(cut.startTime, GUILayout.Width(60));
-                        EditorGUILayout.LabelField("End:", GUILayout.Width(35));
-                        cut.endTime = EditorGUILayout.DoubleField(cut.endTime, GUILayout.Width(60));
-                        EditorGUILayout.LabelField($"Duration: {cut.Duration:F2}s", GUILayout.ExpandWidth(true));
-                        EditorGUILayout.EndHorizontal();
-                        
-                        EditorGUILayout.EndVertical();
-                        
-                        if (isSelected)
-                        {
-                            GUI.backgroundColor = Color.white;
-                        }
-                        
-                        // Handle selection
-                        if (Event.current.type == EventType.MouseDown && 
-                            GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
-                        {
-                            selectedCutIndex = i;
-                            Event.current.Use();
-                        }
-                        
-                        EditorGUILayout.EndHorizontal();
-                        
-                        EditorGUILayout.Space(2);
-                    }
-                    
-                    EditorGUILayout.EndScrollView();
-                    
-                    // Summary
-                    EditorGUILayout.Space(5);
-                    EditorGUILayout.LabelField($"Total Duration: {cutListData.GetTotalDuration():F2} seconds", EditorStyles.miniLabel);
-                    EditorGUILayout.LabelField($"Enabled Cuts: {cutListData.GetEnabledCutCount()} / {cutListData.Cuts.Count}", EditorStyles.miniLabel);
-                }
-            }
-            
-            EditorGUILayout.EndVertical();
         }
         
     }
