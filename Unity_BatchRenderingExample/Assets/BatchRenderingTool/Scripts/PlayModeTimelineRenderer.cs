@@ -244,9 +244,25 @@ namespace BatchRenderingTool
                         renderingDirector.SetGenericBinding(track, targetDirector.gameObject);
                         UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Bound ControlTrack to {targetDirector.gameObject.name}");
                         
+                        // Log ControlTrack clip details
+                        var controlClips = track.GetClips();
+                        foreach (var controlClip in controlClips)
+                        {
+                            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] ControlTrack clip: {controlClip.displayName}, start: {controlClip.start}, duration: {controlClip.duration}");
+                        }
+                        
                         if (!string.IsNullOrEmpty(data.exposedName))
                         {
+                            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Setting exposed reference: {data.exposedName} -> {targetDirector.gameObject.name}");
                             renderingDirector.SetReferenceValue(data.exposedName, targetDirector.gameObject);
+                            
+                            // Verify the reference was set
+                            var resolvedRef = renderingDirector.GetReferenceValue(data.exposedName, out bool isValid);
+                            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Exposed reference resolved: {resolvedRef}, isValid: {isValid}");
+                        }
+                        else
+                        {
+                            UnityEngine.Debug.LogWarning("[PlayModeTimelineRenderer] No exposed name provided for ControlTrack binding!");
                         }
                     }
                 }
