@@ -328,20 +328,20 @@ namespace BatchRenderingTool
         
         // ========== Multi Recorder Mode Methods ==========
         
-        private RecorderSettings CreateImageRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.ImageConfig config)
+        private RecorderSettings CreateImageRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
             var settings = ScriptableObject.CreateInstance<ImageRecorderSettings>();
             settings.name = "ImageRecorderSettings";
             settings.Enabled = true;
             settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-            settings.OutputFormat = config.outputFormat;
+            settings.OutputFormat = config.imageFormat;
             settings.CaptureAlpha = config.captureAlpha;
             
-            if (config.outputFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
+            if (config.imageFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
             {
                 settings.JpegQuality = config.jpegQuality;
             }
-            else if (config.outputFormat == ImageRecorderSettings.ImageRecorderOutputFormat.EXR)
+            else if (config.imageFormat == ImageRecorderSettings.ImageRecorderOutputFormat.EXR)
             {
                 settings.EXRCompression = config.exrCompression;
             }
@@ -360,19 +360,13 @@ namespace BatchRenderingTool
             return settings;
         }
         
-        private RecorderSettings CreateMovieRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.MovieConfig config)
+        private RecorderSettings CreateMovieRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
-            var settingsConfig = new MovieRecorderSettingsConfig
-            {
-                outputFormat = config.outputFormat,
-                videoBitrateMode = config.quality,
-                captureAudio = config.captureAudio,
-                captureAlpha = config.captureAlpha,
-                width = width,
-                height = height,
-                frameRate = frameRate,
-                capFrameRate = true
-            };
+            var settingsConfig = config.movieConfig;
+            settingsConfig.width = width;
+            settingsConfig.height = height;
+            settingsConfig.frameRate = frameRate;
+            settingsConfig.capFrameRate = true;
             
             string errorMessage;
             if (!settingsConfig.Validate(out errorMessage))
@@ -393,17 +387,13 @@ namespace BatchRenderingTool
             return settings;
         }
         
-        private List<RecorderSettings> CreateAOVRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.AOVConfig config)
+        private List<RecorderSettings> CreateAOVRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
-            var settingsConfig = new AOVRecorderSettingsConfig
-            {
-                selectedAOVs = config.selectedAOVTypes,
-                outputFormat = config.outputFormat,
-                width = width,
-                height = height,
-                frameRate = frameRate,
-                capFrameRate = true
-            };
+            var settingsConfig = config.aovConfig;
+            settingsConfig.width = width;
+            settingsConfig.height = height;
+            settingsConfig.frameRate = frameRate;
+            settingsConfig.capFrameRate = true;
             
             string errorMessage;
             if (!settingsConfig.Validate(out errorMessage))
@@ -422,20 +412,10 @@ namespace BatchRenderingTool
             return settingsList;
         }
         
-        private RecorderSettings CreateAnimationRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.AnimationConfig config)
+        private RecorderSettings CreateAnimationRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
-            var settingsConfig = new AnimationRecorderSettingsConfig
-            {
-                recordingProperties = config.recordingProperties,
-                recordingScope = config.recordingScope,
-                targetGameObject = config.targetGameObject,
-                interpolationMode = config.interpolationMode,
-                compressionLevel = config.compressionLevel,
-                frameRate = frameRate,
-                recordInWorldSpace = config.recordInWorldSpace,
-                treatAsHumanoid = config.treatAsHumanoid,
-                optimizeGameObjects = config.optimizeGameObjects
-            };
+            var settingsConfig = config.animationConfig;
+            settingsConfig.frameRate = frameRate;
             
             string errorMessage;
             if (!settingsConfig.Validate(out errorMessage))
@@ -456,26 +436,16 @@ namespace BatchRenderingTool
             return settings;
         }
         
-        private RecorderSettings CreateFBXRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.FBXConfig config)
+        private RecorderSettings CreateFBXRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
-            if (config.targetGameObject == null)
+            if (config.fbxConfig.targetGameObject == null)
             {
                 BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] FBX Recorder requires a target GameObject to be set.");
                 return null;
             }
             
-            var settingsConfig = new FBXRecorderSettingsConfig
-            {
-                targetGameObject = config.targetGameObject,
-                recordedComponent = config.recordedComponent,
-                recordHierarchy = config.recordHierarchy,
-                clampedTangents = config.clampedTangents,
-                animationCompression = config.animationCompression,
-                exportGeometry = config.exportGeometry,
-                transferAnimationSource = config.transferAnimationSource,
-                transferAnimationDest = config.transferAnimationDest,
-                frameRate = frameRate
-            };
+            var settingsConfig = config.fbxConfig;
+            settingsConfig.frameRate = frameRate;
             
             string errorMessage;
             if (!settingsConfig.Validate(out errorMessage))
@@ -496,22 +466,13 @@ namespace BatchRenderingTool
             return settings;
         }
         
-        private RecorderSettings CreateAlembicRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.AlembicConfig config)
+        private RecorderSettings CreateAlembicRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
-            var settingsConfig = new AlembicRecorderSettingsConfig
-            {
-                exportTargets = config.exportTargets,
-                exportScope = config.exportScope,
-                targetGameObject = config.targetGameObject,
-                handedness = config.handedness,
-                scaleFactor = config.scaleFactor,
-                frameRate = frameRate,
-                samplesPerFrame = 1,
-                exportUVs = true,
-                exportNormals = true,
-                includeChildren = config.includeChildren,
-                flattenHierarchy = config.flattenHierarchy
-            };
+            var settingsConfig = config.alembicConfig;
+            settingsConfig.frameRate = frameRate;
+            settingsConfig.samplesPerFrame = 1;
+            settingsConfig.exportUVs = true;
+            settingsConfig.exportNormals = true;
             
             string errorMessage;
             if (!settingsConfig.Validate(out errorMessage))

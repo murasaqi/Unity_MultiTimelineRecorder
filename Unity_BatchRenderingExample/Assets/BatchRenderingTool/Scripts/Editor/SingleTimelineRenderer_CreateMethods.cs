@@ -382,17 +382,17 @@ namespace BatchRenderingTool
             switch (recorderItem.type)
             {
                 case RecorderSettingsType.Image:
-                    recorderSettings = CreateImageRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem.imageConfig);
+                    recorderSettings = CreateImageRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
                     if (recorderSettings != null) settingsList.Add(recorderSettings);
                     break;
                     
                 case RecorderSettingsType.Movie:
-                    recorderSettings = CreateMovieRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem.movieConfig);
+                    recorderSettings = CreateMovieRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
                     if (recorderSettings != null) settingsList.Add(recorderSettings);
                     break;
                     
                 case RecorderSettingsType.AOV:
-                    var aovSettingsList = CreateAOVRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem.aovConfig);
+                    var aovSettingsList = CreateAOVRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
                     if (aovSettingsList != null && aovSettingsList.Count > 0)
                     {
                         settingsList.AddRange(aovSettingsList);
@@ -402,17 +402,17 @@ namespace BatchRenderingTool
                     break;
                     
                 case RecorderSettingsType.Animation:
-                    recorderSettings = CreateAnimationRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem.animationConfig);
+                    recorderSettings = CreateAnimationRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
                     if (recorderSettings != null) settingsList.Add(recorderSettings);
                     break;
                     
                 case RecorderSettingsType.FBX:
-                    recorderSettings = CreateFBXRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem.fbxConfig);
+                    recorderSettings = CreateFBXRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
                     if (recorderSettings != null) settingsList.Add(recorderSettings);
                     break;
                     
                 case RecorderSettingsType.Alembic:
-                    recorderSettings = CreateAlembicRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem.alembicConfig);
+                    recorderSettings = CreateAlembicRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
                     if (recorderSettings != null) settingsList.Add(recorderSettings);
                     break;
             }
