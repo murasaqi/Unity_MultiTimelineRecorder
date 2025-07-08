@@ -18,6 +18,8 @@ namespace BatchRenderingTool
         string fileName { get; set; }
         string filePath { get; set; }
         int takeNumber { get; set; }
+        string cameraTag { get; set; }
+        OutputResolution outputResolution { get; set; }
         
         // Image settings
         ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat { get; set; }
@@ -40,6 +42,9 @@ namespace BatchRenderingTool
         AOVOutputFormat aovOutputFormat { get; set; }
         AOVPreset aovPreset { get; set; }
         bool useAOVPreset { get; set; }
+        bool useMultiPartEXR { get; set; }
+        AOVColorSpace aovColorSpace { get; set; }
+        AOVCompression aovCompression { get; set; }
         
         // Alembic settings
         AlembicExportTargets alembicExportTargets { get; set; }

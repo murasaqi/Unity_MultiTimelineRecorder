@@ -222,6 +222,8 @@ namespace BatchRenderingTool
             public string fileName { get => config.fileName; set => config.fileName = value; }
             public string filePath { get => config.filePath; set => config.filePath = value; }
             public int takeNumber { get => config.takeNumber; set => config.takeNumber = value; }
+            public string cameraTag { get => config.cameraTag; set => config.cameraTag = value; }
+            public OutputResolution outputResolution { get => config.outputResolution; set => config.outputResolution = value; }
             
             // Image settings
             public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat { get => config.imageOutputFormat; set => config.imageOutputFormat = value; }
@@ -244,6 +246,9 @@ namespace BatchRenderingTool
             public AOVOutputFormat aovOutputFormat { get => config.aovOutputFormat; set => config.aovOutputFormat = value; }
             public AOVPreset aovPreset { get => config.aovPreset; set => config.aovPreset = value; }
             public bool useAOVPreset { get => config.useAOVPreset; set => config.useAOVPreset = value; }
+            public bool useMultiPartEXR { get => config.useMultiPartEXR; set => config.useMultiPartEXR = value; }
+            public AOVColorSpace aovColorSpace { get => config.aovColorSpace; set => config.aovColorSpace = value; }
+            public AOVCompression aovCompression { get => config.aovCompression; set => config.aovCompression = value; }
             
             // Alembic settings
             public AlembicExportTargets alembicExportTargets { get => config.alembicExportTargets; set => config.alembicExportTargets = value; }

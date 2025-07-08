@@ -14,4 +14,16 @@ namespace BatchRenderingTool
         AOV,
         FBX
     }
+    
+    /// <summary>
+    /// Output resolution presets
+    /// </summary>
+    public enum OutputResolution
+    {
+        HD720p,
+        HD1080p,
+        UHD4K,
+        UHD8K,
+        Custom
+    }
 }

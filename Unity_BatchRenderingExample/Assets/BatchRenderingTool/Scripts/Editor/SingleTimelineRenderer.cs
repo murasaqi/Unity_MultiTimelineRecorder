@@ -57,6 +57,8 @@ namespace BatchRenderingTool
         public string filePath = "Recordings"; // Output path
         public int takeNumber = 1;
         public int preRollFrames = 0; // Pre-roll frames for simulation warm-up
+        public string cameraTag = "MainCamera";
+        public OutputResolution outputResolution = OutputResolution.HD1080p;
         
         // Debug settings
         public bool debugMode = false; // Keep generated assets for debugging
@@ -83,6 +85,9 @@ namespace BatchRenderingTool
         public AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;
         public AOVPreset aovPreset = AOVPreset.Compositing;
         public bool useAOVPreset = false;
+        public bool useMultiPartEXR = true;
+        public AOVColorSpace aovColorSpace = AOVColorSpace.Linear;
+        public AOVCompression aovCompression = AOVCompression.Zip;
         
         // Alembic recorder settings
         public AlembicExportTargets alembicExportTargets = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform;
@@ -152,6 +157,8 @@ namespace BatchRenderingTool
         string IRecorderSettingsHost.fileName { get => fileName; set => fileName = value; }
         string IRecorderSettingsHost.filePath { get => filePath; set => filePath = value; }
         int IRecorderSettingsHost.takeNumber { get => takeNumber; set => takeNumber = value; }
+        string IRecorderSettingsHost.cameraTag { get => cameraTag; set => cameraTag = value; }
+        OutputResolution IRecorderSettingsHost.outputResolution { get => outputResolution; set => outputResolution = value; }
         ImageRecorderSettings.ImageRecorderOutputFormat IRecorderSettingsHost.imageOutputFormat { get => imageOutputFormat; set => imageOutputFormat = value; }
         bool IRecorderSettingsHost.imageCaptureAlpha { get => imageCaptureAlpha; set => imageCaptureAlpha = value; }
         int IRecorderSettingsHost.jpegQuality { get => jpegQuality; set => jpegQuality = value; }
@@ -168,6 +175,9 @@ namespace BatchRenderingTool
         AOVOutputFormat IRecorderSettingsHost.aovOutputFormat { get => aovOutputFormat; set => aovOutputFormat = value; }
         AOVPreset IRecorderSettingsHost.aovPreset { get => aovPreset; set => aovPreset = value; }
         bool IRecorderSettingsHost.useAOVPreset { get => useAOVPreset; set => useAOVPreset = value; }
+        bool IRecorderSettingsHost.useMultiPartEXR { get => useMultiPartEXR; set => useMultiPartEXR = value; }
+        AOVColorSpace IRecorderSettingsHost.aovColorSpace { get => aovColorSpace; set => aovColorSpace = value; }
+        AOVCompression IRecorderSettingsHost.aovCompression { get => aovCompression; set => aovCompression = value; }
         AlembicExportTargets IRecorderSettingsHost.alembicExportTargets { get => alembicExportTargets; set => alembicExportTargets = value; }
         AlembicExportScope IRecorderSettingsHost.alembicExportScope { get => alembicExportScope; set => alembicExportScope = value; }
         GameObject IRecorderSettingsHost.alembicTargetGameObject { get => alembicTargetGameObject; set => alembicTargetGameObject = value; }
@@ -797,27 +807,48 @@ namespace BatchRenderingTool
         
         private void StopRendering()
         {
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRendering called");
+            
             if (renderCoroutine != null)
             {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping render coroutine");
                 EditorCoroutineUtility.StopCoroutine(renderCoroutine);
                 renderCoroutine = null;
             }
             
             if (renderingDirector != null)
             {
-                renderingDirector.Stop();
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping rendering director");
+                try
+                {
+                    renderingDirector.Stop();
+                }
+                catch (System.Exception e)
+                {
+                    BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Error stopping director: {e.Message}");
+                }
             }
             
             // Exit Play Mode if active
             if (EditorApplication.isPlaying)
             {
+                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Exiting play mode");
                 EditorApplication.isPlaying = false;
             }
             
-            CleanupRendering();
+            // CleanupRenderingを安全に実行
+            try
+            {
+                CleanupRendering();
+            }
+            catch (System.Exception e)
+            {
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Error during cleanup: {e.Message}");
+            }
             
             currentState = RenderState.Idle;
             statusMessage = "Rendering stopped by user";
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRendering completed");
         }
         
         private IEnumerator RenderTimelineCoroutine()
@@ -955,6 +986,27 @@ namespace BatchRenderingTool
                 EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
                 EditorPrefs.SetInt("STR_FrameRate", frameRate);
                 EditorPrefs.SetInt("STR_PreRollFrames", preRollFrames);
+                // exposedNameも保存（CreateRenderTimelineで生成されたもの）
+                if (renderTimeline != null)
+                {
+                    // ControlTrackのexposedNameを探す
+                    foreach (var output in renderTimeline.outputs)
+                    {
+                        if (output.sourceObject is ControlTrack track)
+                        {
+                            var clips = track.GetClips();
+                            foreach (var clip in clips)
+                            {
+                                if (clip.asset is ControlPlayableAsset controlAsset)
+                                {
+                                    EditorPrefs.SetString("STR_ExposedName", controlAsset.sourceGameObject.exposedName);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
                 
                 EditorApplication.isPlaying = true;
                 // Play Modeに入ると、PlayModeTimelineRendererが自動的に処理を引き継ぐ
@@ -1379,9 +1431,22 @@ namespace BatchRenderingTool
         
         private void CleanupRendering()
         {
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] CleanupRendering started");
+            
             if (renderingDirector != null)
             {
-                renderingDirector.Stop();
+                try
+                {
+                    if (renderingDirector.playableAsset != null)
+                    {
+                        renderingDirector.Stop();
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Error stopping director in cleanup: {e.Message}");
+                }
+                renderingDirector = null;
             }
             
             // Check debug mode before destroying GameObject
@@ -1391,11 +1456,25 @@ namespace BatchRenderingTool
                 {
                     BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Debug Mode: Keeping GameObject '{renderingGameObject.name}' active in scene");
                     // Rename the GameObject to indicate it's a debug object
-                    renderingGameObject.name = $"[DEBUG] {renderingGameObject.name}";
+                    try
+                    {
+                        renderingGameObject.name = $"[DEBUG] {renderingGameObject.name}";
+                    }
+                    catch (System.Exception e)
+                    {
+                        BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Error renaming debug GameObject: {e.Message}");
+                    }
                 }
                 else
                 {
-                    DestroyImmediate(renderingGameObject);
+                    try
+                    {
+                        DestroyImmediate(renderingGameObject);
+                    }
+                    catch (System.Exception e)
+                    {
+                        BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Error destroying GameObject: {e.Message}");
+                    }
                 }
                 renderingGameObject = null;
             }
@@ -1667,6 +1746,7 @@ namespace BatchRenderingTool
                     renderingData.exposedName = exposedName;
                     renderingData.frameRate = frameRate;
                     renderingData.preRollFrames = preRollFrames;
+                    renderingData.recorderType = (RecorderSettingsType)EditorPrefs.GetInt("STR_RecorderType", 0);
                     
                     // PlayModeTimelineRenderer GameObjectを作成
                     var rendererGO = new GameObject("[PlayModeTimelineRenderer]");

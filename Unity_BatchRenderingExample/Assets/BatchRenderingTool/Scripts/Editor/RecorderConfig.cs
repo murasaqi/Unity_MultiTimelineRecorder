@@ -25,6 +25,8 @@ namespace BatchRenderingTool
         public string fileName = "<Scene>_<Recorder>_<Take>_<Frame>";
         public string filePath = "Recordings";
         public int takeNumber = 1;
+        public string cameraTag = "MainCamera";
+        public OutputResolution outputResolution = OutputResolution.HD1080p;
         
         // Image recorder settings
         public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
@@ -47,6 +49,9 @@ namespace BatchRenderingTool
         public AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;
         public AOVPreset aovPreset = AOVPreset.Compositing;
         public bool useAOVPreset = false;
+        public bool useMultiPartEXR = true;
+        public AOVColorSpace aovColorSpace = AOVColorSpace.Linear;
+        public AOVCompression aovCompression = AOVCompression.Zip;
         
         // Alembic recorder settings
         public AlembicExportTargets alembicExportTargets = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform;

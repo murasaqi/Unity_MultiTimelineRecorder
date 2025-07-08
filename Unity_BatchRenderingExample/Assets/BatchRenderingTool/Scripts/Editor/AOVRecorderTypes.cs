@@ -60,6 +60,26 @@ namespace BatchRenderingTool
     }
     
     /// <summary>
+    /// Color space options for AOV output
+    /// </summary>
+    public enum AOVColorSpace
+    {
+        sRGB = 0,
+        Linear = 1
+    }
+    
+    /// <summary>
+    /// Compression options for AOV output
+    /// </summary>
+    public enum AOVCompression
+    {
+        Zip = 0,
+        RLE = 1,
+        PIZ = 2,
+        None = 3
+    }
+    
+    /// <summary>
     /// Helper class for AOV type information
     /// </summary>
     public static class AOVTypeInfo

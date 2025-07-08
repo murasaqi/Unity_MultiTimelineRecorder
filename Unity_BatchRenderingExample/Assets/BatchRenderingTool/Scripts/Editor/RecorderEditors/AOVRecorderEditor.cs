@@ -18,7 +18,18 @@ namespace BatchRenderingTool.RecorderEditors
         
         protected override void DrawInputSettings()
         {
-            base.DrawInputSettings();
+            // Input section
+            EditorGUILayout.LabelField("Input", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            
+            // Source (fixed to Tagged Camera for AOV)
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.TextField("Source", "Tagged Camera");
+            }
+            
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space(5);
             
             // HDRP check
             if (!AOVTypeInfo.IsHDRPAvailable())
@@ -34,66 +45,36 @@ namespace BatchRenderingTool.RecorderEditors
                     MessageType.Warning);
             }
             
-            // Resolution settings
-            EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Resolution", EditorStyles.boldLabel);
-            
+            // Camera section
+            EditorGUILayout.LabelField("Camera", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
             
-            // Preset selection
-            host.useAOVPreset = EditorGUILayout.Toggle("Use Preset", host.useAOVPreset);
+            // Camera selection dropdown
+            host.cameraTag = EditorGUILayout.TagField("Camera", host.cameraTag ?? "MainCamera");
             
-            if (host.useAOVPreset)
+            // Output Resolution dropdown
+            host.outputResolution = (OutputResolution)EditorGUILayout.EnumPopup("Output Resolution", host.outputResolution);
+            
+            if (host.outputResolution == OutputResolution.Custom)
             {
-                host.aovPreset = (AOVPreset)EditorGUILayout.EnumPopup("Preset", host.aovPreset);
-                
-                if (host.aovPreset != AOVPreset.Custom)
-                {
-                    var config = GetPresetConfig(host.aovPreset);
-                    
-                    // Apply preset values
-                    host.selectedAOVTypes = config.selectedAOVs;
-                    host.aovOutputFormat = config.outputFormat;
-                    host.width = config.width;
-                    host.height = config.height;
-                    
-                    // Show preset info
-                    EditorGUI.indentLevel++;
-                    using (new EditorGUI.DisabledScope(true))
-                    {
-                        EditorGUILayout.IntField("Width", config.width);
-                        EditorGUILayout.IntField("Height", config.height);
-                        EditorGUILayout.EnumPopup("Format", config.outputFormat);
-                    }
-                    EditorGUI.indentLevel--;
-                }
+                EditorGUI.indentLevel++;
+                host.width = EditorGUILayout.IntField("W", host.width);
+                host.height = EditorGUILayout.IntField("H", host.height);
+                EditorGUI.indentLevel--;
             }
-            
-            if (!host.useAOVPreset || host.aovPreset == AOVPreset.Custom)
+            else
             {
-                host.width = EditorGUILayout.IntField("Width", host.width);
-                host.height = EditorGUILayout.IntField("Height", host.height);
+                // Apply preset resolution
+                ApplyResolutionPreset(host.outputResolution);
                 
-                // Resolution presets
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(EditorGUIUtility.labelWidth);
-                if (GUILayout.Button("HD", GUILayout.Width(40)))
+                // Show current resolution (read-only)
+                EditorGUI.indentLevel++;
+                using (new EditorGUI.DisabledScope(true))
                 {
-                    host.width = 1920;
-                    host.height = 1080;
+                    EditorGUILayout.IntField("W", host.width);
+                    EditorGUILayout.IntField("H", host.height);
                 }
-                if (GUILayout.Button("2K", GUILayout.Width(40)))
-                {
-                    host.width = 2048;
-                    host.height = 1080;
-                }
-                if (GUILayout.Button("4K", GUILayout.Width(40)))
-                {
-                    host.width = 3840;
-                    host.height = 2160;
-                }
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.EndHorizontal();
+                EditorGUI.indentLevel--;
             }
             
             EditorGUI.indentLevel--;
@@ -102,59 +83,108 @@ namespace BatchRenderingTool.RecorderEditors
         protected override void DrawOutputFormatSettings()
         {
             // AOV Type selection
-            EditorGUILayout.LabelField("AOV Types", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Arbitrary Output Variables (AOVs)", EditorStyles.boldLabel);
             
-            // Quick select buttons
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Select All", GUILayout.Width(80)))
+            // Following Unity Recorder's AOV category structure
+            var beautyType = new[] { AOVType.Beauty };
+            var materialTypes = new[] { AOVType.Albedo, AOVType.Alpha, AOVType.Metal, 
+                                       AOVType.Smoothness, AOVType.Specular };
+            var lightingTypes = new[] { AOVType.DirectDiffuse, AOVType.DirectSpecular, 
+                                       AOVType.Emissive, AOVType.IndirectDiffuse, 
+                                       AOVType.Reflection, AOVType.Refraction };
+            var utilityTypes = new[] { AOVType.AmbientOcclusion, AOVType.Depth, AOVType.DepthNormalized,
+                                      AOVType.MotionVectors, AOVType.Normal };
+            
+            EditorGUILayout.Space(5);
+            
+            // Draw categories with Unity Recorder style
+            DrawAOVCategoryWithToggle("Beauty", beautyType);
+            DrawAOVCategoryWithToggle("Material Properties", materialTypes);
+            DrawAOVCategoryWithToggle("Lighting", lightingTypes);
+            DrawAOVCategoryWithToggle("Utility", utilityTypes);
+            
+            // Multi-part EXR option (similar to Unity Recorder)
+            EditorGUILayout.Space(10);
+            if (host.aovOutputFormat == AOVOutputFormat.EXR16 || host.aovOutputFormat == AOVOutputFormat.EXR32)
             {
-                var allTypes = System.Enum.GetValues(typeof(AOVType)).Cast<AOVType>()
-                    .Where(t => t != AOVType.None);
-                host.selectedAOVTypes = AOVType.None;
-                foreach (var type in allTypes)
+                host.useMultiPartEXR = EditorGUILayout.Toggle("Multi-part file", host.useMultiPartEXR);
+                if (host.useMultiPartEXR)
+                {
+                    EditorGUILayout.HelpBox("All selected AOVs will be saved in a single multi-part EXR file", MessageType.Info);
+                }
+            }
+            
+            // Output format
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Output Format", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            
+            // Format dropdown
+            host.aovOutputFormat = (AOVOutputFormat)EditorGUILayout.EnumPopup("Format", host.aovOutputFormat);
+            
+            // Color space (for non-EXR formats)
+            if (host.aovOutputFormat != AOVOutputFormat.EXR16 && host.aovOutputFormat != AOVOutputFormat.EXR32)
+            {
+                host.aovColorSpace = (AOVColorSpace)EditorGUILayout.EnumPopup("Color Space", host.aovColorSpace);
+                EditorGUILayout.HelpBox("EXR format is recommended for AOV outputs to preserve full dynamic range", MessageType.Info);
+            }
+            
+            // Compression settings for EXR
+            if (host.aovOutputFormat == AOVOutputFormat.EXR16 || host.aovOutputFormat == AOVOutputFormat.EXR32)
+            {
+                host.aovCompression = (AOVCompression)EditorGUILayout.EnumPopup("Compression", host.aovCompression);
+            }
+            
+            EditorGUI.indentLevel--;
+        }
+        
+        private void DrawAOVCategoryWithToggle(string categoryName, AOVType[] types)
+        {
+            EditorGUILayout.BeginHorizontal();
+            
+            // Calculate if all, none, or some are selected (for mixed state)
+            int selectedCount = 0;
+            foreach (var type in types)
+            {
+                if ((host.selectedAOVTypes & type) != 0)
+                    selectedCount++;
+            }
+            
+            bool allSelected = selectedCount == types.Length;
+            bool noneSelected = selectedCount == 0;
+            bool mixedSelection = !allSelected && !noneSelected;
+            
+            // Draw category toggle with mixed state support
+            EditorGUI.showMixedValue = mixedSelection;
+            bool categoryToggle = EditorGUILayout.Toggle(allSelected, GUILayout.Width(15));
+            EditorGUI.showMixedValue = false;
+            
+            // Category label
+            EditorGUILayout.LabelField(categoryName, EditorStyles.boldLabel);
+            
+            EditorGUILayout.EndHorizontal();
+            
+            // Handle category toggle change
+            if (categoryToggle != allSelected && !mixedSelection)
+            {
+                foreach (var type in types)
+                {
+                    if (categoryToggle)
+                        host.selectedAOVTypes |= type;
+                    else
+                        host.selectedAOVTypes &= ~type;
+                }
+            }
+            else if (mixedSelection && categoryToggle)
+            {
+                // When clicking mixed state, select all
+                foreach (var type in types)
                 {
                     host.selectedAOVTypes |= type;
                 }
             }
-            if (GUILayout.Button("Clear All", GUILayout.Width(80)))
-            {
-                host.selectedAOVTypes = AOVType.None;
-            }
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
             
-            // AOV type grid
-            var aovTypes = System.Enum.GetValues(typeof(AOVType)).Cast<AOVType>()
-                .Where(t => t != AOVType.None).ToList();
-            
-            // Group AOV types by category
-            var geometryTypes = new[] { AOVType.Depth, AOVType.DepthNormalized, AOVType.Normal, AOVType.MotionVectors };
-            var lightingTypes = new[] { AOVType.DirectDiffuse, AOVType.DirectSpecular, 
-                                       AOVType.IndirectDiffuse, AOVType.IndirectSpecular, 
-                                       AOVType.Emissive, AOVType.Shadow, AOVType.ContactShadows };
-            var materialTypes = new[] { AOVType.Albedo, AOVType.Specular, AOVType.Smoothness, 
-                                       AOVType.AmbientOcclusion, AOVType.Metal };
-            
-            EditorGUILayout.Space(5);
-            
-            // Draw categories
-            DrawAOVCategory("Geometry", geometryTypes);
-            DrawAOVCategory("Lighting", lightingTypes);
-            DrawAOVCategory("Material Properties", materialTypes);
-            
-            // Output format
-            EditorGUILayout.Space(10);
-            host.aovOutputFormat = (AOVOutputFormat)EditorGUILayout.EnumPopup("Output Format", host.aovOutputFormat);
-            
-            if (host.aovOutputFormat != AOVOutputFormat.EXR16 && host.aovOutputFormat != AOVOutputFormat.EXR32)
-            {
-                EditorGUILayout.HelpBox("EXR format is recommended for AOV outputs to preserve full dynamic range", MessageType.Info);
-            }
-        }
-        
-        private void DrawAOVCategory(string categoryName, AOVType[] types)
-        {
-            EditorGUILayout.LabelField(categoryName, EditorStyles.miniLabel);
+            // Draw individual AOV toggles
             EditorGUI.indentLevel++;
             
             int columns = 2;
@@ -171,10 +201,14 @@ namespace BatchRenderingTool.RecorderEditors
                 }
                 
                 bool isSelected = (host.selectedAOVTypes & type) != 0;
+                
+                // Create proper AOV display name
+                string displayName = GetAOVDisplayName(type);
+                
                 bool newSelected = EditorGUILayout.ToggleLeft(
-                    ObjectNames.NicifyVariableName(type.ToString()), 
+                    displayName, 
                     isSelected, 
-                    GUILayout.Width(150)
+                    GUILayout.Width(180)
                 );
                 
                 if (newSelected != isSelected)
@@ -187,10 +221,34 @@ namespace BatchRenderingTool.RecorderEditors
                 
                 currentColumn++;
             }
+            
+            // Fill remaining columns with empty space
+            while (currentColumn < columns)
+            {
+                GUILayout.Label("", GUILayout.Width(180));
+                currentColumn++;
+            }
+            
             EditorGUILayout.EndHorizontal();
             
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(5);
+        }
+        
+        private string GetAOVDisplayName(AOVType type)
+        {
+            return type switch
+            {
+                AOVType.DepthNormalized => "Depth (Normalized)",
+                AOVType.DirectDiffuse => "Direct Diffuse",
+                AOVType.DirectSpecular => "Direct Specular",
+                AOVType.IndirectDiffuse => "Indirect Diffuse",
+                AOVType.IndirectSpecular => "Indirect Specular",
+                AOVType.MotionVectors => "Motion Vectors",
+                AOVType.AmbientOcclusion => "Ambient Occlusion",
+                AOVType.ContactShadows => "Contact Shadows",
+                _ => ObjectNames.NicifyVariableName(type.ToString())
+            };
         }
         
         protected override string GetFileExtension()
@@ -257,6 +315,29 @@ namespace BatchRenderingTool.RecorderEditors
         protected override RecorderSettingsType GetRecorderType()
         {
             return RecorderSettingsType.AOV;
+        }
+        
+        private void ApplyResolutionPreset(OutputResolution preset)
+        {
+            switch (preset)
+            {
+                case OutputResolution.HD720p:
+                    host.width = 1280;
+                    host.height = 720;
+                    break;
+                case OutputResolution.HD1080p:
+                    host.width = 1920;
+                    host.height = 1080;
+                    break;
+                case OutputResolution.UHD4K:
+                    host.width = 3840;
+                    host.height = 2160;
+                    break;
+                case OutputResolution.UHD8K:
+                    host.width = 7680;
+                    host.height = 4320;
+                    break;
+            }
         }
     }
 }

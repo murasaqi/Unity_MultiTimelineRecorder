@@ -109,6 +109,26 @@ namespace BatchRenderingTool
                 yield break;
             }
             
+            // FBX Recorderの場合の特別な処理
+            if (data.recorderType == RecorderSettingsType.FBX)
+            {
+                UnityEngine.Debug.Log("[PlayModeTimelineRenderer] FBX Recorder detected - applying special initialization");
+                
+                // ターゲットDirectorの初期状態を確保
+                targetDirector.time = 0;
+                targetDirector.Evaluate();
+                
+                // 1フレーム待機してUnityの初期化を完了させる
+                yield return null;
+                
+                // レンダリングDirectorも初期化
+                renderingDirector.time = 0;
+                renderingDirector.Evaluate();
+                
+                // もう1フレーム待機
+                yield return null;
+            }
+            
             // レンダリング開始
             renderingDirector.time = 0;
             renderingDirector.Play();
@@ -185,6 +205,25 @@ namespace BatchRenderingTool
                     }
                 }
                 
+                // FBX Recorderの場合、追加のバインディング設定
+                if (data.recorderType == RecorderSettingsType.FBX)
+                {
+                    UnityEngine.Debug.Log("[PlayModeTimelineRenderer] FBX Recorder - Setting up additional bindings");
+                    
+                    // ターゲットDirectorのPlayOnAwakeを確実にfalseに
+                    targetDirector.playOnAwake = false;
+                    
+                    // バインディングを再確認
+                    foreach (var output in targetDirector.playableAsset.outputs)
+                    {
+                        var binding = targetDirector.GetGenericBinding(output.sourceObject);
+                        if (binding != null)
+                        {
+                            UnityEngine.Debug.Log($"[PlayModeTimelineRenderer] Target director binding: {output.sourceObject} -> {binding}");
+                        }
+                    }
+                }
+                
                 renderingDirector.RebuildGraph();
             }
         }
@@ -256,6 +295,7 @@ namespace BatchRenderingTool
         public string exposedName;
         public int frameRate;
         public int preRollFrames;
+        public RecorderSettingsType recorderType;
         
         // 進捗状態（SingleTimelineRendererが監視）
         public float progress = 0f;
