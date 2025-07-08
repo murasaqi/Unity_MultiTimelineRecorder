@@ -207,11 +207,107 @@ namespace BatchRenderingTool
             
             BatchRenderingToolLogger.LogVerbose($"[RecorderSettingsFactory] Creating AOV recorder settings for: {name}");
             
-            // Unity Recorder 5.1.2では専用のAOVRecorderSettingsが存在しないため、
-            // ImageRecorderSettingsを使用した暫定実装を使用
-            BatchRenderingToolLogger.LogWarning("[RecorderSettingsFactory] Using fallback AOV implementation with ImageRecorderSettings");
+            var settingsList = new List<RecorderSettings>();
             
-            var settingsList = AOVRecorderImplementation.AOVRecorderFallback.CreateAOVRecorderSettingsFallback(name, config);
+            // Unity Recorder has AOVRecorderSettings, use it directly
+            try
+            {
+                // Create single AOVRecorderSettings instance
+                var aovSettings = ScriptableObject.CreateInstance<UnityEditor.Recorder.AOVRecorderSettings>();
+                aovSettings.name = name;
+                
+                // Configure AOV types
+                var aovTypeList = new List<UnityEditor.Recorder.AOVType>();
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Beauty) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Beauty);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Albedo) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Albedo);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Normal) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Normal);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Smoothness) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Smoothness);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.AmbientOcclusion) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.AmbientOcclusion);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Metal) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Metal);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Specular) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Specular);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Alpha) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Alpha);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.DirectDiffuse) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.DirectDiffuse);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.DirectSpecular) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.DirectSpecular);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.IndirectDiffuse) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.IndirectDiffuse);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Reflection) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Reflection);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Refraction) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Refraction);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Emissive) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Emissive);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.MotionVectors) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.MotionVectors);
+                if ((config.selectedAOVs & BatchRenderingTool.AOVType.Depth) != 0)
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Depth);
+                
+                // Add Beauty pass if none selected
+                if (aovTypeList.Count == 0)
+                {
+                    aovTypeList.Add(UnityEditor.Recorder.AOVType.Beauty);
+                }
+                
+                // Set AOV types
+                aovSettings.SetAOVSelection(aovTypeList.ToArray());
+                
+                // Configure output format
+                switch (config.outputFormat)
+                {
+                    case AOVOutputFormat.PNG:
+                        aovSettings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
+                        BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Set AOV output format to PNG");
+                        break;
+                    case AOVOutputFormat.JPEG:
+                        aovSettings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.JPEG;
+                        BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Set AOV output format to JPEG");
+                        break;
+                    case AOVOutputFormat.EXR16:
+                    case AOVOutputFormat.EXR32:
+                        aovSettings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.EXR;
+                        BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Set AOV output format to EXR");
+                        break;
+                }
+                
+                // Configure multi-part EXR
+                aovSettings.IsMultiPartEXR = aovTypeList.Count > 1;
+                
+                // Configure resolution
+                var imageInputSettings = new UnityEditor.Recorder.Input.GameViewInputSettings
+                {
+                    OutputWidth = config.width,
+                    OutputHeight = config.height,
+                    FlipFinalOutput = config.flipVertical
+                };
+                aovSettings.imageInputSettings = imageInputSettings;
+                
+                // Configure frame rate
+                aovSettings.FrameRate = config.frameRate;
+                aovSettings.CapFrameRate = config.capFrameRate;
+                
+                settingsList.Add(aovSettings);
+                
+                // Log the actual output format after configuration
+                BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Created AOVRecorderSettings with {aovTypeList.Count} AOV types");
+                BatchRenderingToolLogger.Log($"[RecorderSettingsFactory] Final AOV output format: {aovSettings.OutputFormat}");
+            }
+            catch (Exception ex)
+            {
+                BatchRenderingToolLogger.LogWarning($"[RecorderSettingsFactory] Failed to create AOVRecorderSettings: {ex.Message}");
+                BatchRenderingToolLogger.LogWarning("[RecorderSettingsFactory] Falling back to ImageRecorderSettings implementation");
+                
+                // Fallback to ImageRecorderSettings implementation
+                settingsList = AOVRecorderImplementation.AOVRecorderFallback.CreateAOVRecorderSettingsFallback(name, config);
+            }
             
             // Apply common settings to each
             foreach (var settings in settingsList)
@@ -462,18 +558,26 @@ namespace BatchRenderingTool
         /// </summary>
         public static RecorderSettingsType DetectRecorderType(RecorderSettings settings)
         {
-            if (settings is ImageRecorderSettings)
-                return RecorderSettingsType.Image;
+            var typeName = settings.GetType().Name;
+            
+            // Check specific types first
+            if (typeName == "AOVRecorderSettings")
+                return RecorderSettingsType.AOV;
+            else if (typeName == "AnimationRecorderSettings")
+                return RecorderSettingsType.Animation;
+            else if (typeName == "AlembicRecorderSettings")
+                return RecorderSettingsType.Alembic;
+            else if (typeName == "FbxRecorderSettings")
+                return RecorderSettingsType.FBX;
             else if (settings is MovieRecorderSettings)
                 return RecorderSettingsType.Movie;
-            else if (settings.GetType().Name == "AnimationRecorderSettings")
-                return RecorderSettingsType.Animation;
-            else if (settings.GetType().Name == "AlembicRecorderSettings")
-                return RecorderSettingsType.Alembic;
-            else if (settings.GetType().Name == "AOVRecorderSettings")
-                return RecorderSettingsType.AOV;
-            else if (settings.GetType().Name == "FbxRecorderSettings")
-                return RecorderSettingsType.FBX;
+            else if (settings is ImageRecorderSettings)
+            {
+                // Check if it's a fallback AOV implementation
+                if (settings.name.Contains("AOV"))
+                    return RecorderSettingsType.AOV;
+                return RecorderSettingsType.Image;
+            }
             else
                 throw new NotSupportedException($"Unknown recorder settings type: {settings.GetType().Name}");
         }

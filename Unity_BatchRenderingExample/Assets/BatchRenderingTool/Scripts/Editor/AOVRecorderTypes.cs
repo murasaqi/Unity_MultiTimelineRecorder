@@ -32,14 +32,18 @@ namespace BatchRenderingTool
         IndirectDiffuse = 1 << 11,
         IndirectSpecular = 1 << 12,
         Emissive = 1 << 13,
+        Reflection = 1 << 14,
+        Refraction = 1 << 15,
         
         // Additional passes
-        Shadow = 1 << 14,
-        ContactShadows = 1 << 15,
-        ScreenSpaceReflection = 1 << 16,
+        Shadow = 1 << 16,
+        ContactShadows = 1 << 17,
+        ScreenSpaceReflection = 1 << 18,
+        Alpha = 1 << 19,
+        Beauty = 1 << 20,
         
         // Custom/Debug
-        CustomPass = 1 << 17
+        CustomPass = 1 << 21
     }
     
     /// <summary>
@@ -49,8 +53,8 @@ namespace BatchRenderingTool
     {
         EXR16 = 0,  // 16-bit float EXR
         EXR32 = 1,  // 32-bit float EXR
-        PNG16 = 2,  // 16-bit PNG (limited use)
-        TGA = 3     // TGA format
+        PNG = 2,    // PNG format (with alpha support)
+        JPEG = 3    // JPEG format (no alpha support)
     }
     
     /// <summary>

@@ -69,9 +69,40 @@ namespace BatchRenderingTool
                     break;
                     
                 case RecorderSettingsType.AOV:
-                    // AOV output paths are handled differently as they may have multiple outputs
-                    if (settings is ImageRecorderSettings aovSettings)
+                    // Check if it's actual AOVRecorderSettings
+                    if (settings.GetType().Name == "AOVRecorderSettings")
                     {
+                        // Handle real AOVRecorderSettings
+                        var aovType = settings.GetType();
+                        var aovOutputFileProperty = aovType.GetProperty("OutputFile");
+                        if (aovOutputFileProperty != null && aovOutputFileProperty.CanWrite)
+                        {
+                            // Ensure <Frame> wildcard is present for image sequences
+                            string aovOutputFile = outputFile;
+                            if (!aovOutputFile.Contains("<Frame>"))
+                            {
+                                // Add <Frame> before the file extension
+                                var extension = Path.GetExtension(aovOutputFile);
+                                var nameWithoutExt = Path.GetFileNameWithoutExtension(aovOutputFile);
+                                var directory = Path.GetDirectoryName(aovOutputFile);
+                                
+                                if (!string.IsNullOrEmpty(directory))
+                                {
+                                    aovOutputFile = directory + Path.DirectorySeparatorChar + nameWithoutExt + "_<Frame>" + extension;
+                                }
+                                else
+                                {
+                                    aovOutputFile = nameWithoutExt + "_<Frame>" + extension;
+                                }
+                            }
+                            
+                            aovOutputFileProperty.SetValue(settings, aovOutputFile);
+                            BatchRenderingToolLogger.Log($"[RecorderSettingsHelper] Set AOVRecorderSettings output to: {aovOutputFile}");
+                        }
+                    }
+                    else if (settings is ImageRecorderSettings aovSettings)
+                    {
+                        // Fallback: Handle ImageRecorderSettings as AOV
                         // Extract AOV type from settings name if possible
                         string aovType = "";
                         if (settings.name.Contains("_AOV_"))
@@ -317,7 +348,29 @@ namespace BatchRenderingTool
         /// </summary>
         public static string GetFileExtension(RecorderSettings settings)
         {
-            if (settings is ImageRecorderSettings imageSettings)
+            // Check for AOVRecorderSettings first
+            if (settings.GetType().Name == "AOVRecorderSettings")
+            {
+                // Use reflection to get OutputFormat property
+                var outputFormatProp = settings.GetType().GetProperty("OutputFormat");
+                if (outputFormatProp != null)
+                {
+                    var outputFormat = outputFormatProp.GetValue(settings);
+                    if (outputFormat != null)
+                    {
+                        var formatName = outputFormat.ToString();
+                        if (formatName.Contains("PNG"))
+                            return "png";
+                        else if (formatName.Contains("JPEG") || formatName.Contains("JPG"))
+                            return "jpg";
+                        else if (formatName.Contains("EXR"))
+                            return "exr";
+                    }
+                }
+                // Default to EXR for AOV
+                return "exr";
+            }
+            else if (settings is ImageRecorderSettings imageSettings)
             {
                 switch (imageSettings.OutputFormat)
                 {
@@ -362,15 +415,15 @@ namespace BatchRenderingTool
         }
         
         /// <summary>
-        /// Check if settings is an AOV recorder (placeholder check)
+        /// Check if settings is an AOV recorder
         /// </summary>
         public static bool IsAOVRecorderSettings(RecorderSettings settings)
         {
-            // Since Unity Recorder's AOV API might not be directly accessible,
-            // we check by name pattern or type name
+            // Check for actual AOVRecorderSettings type
             return settings != null && 
-                   (settings.name.Contains("AOV") || 
-                    settings.GetType().Name.Contains("AOV"));
+                   (settings.GetType().Name == "AOVRecorderSettings" ||
+                    settings.GetType().FullName == "UnityEditor.Recorder.AOVRecorderSettings" ||
+                    settings.name.Contains("AOV"));
         }
         
         /// <summary>
