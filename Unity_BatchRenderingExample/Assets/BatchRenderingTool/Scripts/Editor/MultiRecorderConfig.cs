@@ -75,11 +75,11 @@ namespace BatchRenderingTool
                 };
                 
                 // 各設定のクローン
-                clone.movieConfig = this.movieConfig.Clone();
-                clone.aovConfig = this.aovConfig.Clone();
-                clone.alembicConfig = this.alembicConfig.Clone();
-                clone.animationConfig = this.animationConfig.Clone();
-                clone.fbxConfig = this.fbxConfig.Clone();
+                clone.movieConfig = this.movieConfig?.Clone();
+                clone.aovConfig = this.aovConfig?.Clone();
+                clone.alembicConfig = this.alembicConfig?.Clone();
+                clone.animationConfig = this.animationConfig?.Clone();
+                clone.fbxConfig = this.fbxConfig?.Clone();
                 
                 return clone;
             }
@@ -226,30 +226,140 @@ namespace BatchRenderingTool
                 case RecorderSettingsType.Movie:
                     item.name = "Movie";
                     item.fileName = "Recordings/<Scene>_<Take>";
+                    // Movie configを初期化
+                    item.movieConfig = new MovieRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.Animation:
                     item.name = "Animation";
                     item.fileName = "Assets/Animations/<Scene>_<Take>";
+                    // Animation configを初期化
+                    item.animationConfig = new AnimationRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.Alembic:
                     item.name = "Alembic";
                     item.fileName = "Recordings/<Scene>_<Take>/<Scene>";
+                    // Alembic configを初期化
+                    item.alembicConfig = new AlembicRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.AOV:
                     item.name = "AOV";
                     item.fileName = "Recordings/<Scene>_<Take>/AOV/<AOVType>_<Frame>";
+                    // AOV configを初期化
+                    item.aovConfig = new AOVRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.FBX:
                     item.name = "FBX Animation";
                     item.fileName = "Assets/FBX/<Scene>_<Take>";
+                    // FBX configを初期化して、GameObject参照が保持されるようにする
+                    item.fbxConfig = new FBXRecorderSettingsConfig();
                     break;
             }
             
             return item;
+        }
+        
+        /// <summary>
+        /// レコーダー設定項目をクローン
+        /// </summary>
+        public static RecorderConfigItem CloneRecorderItem(RecorderConfigItem source)
+        {
+            var clone = new RecorderConfigItem
+            {
+                name = source.name,
+                enabled = source.enabled,
+                recorderType = source.recorderType,
+                fileName = source.fileName,
+                takeNumber = source.takeNumber,
+                
+                // Image settings
+                imageFormat = source.imageFormat,
+                imageQuality = source.imageQuality,
+                captureAlpha = source.captureAlpha,
+                jpegQuality = source.jpegQuality,
+                exrCompression = source.exrCompression,
+                
+                // Resolution
+                width = source.width,
+                height = source.height
+            };
+            
+            // Clone config objects
+            if (source.movieConfig != null)
+            {
+                clone.movieConfig = new MovieRecorderSettingsConfig
+                {
+                    outputFormat = source.movieConfig.outputFormat,
+                    videoBitrateMode = source.movieConfig.videoBitrateMode,
+                    captureAudio = source.movieConfig.captureAudio,
+                    captureAlpha = source.movieConfig.captureAlpha,
+                    customBitrate = source.movieConfig.customBitrate,
+                    audioBitrate = source.movieConfig.audioBitrate
+                };
+            }
+            
+            if (source.aovConfig != null)
+            {
+                clone.aovConfig = new AOVRecorderSettingsConfig
+                {
+                    selectedAOVs = source.aovConfig.selectedAOVs,
+                    outputFormat = source.aovConfig.outputFormat,
+                    useMultiPartEXR = source.aovConfig.useMultiPartEXR,
+                    colorSpace = source.aovConfig.colorSpace,
+                    compression = source.aovConfig.compression
+                };
+            }
+            
+            if (source.alembicConfig != null)
+            {
+                clone.alembicConfig = new AlembicRecorderSettingsConfig
+                {
+                    exportTargets = source.alembicConfig.exportTargets,
+                    exportScope = source.alembicConfig.exportScope,
+                    targetGameObject = source.alembicConfig.targetGameObject,
+                    handedness = source.alembicConfig.handedness,
+                    scaleFactor = source.alembicConfig.scaleFactor,
+                    frameRate = source.alembicConfig.frameRate,
+                    timeSamplingType = source.alembicConfig.timeSamplingType,
+                    includeChildren = source.alembicConfig.includeChildren,
+                    flattenHierarchy = source.alembicConfig.flattenHierarchy
+                };
+            }
+            
+            if (source.animationConfig != null)
+            {
+                clone.animationConfig = new AnimationRecorderSettingsConfig
+                {
+                    recordingProperties = source.animationConfig.recordingProperties,
+                    targetGameObject = source.animationConfig.targetGameObject,
+                    recordingScope = source.animationConfig.recordingScope,
+                    interpolationMode = source.animationConfig.interpolationMode,
+                    compressionLevel = source.animationConfig.compressionLevel,
+                    includeChildren = source.animationConfig.includeChildren,
+                    clampedTangents = source.animationConfig.clampedTangents,
+                    recordBlendShapes = source.animationConfig.recordBlendShapes
+                };
+            }
+            
+            if (source.fbxConfig != null)
+            {
+                clone.fbxConfig = new FBXRecorderSettingsConfig
+                {
+                    targetGameObject = source.fbxConfig.targetGameObject,
+                    recordedComponent = source.fbxConfig.recordedComponent,
+                    recordHierarchy = source.fbxConfig.recordHierarchy,
+                    clampedTangents = source.fbxConfig.clampedTangents,
+                    animationCompression = source.fbxConfig.animationCompression,
+                    exportGeometry = source.fbxConfig.exportGeometry,
+                    transferAnimationSource = source.fbxConfig.transferAnimationSource,
+                    transferAnimationDest = source.fbxConfig.transferAnimationDest
+                };
+            }
+            
+            return clone;
         }
         
         /// <summary>

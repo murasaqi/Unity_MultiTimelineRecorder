@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEditor;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Input;
@@ -353,8 +354,8 @@ namespace BatchRenderingTool
             
             settings.imageInputSettings = new GameViewInputSettings
             {
-                OutputWidth = width,
-                OutputHeight = height
+                OutputWidth = config.width,
+                OutputHeight = config.height
             };
             
             return settings;
@@ -363,8 +364,8 @@ namespace BatchRenderingTool
         private RecorderSettings CreateMovieRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
             var settingsConfig = config.movieConfig;
-            settingsConfig.width = width;
-            settingsConfig.height = height;
+            settingsConfig.width = config.width;
+            settingsConfig.height = config.height;
             settingsConfig.frameRate = frameRate;
             settingsConfig.capFrameRate = true;
             
@@ -390,8 +391,8 @@ namespace BatchRenderingTool
         private List<RecorderSettings> CreateAOVRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
             var settingsConfig = config.aovConfig;
-            settingsConfig.width = width;
-            settingsConfig.height = height;
+            settingsConfig.width = config.width;
+            settingsConfig.height = config.height;
             settingsConfig.frameRate = frameRate;
             settingsConfig.capFrameRate = true;
             
@@ -438,9 +439,16 @@ namespace BatchRenderingTool
         
         private RecorderSettings CreateFBXRecorderSettingsFromConfig(string outputPath, string outputFileName, MultiRecorderConfig.RecorderConfigItem config)
         {
+            // FBX configがnullの場合の処理
+            if (config.fbxConfig == null)
+            {
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] FBX Recorder config is null for recorder '{config.name}'.");
+                return null;
+            }
+            
             if (config.fbxConfig.targetGameObject == null)
             {
-                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] FBX Recorder requires a target GameObject to be set.");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] FBX Recorder requires a target GameObject to be set for recorder '{config.name}'.");
                 return null;
             }
             
@@ -491,6 +499,82 @@ namespace BatchRenderingTool
             }
             
             return settings;
+        }
+        
+        // ========== Per-Timeline Recorder Configuration Methods ==========
+        
+        /// <summary>
+        /// Creates RecorderSettings for a specific timeline and recorder item
+        /// </summary>
+        private RecorderSettings CreateRecorderSettingsForItem(MultiRecorderConfig.RecorderConfigItem recorderItem, PlayableDirector director, int timelineIndex)
+        {
+            // Get the timeline-specific config to check for global resolution settings
+            var timelineConfig = GetTimelineRecorderConfig(timelineIndex);
+            
+            var context = new WildcardContext(recorderItem.takeNumber,
+                timelineConfig.useGlobalResolution ? timelineConfig.globalWidth : recorderItem.width,
+                timelineConfig.useGlobalResolution ? timelineConfig.globalHeight : recorderItem.height);
+            context.TimelineName = director.gameObject.name;
+            context.RecorderName = recorderItem.recorderType.ToString();
+            
+            // Set GameObject name based on recorder type
+            if (recorderItem.recorderType == RecorderSettingsType.Alembic && recorderItem.alembicConfig?.targetGameObject != null)
+            {
+                context.GameObjectName = recorderItem.alembicConfig.targetGameObject.name;
+            }
+            else if (recorderItem.recorderType == RecorderSettingsType.Animation && recorderItem.animationConfig?.targetGameObject != null)
+            {
+                context.GameObjectName = recorderItem.animationConfig.targetGameObject.name;
+            }
+            else if (recorderItem.recorderType == RecorderSettingsType.FBX && recorderItem.fbxConfig?.targetGameObject != null)
+            {
+                context.GameObjectName = recorderItem.fbxConfig.targetGameObject.name;
+            }
+            
+            var processedFileName = WildcardProcessor.ProcessWildcards(recorderItem.fileName, context);
+            var processedFilePath = timelineConfig.globalOutputPath;
+            
+            // Create recorder settings based on type
+            RecorderSettings recorderSettings = null;
+            
+            switch (recorderItem.recorderType)
+            {
+                case RecorderSettingsType.Image:
+                    recorderSettings = CreateImageRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
+                    break;
+                    
+                case RecorderSettingsType.Movie:
+                    recorderSettings = CreateMovieRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
+                    break;
+                    
+                case RecorderSettingsType.AOV:
+                    var aovSettingsList = CreateAOVRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
+                    if (aovSettingsList != null && aovSettingsList.Count > 0)
+                    {
+                        recorderSettings = aovSettingsList[0];
+                        // Additional AOV settings need to be handled separately
+                        BatchRenderingToolLogger.LogWarning($"[SingleTimelineRenderer] Multiple AOV outputs detected, only using first one for timeline {director.gameObject.name}");
+                    }
+                    break;
+                    
+                case RecorderSettingsType.Animation:
+                    recorderSettings = CreateAnimationRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
+                    break;
+                    
+                case RecorderSettingsType.FBX:
+                    recorderSettings = CreateFBXRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
+                    break;
+                    
+                case RecorderSettingsType.Alembic:
+                    recorderSettings = CreateAlembicRecorderSettingsFromConfig(processedFilePath, processedFileName, recorderItem);
+                    break;
+                    
+                default:
+                    BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Unsupported recorder type: {recorderItem.recorderType}");
+                    break;
+            }
+            
+            return recorderSettings;
         }
     }
 }
