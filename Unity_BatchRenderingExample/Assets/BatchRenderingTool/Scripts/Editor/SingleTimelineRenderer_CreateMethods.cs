@@ -170,15 +170,8 @@ namespace BatchRenderingTool
                     controlAsset.searchHierarchy = false;
                     controlAsset.active = true;
                     
-                    // Set postPlayback based on recorder type
-                    if (recorderType == RecorderSettingsType.FBX)
-                    {
-                        controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Active;
-                    }
-                    else
-                    {
-                        controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
-                    }
+                    // Set postPlayback to Revert for all recorders (FBX handling is done per-recorder)
+                    controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
                     
                     BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Created ControlClip for {director.gameObject.name}: start={currentStartTime:F2}s, duration={controlClip.duration:F2}s");
                     
@@ -207,19 +200,9 @@ namespace BatchRenderingTool
                 // Calculate total duration (currentStartTime is the end time after all clips)
                 float totalDuration = currentStartTime - preRollTime;
                 
-                // Create recorder tracks based on mode
-                if (useMultiRecorder)
-                {
-                    // Multi-recorder mode with per-timeline configurations
-                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Multi-Recorder Mode for Multiple Timelines ===");
-                    return CreateRecorderTracksForMultipleTimelines(timeline, directors, preRollTime, oneFrameDuration);
-                }
-                else
-                {
-                    // Single recorder mode for all timelines
-                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Single Recorder Mode for Multiple Timelines ===");
-                    return CreateRecorderTrackForMultipleTimelinesSingleRecorder(timeline, directors, preRollTime, totalDuration);
-                }
+                // Always use multi-recorder mode with per-timeline configurations
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Multi-Recorder Mode for Multiple Timelines ===");
+                return CreateRecorderTracksForMultipleTimelines(timeline, directors, preRollTime, oneFrameDuration);
             }
             catch (System.Exception e)
             {
@@ -236,7 +219,8 @@ namespace BatchRenderingTool
             float marginTime = timelineMarginFrames / (float)frameRate;
             
             // Keep track of all recorder types needed across all timelines
-            Dictionary<RecorderSettingsType, RecorderTrack> recorderTracks = new Dictionary<RecorderSettingsType, RecorderTrack>();
+            // Use a string key that includes recorder type and unique identifier for proper track management
+            Dictionary<string, RecorderTrack> recorderTracks = new Dictionary<string, RecorderTrack>();
             
             // Create recorder clips for each timeline
             for (int i = 0; i < directors.Count; i++)
@@ -260,62 +244,81 @@ namespace BatchRenderingTool
                 // Create recorder clips for each enabled recorder
                 foreach (var recorderItem in enabledRecorders)
                 {
-                    // Get or create the recorder track for this type
-                    if (!recorderTracks.ContainsKey(recorderItem.recorderType))
+                    try
                     {
-                        var trackName = $"{recorderItem.recorderType} Recorder Track";
-                        var track = timeline.CreateTrack<RecorderTrack>(null, trackName);
-                        if (track == null)
+                        // Generate unique track key based on recorder type and configuration
+                        string trackKey = GenerateRecorderTrackKey(recorderItem);
+                        
+                        // Get or create the recorder track for this specific configuration
+                        if (!recorderTracks.ContainsKey(trackKey))
                         {
-                            BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create {trackName}");
+                            var trackName = GenerateRecorderTrackName(recorderItem);
+                            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Creating track: {trackName}");
+                            
+                            var track = timeline.CreateTrack<RecorderTrack>(null, trackName);
+                            if (track == null)
+                            {
+                                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create {trackName}");
+                                continue;
+                            }
+                            recorderTracks[trackKey] = track;
+                            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Successfully created track: {trackName} with key: {trackKey}");
+                        }
+                        
+                        var recorderTrack = recorderTracks[trackKey];
+                        
+                        // Create recorder settings for this specific timeline and recorder
+                        BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Creating recorder settings for {recorderItem.name} ({recorderItem.recorderType})");
+                        RecorderSettings recorderSettings = CreateRecorderSettingsForItem(recorderItem, director, timelineIndex);
+                        if (recorderSettings == null)
+                        {
+                            BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create recorder settings for {recorderItem.recorderType}");
                             continue;
                         }
-                        recorderTracks[recorderItem.recorderType] = track;
-                    }
-                    
-                    var recorderTrack = recorderTracks[recorderItem.recorderType];
-                    
-                    // Create recorder settings for this specific timeline and recorder
-                    RecorderSettings recorderSettings = CreateRecorderSettingsForItem(recorderItem, director, timelineIndex);
-                    if (recorderSettings == null)
-                    {
-                        BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create recorder settings for {recorderItem.recorderType}");
-                        continue;
-                    }
-                    
-                    // Save settings as sub-asset
-                    AssetDatabase.AddObjectToAsset(recorderSettings, timeline);
-                    
-                    // Create recorder clip
-                    var recorderClip = recorderTrack.CreateClip<RecorderClip>();
-                    if (recorderClip == null)
-                    {
-                        BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create RecorderClip for {recorderItem.recorderType}");
-                        continue;
-                    }
-                    
-                    recorderClip.displayName = $"{director.gameObject.name} - {recorderItem.recorderType}";
-                    recorderClip.start = currentStartTime;
-                    recorderClip.duration = timelineDuration;
-                    
-                    var recorderAsset = recorderClip.asset as RecorderClip;
-                    recorderAsset.settings = recorderSettings;
-                    
-                    // Apply type-specific settings
-                    if (recorderItem.recorderType == RecorderSettingsType.FBX)
-                    {
-                        GameObject fbxTarget = recorderItem.fbxConfig?.targetGameObject;
-                        if (fbxTarget != null)
+                        
+                        // Save settings as sub-asset
+                        AssetDatabase.AddObjectToAsset(recorderSettings, timeline);
+                        
+                        // Create recorder clip
+                        BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Creating recorder clip for {recorderItem.name}");
+                        var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+                        if (recorderClip == null)
                         {
-                            ApplyFBXRecorderPatchForMultiRecorder(recorderAsset, recorderClip, fbxTarget);
+                            BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create RecorderClip for {recorderItem.recorderType}");
+                            continue;
                         }
+                        
+                        recorderClip.displayName = $"{director.gameObject.name} - {recorderItem.recorderType}";
+                        recorderClip.start = currentStartTime;
+                        recorderClip.duration = timelineDuration;
+                        
+                        var recorderAsset = recorderClip.asset as RecorderClip;
+                        recorderAsset.settings = recorderSettings;
+                        
+                        BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Clip created: {recorderClip.displayName}, Start: {recorderClip.start:F2}s, Duration: {recorderClip.duration:F2}s");
+                        
+                        // Apply type-specific settings
+                        if (recorderItem.recorderType == RecorderSettingsType.FBX)
+                        {
+                            GameObject fbxTarget = recorderItem.fbxConfig?.targetGameObject;
+                            if (fbxTarget != null)
+                            {
+                                ApplyFBXRecorderPatchForMultiRecorder(recorderAsset, recorderClip, fbxTarget);
+                            }
+                        }
+                        else if (recorderItem.recorderType == RecorderSettingsType.Alembic)
+                        {
+                            ApplyAlembicSettingsToRecorderClip(recorderAsset, recorderSettings);
+                        }
+                        
+                        RecorderClipUtility.EnsureRecorderTypeIsSet(recorderAsset, recorderSettings);
                     }
-                    else if (recorderItem.recorderType == RecorderSettingsType.Alembic)
+                    catch (System.Exception e)
                     {
-                        ApplyAlembicSettingsToRecorderClip(recorderAsset, recorderSettings);
+                        BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Exception while creating recorder for {recorderItem.name}: {e.Message}");
+                        BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Stack trace: {e.StackTrace}");
+                        // Continue with next recorder
                     }
-                    
-                    RecorderClipUtility.EnsureRecorderTypeIsSet(recorderAsset, recorderSettings);
                 }
                 
                 // Update start time for next timeline
@@ -344,14 +347,19 @@ namespace BatchRenderingTool
             context.TimelineName = directors.Count > 1 ? $"MultiTimeline_{directors.Count}" : firstDirector.gameObject.name;
             
             // Set GameObject name for specific recorder types
-            if (recorderType == RecorderSettingsType.Alembic && alembicExportScope == AlembicExportScope.TargetGameObject && alembicTargetGameObject != null)
-            {
-                context.GameObjectName = alembicTargetGameObject.name;
-            }
+            // GameObject name is set in the per-timeline configuration
             
             var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
-            var processedFilePath = filePath;
+            var processedFilePath = globalOutputPath.GetResolvedPath(context);
             List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
+            
+            // Get recorder type from first recorder in config
+            if (multiRecorderConfig.RecorderItems.Count == 0)
+            {
+                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No recorder configured");
+                return timeline;
+            }
+            var recorderType = multiRecorderConfig.RecorderItems[0].recorderType;
             
             // Create recorder settings (same as single timeline mode)
             switch (recorderType)
@@ -432,7 +440,7 @@ namespace BatchRenderingTool
             // Apply type-specific patches
             if (recorderType == RecorderSettingsType.FBX)
             {
-                ApplyFBXRecorderPatch(recorderAsset, recorderClip);
+                ApplyFBXRecorderPatch(recorderAsset, recorderClip, firstDirector.gameObject);
             }
             else if (recorderType == RecorderSettingsType.Alembic)
             {
@@ -456,9 +464,11 @@ namespace BatchRenderingTool
         {
             // Similar to CreateRecorderTrack but with multiple timeline support
             var firstDirector = directors[0];
+            // Get timeline-specific config (using first timeline)
+            var timelineConfig = GetTimelineRecorderConfig(0);
             var context = new WildcardContext(recorderItem.takeNumber,
-                multiRecorderConfig.useGlobalResolution ? multiRecorderConfig.globalWidth : recorderItem.width,
-                multiRecorderConfig.useGlobalResolution ? multiRecorderConfig.globalHeight : recorderItem.height);
+                timelineConfig.useGlobalResolution ? timelineConfig.globalWidth : recorderItem.width,
+                timelineConfig.useGlobalResolution ? timelineConfig.globalHeight : recorderItem.height);
             context.TimelineName = directors.Count > 1 ? $"MultiTimeline_{directors.Count}" : firstDirector.gameObject.name;
             context.RecorderName = recorderItem.recorderType.ToString();
             
@@ -477,7 +487,12 @@ namespace BatchRenderingTool
             }
             
             var processedFileName = WildcardProcessor.ProcessWildcards(recorderItem.fileName, context);
-            var processedFilePath = multiRecorderConfig.globalOutputPath;
+            
+            // Use OutputPathManager to resolve the path
+            string resolvedPath = OutputPathManager.ResolveRecorderPath(globalOutputPath, recorderItem.outputPath);
+            
+            // Process wildcards in the resolved path
+            string processedFilePath = WildcardProcessor.ProcessWildcards(resolvedPath, context);
             
             // Create recorder settings based on type
             RecorderSettings recorderSettings = null;
@@ -708,59 +723,44 @@ namespace BatchRenderingTool
                 controlAsset.searchHierarchy = false;
                 controlAsset.active = true;
                 
-                // FBXレコーダーの場合、postPlaybackをActiveに設定して
-                // Timeline終了時もGameObjectがアクティブなままにする
-                if (recorderType == RecorderSettingsType.FBX)
-                {
-                    controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Active;
-                    BatchRenderingToolLogger.Log("[SingleTimelineRenderer] FBX: Set ControlClip postPlayback to Active");
-                }
-                else
-                {
-                    controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
-                }
+                // Set postPlayback to Revert for all recorders (FBX handling is done per-recorder)
+                controlAsset.postPlayback = ActivationControlPlayable.PostPlaybackState.Revert;
                 
                 // Important: We'll set the bindings on the PlayableDirector after creating it
                 
-                // Multi-recorder mode or single recorder mode
-                if (useMultiRecorder)
+                // Always use multi-recorder mode
+                // Get the recorder config for this timeline
+                int timelineIndex = availableDirectors.IndexOf(originalDirector);
+                var timelineRecorderConfig = GetTimelineRecorderConfig(timelineIndex);
+                var enabledRecorders = timelineRecorderConfig.GetEnabledRecorders();
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Multi-Recorder Mode: Creating {enabledRecorders.Count} recorder tracks ===");
+                
+                if (enabledRecorders.Count == 0)
                 {
-                    // Create multiple recorder tracks
-                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Multi-Recorder Mode: Creating {multiRecorderConfig.GetEnabledRecorders().Count} recorder tracks ===");
-                    
-                    var enabledRecorders = multiRecorderConfig.GetEnabledRecorders();
-                    if (enabledRecorders.Count == 0)
-                    {
-                        BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No enabled recorders in multi-recorder config");
-                        return null;
-                    }
-                    
-                    foreach (var recorderItem in enabledRecorders)
-                    {
-                        CreateRecorderTrack(timeline, recorderItem, originalDirector, originalTimeline, preRollTime, oneFrameDuration);
-                    }
-                    
-                    // Save asset after all tracks are created
-                    EditorUtility.SetDirty(timeline);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                    
-                    // Store last generated asset path for debugging
-                    if (debugMode)
-                    {
-                        lastGeneratedAssetPath = tempAssetPath;
-                    }
-                    
-                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Multi-Recorder Timeline created successfully at: {tempAssetPath} ===");
-                    
-                    return timeline;
+                    BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No enabled recorders in timeline config");
+                    return null;
                 }
-                else
+                
+                foreach (var recorderItem in enabledRecorders)
                 {
-                    // Single recorder mode - continue with rest of method
-                    // This part will be in the next section due to length
-                    return CreateRenderTimelineSingleRecorder(timeline, originalDirector, originalTimeline, preRollTime, oneFrameDuration);
+                    CreateRecorderTrack(timeline, recorderItem, originalDirector, originalTimeline, preRollTime, oneFrameDuration, timelineIndex);
                 }
+                
+                // Save asset after all tracks are created
+                EditorUtility.SetDirty(timeline);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                
+                // Store last generated asset path for debugging
+                if (debugMode)
+                {
+                    lastGeneratedAssetPath = tempAssetPath;
+                }
+                
+                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Multi-Recorder Timeline created successfully at: {tempAssetPath} ===");
+                
+                return timeline;
             }
             catch (System.Exception e)
             {
@@ -770,162 +770,16 @@ namespace BatchRenderingTool
             }
         }
         
-        private TimelineAsset CreateRenderTimelineSingleRecorder(TimelineAsset timeline, PlayableDirector originalDirector, TimelineAsset originalTimeline, float preRollTime, float oneFrameDuration)
-        {
-            // Single recorder mode - existing code
-            var context = new WildcardContext(takeNumber, width, height);
-            context.TimelineName = originalDirector.gameObject.name;
-            
-            // Set GameObject name for Alembic export
-            if (recorderType == RecorderSettingsType.Alembic && alembicExportScope == AlembicExportScope.TargetGameObject && alembicTargetGameObject != null)
-            {
-                context.GameObjectName = alembicTargetGameObject.name;
-                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Setting GameObject wildcard to: {alembicTargetGameObject.name} ===");
-            }
-            
-            var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
-            var processedFilePath = filePath; // Path doesn't need wildcard processing
-            List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
-            
-            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Creating recorder settings for type: {recorderType}");
-            switch (recorderType)
-            {
-                case RecorderSettingsType.Image:
-                    BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating ImageRecorderSettings...");
-                    var imageSettings = CreateImageRecorderSettings(processedFilePath, processedFileName);
-                    if (imageSettings != null)
-                    {
-                        recorderSettingsList.Add(imageSettings);
-                        BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] ImageRecorderSettings created: {imageSettings.GetType().Name}");
-                    }
-                    else
-                    {
-                        BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] CreateImageRecorderSettings returned null");
-                    }
-                    break;
-                    
-                case RecorderSettingsType.Movie:
-                    var movieSettings = CreateMovieRecorderSettings(processedFilePath, processedFileName);
-                    if (movieSettings != null) recorderSettingsList.Add(movieSettings);
-                    break;
-                    
-                case RecorderSettingsType.AOV:
-                    var aovSettingsList = CreateAOVRecorderSettings(processedFilePath, processedFileName);
-                    if (aovSettingsList != null) recorderSettingsList.AddRange(aovSettingsList);
-                    break;
-                    
-                case RecorderSettingsType.Alembic:
-                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Creating Alembic settings with file: {processedFileName} ===");
-                    var alembicSettings = CreateAlembicRecorderSettings(processedFilePath, processedFileName);
-                    if (alembicSettings != null) recorderSettingsList.Add(alembicSettings);
-                    break;
-                    
-                case RecorderSettingsType.Animation:
-                    var animationSettings = CreateAnimationRecorderSettings(processedFilePath, processedFileName);
-                    if (animationSettings != null) recorderSettingsList.Add(animationSettings);
-                    break;
-                    
-                case RecorderSettingsType.FBX:
-                    BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Creating FBX settings with file: {processedFileName} ===");
-                    var fbxSettings = CreateFBXRecorderSettings(processedFilePath, processedFileName);
-                    if (fbxSettings != null) recorderSettingsList.Add(fbxSettings);
-                    break;
-                    
-                default:
-                    BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Unsupported recorder type: {recorderType}");
-                    return null;
-            }
-            
-            if (recorderSettingsList.Count == 0)
-            {
-                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create recorder settings for type: {recorderType}");
-                return null;
-            }
-            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Created {recorderSettingsList.Count} recorder settings");
-            
-            // For AOV, we might have multiple settings, but for now use the first one for the main recorder track
-            RecorderSettings recorderSettings = recorderSettingsList[0];
-            
-            // Save all recorder settings as sub-assets
-            foreach (var settings in recorderSettingsList)
-            {
-                AssetDatabase.AddObjectToAsset(settings, timeline);
-            }
-            
-            // Create recorder track and clip
-            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Creating RecorderTrack... ===");
-            var recorderTrack = timeline.CreateTrack<UnityEditor.Recorder.Timeline.RecorderTrack>(null, "Recorder Track");
-            if (recorderTrack == null)
-            {
-                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create RecorderTrack");
-                return null;
-            }
-            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === RecorderTrack created successfully ===");
-            var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
-            if (recorderClip == null)
-            {
-                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to create RecorderClip");
-                return null;
-            }
-            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === RecorderClip created successfully ===");
-            
-            recorderClip.displayName = $"Record {originalDirector.gameObject.name}";
-            
-            // すべてのレコーダーで同じタイミングを使用（TODO-101: FBX Recorder ClipがTimelineの尺と違う問題の修正）
-            recorderClip.start = preRollTime;
-            // Add one frame to ensure the last frame is included
-            recorderClip.duration = originalTimeline.duration + oneFrameDuration;
-            
-            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] RecorderClip timing: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s (includes +1 frame = {oneFrameDuration:F3}s)");
-            
-            var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
-            if (recorderAsset == null)
-            {
-                BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] Failed to get RecorderClip asset");
-                return null;
-            }
-            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] RecorderClip asset type: {recorderAsset.GetType().FullName}");
-            
-            recorderAsset.settings = recorderSettings;
-            BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Assigned RecorderSettings of type: {recorderSettings.GetType().FullName}");
-            
-            // Apply FBX patch if needed
-            if (recorderType == RecorderSettingsType.FBX)
-            {
-                ApplyFBXRecorderPatch(recorderAsset, recorderClip);
-            }
-            
-            // For Alembic Recorder, ensure the UI reflects the correct settings
-            if (recorderType == RecorderSettingsType.Alembic)
-            {
-                ApplyAlembicSettingsToRecorderClip(recorderAsset, recorderSettings);
-            }
-            
-            // Use RecorderClipUtility to ensure proper initialization
-            RecorderClipUtility.EnsureRecorderTypeIsSet(recorderAsset, recorderSettings);
-            
-            // Save asset
-            EditorUtility.SetDirty(timeline);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            
-            // Store last generated asset path for debugging
-            if (debugMode)
-            {
-                lastGeneratedAssetPath = tempAssetPath;
-            }
-            
-            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Timeline created successfully at: {tempAssetPath} ===");
-            
-            return timeline;
-        }
+        // Removed CreateRenderTimelineSingleRecorder - always use multi-recorder mode
         
         private void CreateRecorderTrack(TimelineAsset timeline, MultiRecorderConfig.RecorderConfigItem recorderItem, 
-            PlayableDirector originalDirector, TimelineAsset originalTimeline, float preRollTime, float oneFrameDuration)
+            PlayableDirector originalDirector, TimelineAsset originalTimeline, float preRollTime, float oneFrameDuration, int timelineIndex)
         {
+            // Get timeline-specific config (using first timeline)
+            var timelineConfig = GetTimelineRecorderConfig(0);
             var context = new WildcardContext(recorderItem.takeNumber, 
-                multiRecorderConfig.useGlobalResolution ? multiRecorderConfig.globalWidth : recorderItem.width,
-                multiRecorderConfig.useGlobalResolution ? multiRecorderConfig.globalHeight : recorderItem.height);
+                timelineConfig.useGlobalResolution ? timelineConfig.globalWidth : recorderItem.width,
+                timelineConfig.useGlobalResolution ? timelineConfig.globalHeight : recorderItem.height);
             context.TimelineName = originalDirector.gameObject.name;
             context.RecorderName = recorderItem.recorderType.ToString();
             
@@ -945,7 +799,12 @@ namespace BatchRenderingTool
             
             // Use each recorder's individual file name
             var processedFileName = WildcardProcessor.ProcessWildcards(recorderItem.fileName, context);
-            var processedFilePath = multiRecorderConfig.globalOutputPath;
+            
+            // Use OutputPathManager to resolve the path
+            string resolvedPath = OutputPathManager.ResolveRecorderPath(globalOutputPath, recorderItem.outputPath);
+            
+            // Process wildcards in the resolved path
+            string processedFilePath = WildcardProcessor.ProcessWildcards(resolvedPath, context);
             
             // Create recorder settings based on type
             RecorderSettings recorderSettings = null;
@@ -1049,12 +908,12 @@ namespace BatchRenderingTool
             BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Created {recorderItem.recorderType} recorder track successfully");
         }
         
-        private void ApplyFBXRecorderPatch(RecorderClip recorderAsset, TimelineClip recorderClip)
+        private void ApplyFBXRecorderPatch(RecorderClip recorderAsset, TimelineClip recorderClip, GameObject targetGameObject)
         {
             BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === Applying FBX recorder special configuration ===");
             
             // FBX configuration
-            recorderClip.displayName = $"Record FBX {fbxTargetGameObject?.name ?? "Unknown"}";
+            recorderClip.displayName = $"Record FBX {targetGameObject?.name ?? "Unknown"}";
             
             // RecorderAssetの設定を再確認
             if (recorderAsset.settings != null)
@@ -1080,24 +939,22 @@ namespace BatchRenderingTool
                             var targetGO = gameObjectProp.GetValue(animInput) as GameObject;
                             BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] FBX Target GameObject: {(targetGO != null ? targetGO.name : "NULL")}");
                             
-                            if (targetGO == null && fbxTargetGameObject != null)
+                            if (targetGO == null && targetGameObject != null)
                             {
                                 // ターゲットが設定されていない場合は再設定
-                                gameObjectProp.SetValue(animInput, fbxTargetGameObject);
-                                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Set FBX Target GameObject to: {fbxTargetGameObject.name}");
+                                gameObjectProp.SetValue(animInput, targetGameObject);
+                                BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Set FBX Target GameObject to: {targetGameObject.name}");
                                 
                                 // Also add component to record
                                 var addComponentMethod = animType.GetMethod("AddComponentToRecord");
                                 if (addComponentMethod != null)
                                 {
                                     Type componentType = typeof(Transform);
-                                    if (fbxRecordedComponent == FBXRecordedComponent.Camera)
+                                    // Always record Transform for multi-recorder mode
+                                    var camera = targetGameObject.GetComponent<Camera>();
+                                    if (camera != null)
                                     {
-                                        var camera = fbxTargetGameObject.GetComponent<Camera>();
-                                        if (camera != null)
-                                        {
-                                            componentType = typeof(Camera);
-                                        }
+                                        componentType = typeof(Camera);
                                     }
                                     
                                     try
@@ -1177,6 +1034,76 @@ namespace BatchRenderingTool
                     BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Force set m_Settings field on RecorderClip");
                 }
             }
+        }
+        
+        /// <summary>
+        /// Generates a unique key for a recorder track based on its configuration
+        /// </summary>
+        private string GenerateRecorderTrackKey(MultiRecorderConfig.RecorderConfigItem recorderItem)
+        {
+            string key = recorderItem.recorderType.ToString();
+            
+            // Add additional identifiers for recorder types that may have multiple instances
+            switch (recorderItem.recorderType)
+            {
+                case RecorderSettingsType.FBX:
+                    if (recorderItem.fbxConfig?.targetGameObject != null)
+                    {
+                        key += $"_{recorderItem.fbxConfig.targetGameObject.name}";
+                    }
+                    break;
+                    
+                case RecorderSettingsType.Alembic:
+                    if (recorderItem.alembicConfig?.targetGameObject != null)
+                    {
+                        key += $"_{recorderItem.alembicConfig.targetGameObject.name}";
+                    }
+                    break;
+                    
+                case RecorderSettingsType.Animation:
+                    if (recorderItem.animationConfig?.targetGameObject != null)
+                    {
+                        key += $"_{recorderItem.animationConfig.targetGameObject.name}";
+                    }
+                    break;
+            }
+            
+            return key;
+        }
+        
+        /// <summary>
+        /// Generates a descriptive name for a recorder track
+        /// </summary>
+        private string GenerateRecorderTrackName(MultiRecorderConfig.RecorderConfigItem recorderItem)
+        {
+            string name = $"{recorderItem.recorderType} Recorder";
+            
+            // Add specific object names for targeted recorders
+            switch (recorderItem.recorderType)
+            {
+                case RecorderSettingsType.FBX:
+                    if (recorderItem.fbxConfig?.targetGameObject != null)
+                    {
+                        name = $"FBX Recorder - {recorderItem.fbxConfig.targetGameObject.name}";
+                    }
+                    break;
+                    
+                case RecorderSettingsType.Alembic:
+                    if (recorderItem.alembicConfig?.targetGameObject != null)
+                    {
+                        name = $"Alembic Recorder - {recorderItem.alembicConfig.targetGameObject.name}";
+                    }
+                    break;
+                    
+                case RecorderSettingsType.Animation:
+                    if (recorderItem.animationConfig?.targetGameObject != null)
+                    {
+                        name = $"Animation Recorder - {recorderItem.animationConfig.targetGameObject.name}";
+                    }
+                    break;
+            }
+            
+            return name + " Track";
         }
     }
 }

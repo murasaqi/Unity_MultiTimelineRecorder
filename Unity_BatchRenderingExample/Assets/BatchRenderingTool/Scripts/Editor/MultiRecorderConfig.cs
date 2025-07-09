@@ -26,6 +26,9 @@ namespace BatchRenderingTool
             public string fileName = "Recording_<Take>";
             public int takeNumber = 1;
             
+            // Output path settings
+            public OutputPathSettings outputPath = new OutputPathSettings() { pathMode = RecorderPathMode.UseGlobal };
+            
             // Image Recorder
             public ImageRecorderSettings.ImageRecorderOutputFormat imageFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
             public int imageQuality = 75;
@@ -75,6 +78,7 @@ namespace BatchRenderingTool
                 };
                 
                 // 各設定のクローン
+                clone.outputPath = this.outputPath?.Clone();
                 clone.movieConfig = this.movieConfig?.Clone();
                 clone.aovConfig = this.aovConfig?.Clone();
                 clone.alembicConfig = this.alembicConfig?.Clone();
@@ -220,40 +224,40 @@ namespace BatchRenderingTool
             {
                 case RecorderSettingsType.Image:
                     item.name = "Image Sequence";
-                    item.fileName = "Recordings/<Scene>_<Take>/image_<Frame>";
+                    item.fileName = "<Scene>_<Take>_image_<Frame>";
                     break;
                     
                 case RecorderSettingsType.Movie:
                     item.name = "Movie";
-                    item.fileName = "Recordings/<Scene>_<Take>";
+                    item.fileName = "<Scene>_<Take>";
                     // Movie configを初期化
                     item.movieConfig = new MovieRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.Animation:
                     item.name = "Animation";
-                    item.fileName = "Assets/Animations/<Scene>_<Take>";
+                    item.fileName = "<Scene>_<Take>_animation";
                     // Animation configを初期化
                     item.animationConfig = new AnimationRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.Alembic:
                     item.name = "Alembic";
-                    item.fileName = "Recordings/<Scene>_<Take>/<Scene>";
+                    item.fileName = "<Scene>_<Take>_alembic";
                     // Alembic configを初期化
                     item.alembicConfig = new AlembicRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.AOV:
                     item.name = "AOV";
-                    item.fileName = "Recordings/<Scene>_<Take>/AOV/<AOVType>_<Frame>";
+                    item.fileName = "<Scene>_<Take>_<AOVType>_<Frame>";
                     // AOV configを初期化
                     item.aovConfig = new AOVRecorderSettingsConfig();
                     break;
                     
                 case RecorderSettingsType.FBX:
                     item.name = "FBX Animation";
-                    item.fileName = "Assets/FBX/<Scene>_<Take>";
+                    item.fileName = "<Scene>_<Take>_fbx";
                     // FBX configを初期化して、GameObject参照が保持されるようにする
                     item.fbxConfig = new FBXRecorderSettingsConfig();
                     break;
@@ -422,7 +426,7 @@ namespace BatchRenderingTool
                 var beautyItem = CreateDefaultRecorder(RecorderSettingsType.Image);
                 beautyItem.name = "Beauty Pass";
                 beautyItem.imageFormat = ImageRecorderSettings.ImageRecorderOutputFormat.EXR;
-                beautyItem.fileName = "Recordings/<Scene>_<Take>/Beauty/beauty_<Frame>";
+                beautyItem.fileName = "<Scene>_<Take>_beauty_<Frame>";
                 config.AddRecorder(beautyItem);
                 
                 // AOV Passes

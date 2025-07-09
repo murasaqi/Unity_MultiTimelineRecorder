@@ -3,18 +3,26 @@
     "allow": [
       "Bash(find:*)",
       "Bash(ls:*)",
-      "mcp__linear__list_issues",
-      "mcp__linear__list_projects",
       "mcp__unity-natural-mcp__refresh_assets",
       "mcp__unity-natural-mcp__get_compile_logs",
-      "mcp__linear__list_my_issues",
       "mcp__unity-natural-mcp__get_current_console_logs",
       "Bash(grep:*)",
-      "mcp__unity-natural-mcp__clear_console_logs"
+      "mcp__unity-natural-mcp__clear_console_logs",
+      "mcp__unity-natural-mcp__run_edit_mode_tests",
+      "mcp__unity-natural-mcp__run_play_mode_tests",
+      "mcp__snap-happy__TakeScreenshot",
+      "WebFetch(domain:linear.app)",
+      "mcp__linear__list_teams",
+      "mcp__linear__list_projects",
+      "mcp__linear__list_my_issues",
+      "Bash(claude settings mcp add:*)",
+      "Bash(claude)",
+      "mcp__linear__search_documentation"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "unity-natural-mcp"
+    "unity-natural-mcp",
+    "linear"
   ]
 }

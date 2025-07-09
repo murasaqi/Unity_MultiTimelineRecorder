@@ -60,6 +60,12 @@ namespace BatchRenderingTool
                 }
             }
             
+            // Log warning if multiple AOV types are selected
+            if (result.Count > 1)
+            {
+                UnityEngine.Debug.LogWarning($"[AOVRecorderSettingsConfig] Multiple AOV types selected ({result.Count}). Note: Multi-timeline batch rendering currently supports only one AOV type at a time.");
+            }
+            
             return result;
         }
         

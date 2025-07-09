@@ -22,7 +22,7 @@ namespace BatchRenderingTool
         public int frameRate = 24;
         public int width = 1920;
         public int height = 1080;
-        public string fileName = "<Scene>_<Recorder>_<Take>_<Frame>";
+        public string fileName = "<Scene>_<Recorder>_<Take>";
         public string filePath = "Recordings";
         public int takeNumber = 1;
         public string cameraTag = "MainCamera";

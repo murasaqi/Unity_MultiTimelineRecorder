@@ -14,13 +14,65 @@ namespace BatchRenderingTool.RecorderEditors
         protected bool outputFormatFoldout = true;
         protected bool outputFileFoldout = true;
         
+        // セクション見出しのスタイル
+        private static class SectionStyles
+        {
+            public static readonly Color HeaderBackgroundColor = EditorGUIUtility.isProSkin
+                ? new Color(0.18f, 0.18f, 0.18f, 1f)  // Pro Skin: 暗い背景
+                : new Color(0.8f, 0.8f, 0.8f, 1f);     // Light Skin: 明るいグレー
+                
+            public static readonly Color LineColor = EditorGUIUtility.isProSkin
+                ? new Color(0.3f, 0.3f, 0.3f, 1f)      // Pro Skin: 暗いライン
+                : new Color(0.6f, 0.6f, 0.6f, 1f);     // Light Skin: 明るいライン
+                
+            public static GUIStyle HeaderLabel => new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 11,
+                normal = { textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black }
+            };
+        }
+        
+        /// <summary>
+        /// Draws a section header with background and optional foldout
+        /// </summary>
+        protected bool DrawSectionHeader(string title, bool foldout = true, bool isFoldable = true)
+        {
+            EditorGUILayout.Space(2);
+            
+            // セクションヘッダーの背景を描画
+            Rect headerRect = EditorGUILayout.GetControlRect(false, 20);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // 背景を描画
+                EditorGUI.DrawRect(headerRect, SectionStyles.HeaderBackgroundColor);
+                
+                // 下線を描画
+                Rect lineRect = new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1);
+                EditorGUI.DrawRect(lineRect, SectionStyles.LineColor);
+            }
+            
+            // インデントを調整してヘッダーを描画
+            headerRect.x += 4;
+            headerRect.width -= 8;
+            
+            if (isFoldable)
+            {
+                return EditorGUI.Foldout(headerRect, foldout, title, true, SectionStyles.HeaderLabel);
+            }
+            else
+            {
+                GUI.Label(headerRect, title, SectionStyles.HeaderLabel);
+                return true;
+            }
+        }
+        
         /// <summary>
         /// Draws the complete recorder settings UI
         /// </summary>
         public virtual void DrawRecorderSettings()
         {
             // Input section
-            inputFoldout = EditorGUILayout.Foldout(inputFoldout, "Input");
+            inputFoldout = DrawSectionHeader("Input", inputFoldout);
             if (inputFoldout)
             {
                 EditorGUI.indentLevel++;
@@ -28,10 +80,10 @@ namespace BatchRenderingTool.RecorderEditors
                 EditorGUI.indentLevel--;
             }
             
-            GUILayout.Space(10);
+            EditorGUILayout.Space(5);
             
             // Output Format section
-            outputFormatFoldout = EditorGUILayout.Foldout(outputFormatFoldout, "Output Format");
+            outputFormatFoldout = DrawSectionHeader("Output Format", outputFormatFoldout);
             if (outputFormatFoldout)
             {
                 EditorGUI.indentLevel++;
@@ -39,16 +91,39 @@ namespace BatchRenderingTool.RecorderEditors
                 EditorGUI.indentLevel--;
             }
             
-            GUILayout.Space(10);
+            EditorGUILayout.Space(5);
             
             // Output File section
-            outputFileFoldout = EditorGUILayout.Foldout(outputFileFoldout, "Output File");
+            outputFileFoldout = DrawSectionHeader("Output File", outputFileFoldout);
             if (outputFileFoldout)
             {
                 EditorGUI.indentLevel++;
                 DrawOutputFileSettings();
                 EditorGUI.indentLevel--;
             }
+        }
+        
+        /// <summary>
+        /// Draws a simple separator line
+        /// </summary>
+        protected void DrawSeparator()
+        {
+            EditorGUILayout.Space(3);
+            Rect rect = EditorGUILayout.GetControlRect(false, 1);
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, SectionStyles.LineColor);
+            }
+            EditorGUILayout.Space(3);
+        }
+        
+        /// <summary>
+        /// Draws a subsection header without background
+        /// </summary>
+        protected void DrawSubsectionHeader(string title)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField(title, EditorStyles.miniBoldLabel);
         }
         
         /// <summary>
@@ -99,59 +174,12 @@ namespace BatchRenderingTool.RecorderEditors
             
             EditorGUILayout.EndHorizontal();
             
-            // Show example output
-            EditorGUILayout.LabelField("Example: Scene1_Image_001.png", EditorStyles.miniLabel);
+            // Show example output with processed filename
+            string exampleFileName = GetFullOutputPath();
+            EditorGUILayout.LabelField($"Example: {exampleFileName}", EditorStyles.miniLabel);
             
-            // Path field with browse button
-            EditorGUILayout.BeginHorizontal();
-            
-            // Path dropdown
-            string[] pathOptions = { "Project", "Absolute" };
-            int currentPathIndex = System.IO.Path.IsPathRooted(host.filePath) ? 1 : 0;
-            int newPathIndex = EditorGUILayout.Popup("Path", currentPathIndex, pathOptions, GUILayout.MaxWidth(EditorGUIUtility.labelWidth + 100));
-            
-            // Convert path if dropdown selection changed
-            if (newPathIndex != currentPathIndex)
-            {
-                if (newPathIndex == 0) // Convert to project relative
-                {
-                    host.filePath = PathUtility.GetProjectRelativePath(host.filePath);
-                }
-                else // Convert to absolute
-                {
-                    host.filePath = PathUtility.GetAbsolutePath(host.filePath);
-                }
-            }
-            
-            // Path text field
-            host.filePath = EditorGUILayout.TextField(host.filePath);
-            
-            // Browse button
-            if (GUILayout.Button("...", GUILayout.Width(30)))
-            {
-                string currentAbsolutePath = PathUtility.GetAbsolutePath(host.filePath);
-                string selectedPath = EditorUtility.SaveFolderPanel("Select Output Folder", currentAbsolutePath, "");
-                if (!string.IsNullOrEmpty(selectedPath))
-                {
-                    if (newPathIndex == 0) // Project relative mode
-                    {
-                        // Convert to project relative path
-                        host.filePath = PathUtility.GetProjectRelativePath(selectedPath);
-                    }
-                    else // Absolute mode
-                    {
-                        host.filePath = selectedPath;
-                    }
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-            
-            // Full path preview (read-only)
-            using (new EditorGUI.DisabledScope(true))
-            {
-                string fullPath = GetFullOutputPath();
-                EditorGUILayout.TextField(" ", fullPath);
-            }
+            // Path settings are now handled by OutputPathSettingsUI in SingleTimelineRenderer
+            // This prevents duplicate path UI elements
             
             // Take number
             host.takeNumber = EditorGUILayout.IntField("Take Number", host.takeNumber);
@@ -224,9 +252,6 @@ namespace BatchRenderingTool.RecorderEditors
         /// </summary>
         protected virtual string GetFullOutputPath()
         {
-            // Get absolute path using PathUtility
-            string absolutePath = PathUtility.GetAbsolutePath(host.filePath);
-            
             // Process wildcards for preview
             var context = new WildcardContext(host.takeNumber, host.width, host.height)
             {
@@ -243,8 +268,8 @@ namespace BatchRenderingTool.RecorderEditors
                 processedFileName += "." + extension;
             }
             
-            // Combine and normalize the full path
-            return PathUtility.CombineAndNormalize(absolutePath, processedFileName);
+            // Return just the processed filename for preview
+            return processedFileName;
         }
         
         /// <summary>

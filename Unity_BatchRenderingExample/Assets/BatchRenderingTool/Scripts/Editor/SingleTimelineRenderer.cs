@@ -18,14 +18,129 @@ using BatchRenderingTool.RecorderEditors;
 namespace BatchRenderingTool
 {
     /// <summary>
-    /// Single Timeline Renderer - Renders one timeline at a time with a simple UI
+    /// Single Timeline Recorder - Records one timeline at a time with a simple UI
     /// </summary>
-    public partial class SingleTimelineRenderer : EditorWindow, IRecorderSettingsHost
+    public partial class SingleTimelineRenderer : EditorWindow
     {
         // Static instance tracking
         private static SingleTimelineRenderer instance;
         
-        public enum RenderState
+        // UI Styles - Unity標準のエディタスタイルに準拠
+        private static class Styles
+        {
+            // Colors
+            public static readonly Color SelectionColor = EditorGUIUtility.isProSkin 
+                ? new Color(0.22f, 0.44f, 0.69f, 0.5f)  // Pro Skin: 青色
+                : new Color(0.31f, 0.57f, 0.87f, 0.5f); // Light Skin: 明るい青
+                
+            public static readonly Color ActiveSelectionColor = EditorGUIUtility.isProSkin
+                ? new Color(0.28f, 0.55f, 0.87f, 0.6f)  // Pro Skin: 強調青
+                : new Color(0.38f, 0.64f, 0.94f, 0.6f); // Light Skin: 強調青
+                
+            public static readonly Color HoverColor = EditorGUIUtility.isProSkin
+                ? new Color(1f, 1f, 1f, 0.05f)  // Pro Skin: 微かな白
+                : new Color(0f, 0f, 0f, 0.05f); // Light Skin: 微かな黒
+            
+            // Consistent dimensions
+            public const float CheckboxWidth = 20f;
+            public const float IconWidth = 25f;
+            public const float DeleteButtonWidth = 20f;
+            public const float MinButtonWidth = 200f;
+            public const float MinListItemWidth = 200f;
+            public const float StandardSpacing = 5f;
+            public const float SectionSpacing = 10f;
+            public const int HeaderFontSize = 14;
+            
+            // Background colors for visual hierarchy
+            public static readonly Color ColumnBackgroundColor = EditorGUIUtility.isProSkin 
+                ? new Color(0.22f, 0.22f, 0.22f, 0.3f)  // Pro Skin: 薄い暗色
+                : new Color(0.9f, 0.9f, 0.9f, 0.3f);     // Light Skin: 薄い明色
+                
+            public static readonly Color ListBackgroundColor = EditorGUIUtility.isProSkin
+                ? new Color(0.25f, 0.25f, 0.25f, 0.5f)  // Pro Skin: やや暗い
+                : new Color(0.95f, 0.95f, 0.95f, 0.5f); // Light Skin: やや明るい
+                
+            public static readonly Color AlternateRowColor = EditorGUIUtility.isProSkin
+                ? new Color(1f, 1f, 1f, 0.02f)          // Pro Skin: 微かに明るい
+                : new Color(0f, 0f, 0f, 0.02f);         // Light Skin: 微かに暗い
+            
+            // Styles
+            public static GUIStyle HeaderLabel => new GUIStyle(EditorStyles.boldLabel) 
+            { 
+                fontSize = HeaderFontSize,
+                alignment = TextAnchor.MiddleLeft
+            };
+            
+            public static GUIStyle SelectableLabel => new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(4, 4, 2, 2)
+            };
+            
+            public static GUIStyle SelectedLabel => new GUIStyle(SelectableLabel)
+            {
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black }
+            };
+            
+            public static GUIStyle ListItemBackground => new GUIStyle("CN Box")
+            {
+                padding = new RectOffset(4, 4, 4, 4),
+                margin = new RectOffset(0, 0, 2, 2)
+            };
+            
+            // Unity標準のリストアイテムスタイル
+            public static GUIStyle StandardListItem => new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(2, 2, 2, 2),
+                margin = new RectOffset(0, 0, 0, 0)
+            };
+            
+            public static GUIStyle ListBackground => new GUIStyle("RL Background")
+            {
+                padding = new RectOffset(1, 1, 3, 3)
+            };
+            
+            public static GUIStyle ListElementBackground => new GUIStyle("RL Element")
+            {
+                padding = new RectOffset(2, 2, 0, 0),
+                margin = new RectOffset(0, 0, 0, 0)
+            };
+            
+            // ヘッダースタイル
+            public static GUIStyle ColumnHeader
+            {
+                get
+                {
+                    var style = new GUIStyle()
+                    {
+                        fontSize = 13,
+                        fontStyle = FontStyle.Bold,
+                        alignment = TextAnchor.MiddleCenter,
+                        padding = new RectOffset(10, 10, 0, 0),
+                        fixedHeight = 26
+                    };
+                    // Pro/Light Skinに応じた調整
+                    if (EditorGUIUtility.isProSkin)
+                    {
+                        style.normal.textColor = new Color(0.95f, 0.95f, 0.95f);
+                    }
+                    else
+                    {
+                        style.normal.textColor = new Color(0.05f, 0.05f, 0.05f);
+                    }
+                    return style;
+                }
+            }
+            
+            // カラムヘッダーの背景色
+            public static readonly Color ColumnHeaderBackgroundColor = EditorGUIUtility.isProSkin
+                ? new Color(0.15f, 0.15f, 0.15f, 1f)  // Pro Skin: 濃い暗色
+                : new Color(0.7f, 0.7f, 0.7f, 1f);     // Light Skin: 濃いグレー
+        }
+        
+        public enum RecordState
         {
             Idle,
             Preparing,
@@ -33,14 +148,14 @@ namespace BatchRenderingTool
             SavingAssets,         // アセット保存中  
             WaitingForPlayMode,
             InitializingInPlayMode, // Play Mode内での初期化中
-            Rendering,
+            Recording,
             Complete,
             Error
         }
         
         // UI State
-        private RenderState currentState = RenderState.Idle;
-        private string statusMessage = "Ready to render";
+        private RecordState currentState = RecordState.Idle;
+        private string statusMessage = "Ready to record";
         private float renderProgress = 0f;
         
         // Timeline selection
@@ -48,17 +163,11 @@ namespace BatchRenderingTool
         private int selectedDirectorIndex = 0;
         
         // Multiple timeline selection support
-        private bool isMultiTimelineMode = false;
         private List<int> selectedDirectorIndices = new List<int>();
         private int timelineMarginFrames = 30; // Margin frames between timelines for safety
         
-        // Common render settings
-        private RecorderSettingsType recorderType = RecorderSettingsType.Image;
-        private RecorderSettingsType previousRecorderType = RecorderSettingsType.Image;
-        
         // Multi-recorder configuration
         private MultiRecorderConfig multiRecorderConfig = new MultiRecorderConfig();
-        private bool useMultiRecorder = false;
         private Vector2 multiRecorderScrollPos;
         private int selectedRecorderIndex = -1; // Currently selected recorder for detail editing
         private Vector2 detailPanelScrollPos;
@@ -66,6 +175,10 @@ namespace BatchRenderingTool
         // Timeline-specific recorder configurations
         private Dictionary<int, MultiRecorderConfig> timelineRecorderConfigs = new Dictionary<int, MultiRecorderConfig>();
         private int currentTimelineIndexForRecorder = -1; // Currently selected timeline for recorder configuration
+        
+        // Recording progress tracking
+        private int currentRecordingTimelineIndex = 0;
+        private int totalTimelinesToRecord = 0;
         
         // Column width settings for multi-recorder mode
         private float leftColumnWidth = 250f;
@@ -83,7 +196,7 @@ namespace BatchRenderingTool
         public int width = 1920;
         public int height = 1080;
         public string fileName = "<Scene>_<Recorder>_<Take>"; // File name with wildcard support
-        public string filePath = "Recordings"; // Output path
+        public OutputPathSettings globalOutputPath = new OutputPathSettings(); // Global output path settings
         public int takeNumber = 1;
         public int preRollFrames = 0; // Pre-roll frames for simulation warm-up
         public string cameraTag = "MainCamera";
@@ -93,77 +206,11 @@ namespace BatchRenderingTool
         public bool debugMode = false; // Keep generated assets for debugging
         private string lastGeneratedAssetPath = null; // Track the last generated asset
         
-        // Image recorder settings
-        public ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
-        public bool imageCaptureAlpha = false;
-        public int jpegQuality = 75;
-        public CompressionUtility.EXRCompressionType exrCompression = CompressionUtility.EXRCompressionType.None;
         
-        // Movie recorder settings
-        public MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
-        public VideoBitrateMode movieQuality = VideoBitrateMode.High;
-        public bool movieCaptureAudio = false;
-        public bool movieCaptureAlpha = false;
-        public int movieBitrate = 15;
-        public AudioBitRateMode audioBitrate = AudioBitRateMode.High;
-        public MovieRecorderPreset moviePreset = MovieRecorderPreset.HighQuality1080p;
-        public bool useMoviePreset = false;
-        
-        // AOV recorder settings
-        public AOVType selectedAOVTypes = AOVType.Depth | AOVType.Normal | AOVType.Albedo;
-        public AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;
-        public AOVPreset aovPreset = AOVPreset.Compositing;
-        public bool useAOVPreset = false;
-        public bool useMultiPartEXR = true;
-        public AOVColorSpace aovColorSpace = AOVColorSpace.Linear;
-        public AOVCompression aovCompression = AOVCompression.Zip;
-        
-        // Alembic recorder settings
-        public AlembicExportTargets alembicExportTargets = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform;
-        public AlembicExportScope alembicExportScope = AlembicExportScope.EntireScene;
-        public GameObject alembicTargetGameObject = null;
-        public AlembicHandedness alembicHandedness = AlembicHandedness.Left;
-        public float alembicScaleFactor = 1f;
-        public float alembicWorldScale = 1f;
-        public float alembicFrameRate = 24f;
-        public AlembicTimeSamplingType alembicTimeSamplingType = AlembicTimeSamplingType.Uniform;
-        public bool alembicIncludeChildren = true;
-        public bool alembicFlattenHierarchy = false;
-        public AlembicExportPreset alembicPreset = AlembicExportPreset.AnimationExport;
-        public bool useAlembicPreset = false;
-        
-        // Animation recorder settings
-        public AnimationRecordingProperties animationRecordingProperties = AnimationRecordingProperties.TransformOnly;
-        public GameObject animationTargetGameObject = null;
-        public AnimationRecordingScope animationRecordingScope = AnimationRecordingScope.SingleGameObject;
-        public AnimationInterpolationMode animationInterpolationMode = AnimationInterpolationMode.Linear;
-        public AnimationCompressionLevel animationCompressionLevel = AnimationCompressionLevel.Medium;
-        public bool animationIncludeChildren = true;
-        public bool animationClampedTangents = true;
-        public bool animationRecordBlendShapes = false;
-        // AnimationCompression is handled by AnimationCompressionLevel
-        public float animationPositionError = 0.5f;
-        public float animationRotationError = 0.5f;
-        public float animationScaleError = 0.5f;
-        public AnimationExportPreset animationPreset = AnimationExportPreset.SimpleTransform;
-        public bool useAnimationPreset = false;
-        
-        // FBX recorder settings
-        public GameObject fbxTargetGameObject = null;
-        public FBXRecordedComponent fbxRecordedComponent = FBXRecordedComponent.Camera;
-        public bool fbxRecordHierarchy = true;
-        public bool fbxClampedTangents = true;
-        public FBXAnimationCompressionLevel fbxAnimationCompression = FBXAnimationCompressionLevel.Lossy;
-        public bool fbxExportGeometry = true;
-        public Transform fbxTransferAnimationSource = null;
-        public Transform fbxTransferAnimationDest = null;
-        public FBXExportPreset fbxPreset = FBXExportPreset.AnimationExport;
-        public bool useFBXPreset = false;
-        
-        // Rendering objects
+        // Recording objects
         private TimelineAsset renderTimeline;
-        private GameObject renderingGameObject;
-        private PlayableDirector renderingDirector;
+        private GameObject recordingGameObject;
+        private PlayableDirector recordingDirector;
         private EditorCoroutine renderCoroutine;
         private string tempAssetPath;
         
@@ -171,8 +218,6 @@ namespace BatchRenderingTool
         private float renderStartTime;
         private float lastReportedProgress = -1f;
         
-        // UI Editor instances
-        private RecorderSettingsEditorBase currentRecorderEditor;
         
         // Scroll position for the UI
         private Vector2 scrollPosition;
@@ -183,72 +228,12 @@ namespace BatchRenderingTool
             ? availableDirectors[selectedDirectorIndex] 
             : null;
         
-        // IRecorderSettingsHost interface implementation properties
-        int IRecorderSettingsHost.frameRate { get => frameRate; set => frameRate = value; }
-        int IRecorderSettingsHost.width { get => width; set => width = value; }
-        int IRecorderSettingsHost.height { get => height; set => height = value; }
-        string IRecorderSettingsHost.fileName { get => fileName; set => fileName = value; }
-        string IRecorderSettingsHost.filePath { get => filePath; set => filePath = value; }
-        int IRecorderSettingsHost.takeNumber { get => takeNumber; set => takeNumber = value; }
-        string IRecorderSettingsHost.cameraTag { get => cameraTag; set => cameraTag = value; }
-        OutputResolution IRecorderSettingsHost.outputResolution { get => outputResolution; set => outputResolution = value; }
-        ImageRecorderSettings.ImageRecorderOutputFormat IRecorderSettingsHost.imageOutputFormat { get => imageOutputFormat; set => imageOutputFormat = value; }
-        bool IRecorderSettingsHost.imageCaptureAlpha { get => imageCaptureAlpha; set => imageCaptureAlpha = value; }
-        int IRecorderSettingsHost.jpegQuality { get => jpegQuality; set => jpegQuality = value; }
-        CompressionUtility.EXRCompressionType IRecorderSettingsHost.exrCompression { get => exrCompression; set => exrCompression = value; }
-        MovieRecorderSettings.VideoRecorderOutputFormat IRecorderSettingsHost.movieOutputFormat { get => movieOutputFormat; set => movieOutputFormat = value; }
-        VideoBitrateMode IRecorderSettingsHost.movieQuality { get => movieQuality; set => movieQuality = value; }
-        bool IRecorderSettingsHost.movieCaptureAudio { get => movieCaptureAudio; set => movieCaptureAudio = value; }
-        bool IRecorderSettingsHost.movieCaptureAlpha { get => movieCaptureAlpha; set => movieCaptureAlpha = value; }
-        int IRecorderSettingsHost.movieBitrate { get => movieBitrate; set => movieBitrate = value; }
-        AudioBitRateMode IRecorderSettingsHost.audioBitrate { get => audioBitrate; set => audioBitrate = value; }
-        MovieRecorderPreset IRecorderSettingsHost.moviePreset { get => moviePreset; set => moviePreset = value; }
-        bool IRecorderSettingsHost.useMoviePreset { get => useMoviePreset; set => useMoviePreset = value; }
-        AOVType IRecorderSettingsHost.selectedAOVTypes { get => selectedAOVTypes; set => selectedAOVTypes = value; }
-        AOVOutputFormat IRecorderSettingsHost.aovOutputFormat { get => aovOutputFormat; set => aovOutputFormat = value; }
-        AOVPreset IRecorderSettingsHost.aovPreset { get => aovPreset; set => aovPreset = value; }
-        bool IRecorderSettingsHost.useAOVPreset { get => useAOVPreset; set => useAOVPreset = value; }
-        bool IRecorderSettingsHost.useMultiPartEXR { get => useMultiPartEXR; set => useMultiPartEXR = value; }
-        AOVColorSpace IRecorderSettingsHost.aovColorSpace { get => aovColorSpace; set => aovColorSpace = value; }
-        AOVCompression IRecorderSettingsHost.aovCompression { get => aovCompression; set => aovCompression = value; }
-        AlembicExportTargets IRecorderSettingsHost.alembicExportTargets { get => alembicExportTargets; set => alembicExportTargets = value; }
-        AlembicExportScope IRecorderSettingsHost.alembicExportScope { get => alembicExportScope; set => alembicExportScope = value; }
-        GameObject IRecorderSettingsHost.alembicTargetGameObject { get => alembicTargetGameObject; set => alembicTargetGameObject = value; }
-        AlembicHandedness IRecorderSettingsHost.alembicHandedness { get => alembicHandedness; set => alembicHandedness = value; }
-        float IRecorderSettingsHost.alembicWorldScale { get => alembicWorldScale; set => alembicWorldScale = value; }
-        float IRecorderSettingsHost.alembicFrameRate { get => alembicFrameRate; set => alembicFrameRate = value; }
-        AlembicTimeSamplingType IRecorderSettingsHost.alembicTimeSamplingType { get => alembicTimeSamplingType; set => alembicTimeSamplingType = value; }
-        bool IRecorderSettingsHost.alembicIncludeChildren { get => alembicIncludeChildren; set => alembicIncludeChildren = value; }
-        bool IRecorderSettingsHost.alembicFlattenHierarchy { get => alembicFlattenHierarchy; set => alembicFlattenHierarchy = value; }
-        AlembicExportPreset IRecorderSettingsHost.alembicPreset { get => alembicPreset; set => alembicPreset = value; }
-        bool IRecorderSettingsHost.useAlembicPreset { get => useAlembicPreset; set => useAlembicPreset = value; }
-        GameObject IRecorderSettingsHost.animationTargetGameObject { get => animationTargetGameObject; set => animationTargetGameObject = value; }
-        AnimationRecordingScope IRecorderSettingsHost.animationRecordingScope { get => animationRecordingScope; set => animationRecordingScope = value; }
-        bool IRecorderSettingsHost.animationIncludeChildren { get => animationIncludeChildren; set => animationIncludeChildren = value; }
-        bool IRecorderSettingsHost.animationClampedTangents { get => animationClampedTangents; set => animationClampedTangents = value; }
-        bool IRecorderSettingsHost.animationRecordBlendShapes { get => animationRecordBlendShapes; set => animationRecordBlendShapes = value; }
-        float IRecorderSettingsHost.animationPositionError { get => animationPositionError; set => animationPositionError = value; }
-        float IRecorderSettingsHost.animationRotationError { get => animationRotationError; set => animationRotationError = value; }
-        float IRecorderSettingsHost.animationScaleError { get => animationScaleError; set => animationScaleError = value; }
-        AnimationExportPreset IRecorderSettingsHost.animationPreset { get => animationPreset; set => animationPreset = value; }
-        bool IRecorderSettingsHost.useAnimationPreset { get => useAnimationPreset; set => useAnimationPreset = value; }
-        GameObject IRecorderSettingsHost.fbxTargetGameObject { get => fbxTargetGameObject; set => fbxTargetGameObject = value; }
-        FBXRecordedComponent IRecorderSettingsHost.fbxRecordedComponent { get => fbxRecordedComponent; set => fbxRecordedComponent = value; }
-        bool IRecorderSettingsHost.fbxRecordHierarchy { get => fbxRecordHierarchy; set => fbxRecordHierarchy = value; }
-        bool IRecorderSettingsHost.fbxClampedTangents { get => fbxClampedTangents; set => fbxClampedTangents = value; }
-        FBXAnimationCompressionLevel IRecorderSettingsHost.fbxAnimationCompression { get => fbxAnimationCompression; set => fbxAnimationCompression = value; }
-        bool IRecorderSettingsHost.fbxExportGeometry { get => fbxExportGeometry; set => fbxExportGeometry = value; }
-        Transform IRecorderSettingsHost.fbxTransferAnimationSource { get => fbxTransferAnimationSource; set => fbxTransferAnimationSource = value; }
-        Transform IRecorderSettingsHost.fbxTransferAnimationDest { get => fbxTransferAnimationDest; set => fbxTransferAnimationDest = value; }
-        FBXExportPreset IRecorderSettingsHost.fbxPreset { get => fbxPreset; set => fbxPreset = value; }
-        bool IRecorderSettingsHost.useFBXPreset { get => useFBXPreset; set => useFBXPreset = value; }
-        
-        [MenuItem("Window/Batch Rendering Tool/Single Timeline Renderer")]
+        [MenuItem("Window/Batch Recording Tool/Timeline Recorder")]
         public static SingleTimelineRenderer ShowWindow()
         {
             var window = GetWindow<SingleTimelineRenderer>();
-            window.titleContent = new GUIContent("Single Timeline Renderer");
-            window.minSize = new Vector2(300, 450);  // Smaller minimum width to allow for flexible column sizing
+            window.titleContent = new GUIContent("Timeline Recorder");
+            window.minSize = new Vector2(800, 600);  // Larger minimum size for 3-column layout
             instance = window;
             return window;
         }
@@ -261,7 +246,7 @@ namespace BatchRenderingTool
             // Reset state if not in Play Mode
             if (!EditorApplication.isPlaying)
             {
-                currentState = RenderState.Idle;
+                currentState = RecordState.Idle;
                 renderCoroutine = null;
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Reset to Idle state");
             }
@@ -299,39 +284,31 @@ namespace BatchRenderingTool
             }
             
             // Ensure <Frame> wildcard is present for image sequence types
-            if ((recorderType == RecorderSettingsType.Image || recorderType == RecorderSettingsType.AOV) 
-                && !fileName.Contains("<Frame>"))
+            if (multiRecorderConfig.RecorderItems.Count > 0)
             {
-                // Add <Frame> before extension if present, otherwise at the end
-                if (fileName.Contains("."))
+                var firstRecorderType = multiRecorderConfig.RecorderItems[0].recorderType;
+                if ((firstRecorderType == RecorderSettingsType.Image || firstRecorderType == RecorderSettingsType.AOV) 
+                    && !fileName.Contains("<Frame>"))
                 {
-                    int lastDotIndex = fileName.LastIndexOf('.');
-                    fileName = fileName.Substring(0, lastDotIndex) + "_<Frame>" + fileName.Substring(lastDotIndex);
+                    // Add <Frame> before extension if present, otherwise at the end
+                    if (fileName.Contains("."))
+                    {
+                        int lastDotIndex = fileName.LastIndexOf('.');
+                        fileName = fileName.Substring(0, lastDotIndex) + "_<Frame>" + fileName.Substring(lastDotIndex);
+                    }
+                    else
+                    {
+                        fileName += "_<Frame>";
+                    }
                 }
-                else
-                {
-                    fileName += "_<Frame>";
-                }
-            }
-            
-            // Initialize file path if empty
-            if (string.IsNullOrEmpty(filePath))
-            {
-                filePath = "Recordings";
-            }
-            
-            // Initialize recorder editor
-            if (currentRecorderEditor == null)
-            {
-                UpdateRecorderEditor();
             }
             
             // Play Mode内でレンダリング中かチェック
             if (EditorApplication.isPlaying && EditorPrefs.GetBool("STR_IsRendering", false))
             {
                 // Play Mode内でPlayModeTimelineRendererが処理中
-                currentState = RenderState.Rendering;
-                statusMessage = "Rendering in Play Mode...";
+                currentState = RecordState.Recording;
+                statusMessage = "Recording in Play Mode...";
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Detected rendering in progress in Play Mode");
                 
                 // 進捗監視を開始
@@ -379,338 +356,94 @@ namespace BatchRenderingTool
                 }
             }
             
-            EditorGUILayout.LabelField("Single Timeline Renderer", EditorStyles.boldLabel);
-            EditorGUILayout.Space(10);
+            // タイトルは既にウィンドウタブに表示されているので削除
             
-            // Start scroll view
-            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+            // Global settings at the top
+            DrawGlobalSettings();
+            EditorGUILayout.Space(Styles.SectionSpacing);
             
-            try
+            // 3-column layout
+            DrawMultiRecorderLayout();
+            EditorGUILayout.Space(Styles.SectionSpacing);
+            
+            // Render controls
+            DrawRecordControls();
+            EditorGUILayout.Space(Styles.SectionSpacing);
+            
+            // Status section
+            DrawStatusSection();
+            EditorGUILayout.Space(Styles.SectionSpacing);
+            
+            // Debug settings
+            DrawDebugSettings();
+            
+            // Force repaint if GUI changed
+            if (GUI.changed)
             {
-                DrawTimelineSelection();
-                EditorGUILayout.Space(10);
-                
-                DrawRenderSettings();
-                EditorGUILayout.Space(10);
-                
-                DrawRenderControls();
-                EditorGUILayout.Space(10);
-                
-                DrawStatusSection();
-                EditorGUILayout.Space(10);
-                
-                DrawDebugSettings();
-            }
-            finally
-            {
-                // Always end scroll view even if an exception occurs
-                EditorGUILayout.EndScrollView();
+                Repaint();
             }
         }
         
-        private void DrawTimelineSelection()
+        private void DrawGlobalSettings()
         {
-            
-            EditorGUILayout.LabelField("Timeline Selection", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            
-            // Multiple timeline mode toggle for Single Recorder Mode only
-            if (!useMultiRecorder)
+            EditorGUILayout.LabelField("Global Settings", EditorStyles.boldLabel);
+            Rect settingsRect = EditorGUILayout.BeginVertical();
+            if (Event.current.type == EventType.Repaint)
             {
-                EditorGUI.BeginChangeCheck();
-                isMultiTimelineMode = EditorGUILayout.Toggle("Multiple Timeline Mode", isMultiTimelineMode);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    // Clear selection when switching modes
-                    selectedDirectorIndices.Clear();
-                    selectedDirectorIndex = 0;
-                    
-                    // Initialize with first timeline if switching off multiple mode
-                    if (!isMultiTimelineMode && availableDirectors.Count > 0)
-                    {
-                        selectedDirectorIndices.Add(0);
-                    }
-                }
-                
-                if (isMultiTimelineMode)
-                {
-                    timelineMarginFrames = EditorGUILayout.IntField("Margin Frames", timelineMarginFrames);
-                    if (timelineMarginFrames < 0) timelineMarginFrames = 0;
-                    
-                    if (timelineMarginFrames > 0)
-                    {
-                        float marginSeconds = timelineMarginFrames / (float)frameRate;
-                        EditorGUILayout.HelpBox($"Will add {marginSeconds:F2} seconds between each timeline for safe rendering.", MessageType.Info);
-                    }
-                }
-                
-                EditorGUILayout.Space(5);
+                EditorGUI.DrawRect(settingsRect, Styles.ListBackgroundColor);
             }
             
+            // Resolution and Frame Rate on same line
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"Available Timelines: {availableDirectors.Count}");
-            if (GUILayout.Button("Refresh", GUILayout.Width(80)))
-            {
-                BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Manual refresh requested");
-                ScanTimelines();
-            }
+            
+            EditorGUILayout.LabelField("Resolution:", GUILayout.Width(70));
+            width = EditorGUILayout.IntField(width, GUILayout.Width(60));
+            EditorGUILayout.LabelField("x", GUILayout.Width(15));
+            height = EditorGUILayout.IntField(height, GUILayout.Width(60));
+            
+            EditorGUILayout.Space(20);
+            
+            EditorGUILayout.LabelField("Frame Rate:", GUILayout.Width(80));
+            frameRate = EditorGUILayout.IntField(frameRate, GUILayout.Width(60));
+            
             EditorGUILayout.EndHorizontal();
             
-            // Debug info
-            if (availableDirectors.Count == 0)
+            // Output path using OutputPathSettingsUI
+            OutputPathSettingsUI.DrawOutputPathUI(globalOutputPath);
+            
+            // Timeline settings on same line
+            EditorGUILayout.BeginHorizontal();
+            
+            EditorGUILayout.LabelField("Timeline Margin:", GUILayout.Width(100));
+            timelineMarginFrames = EditorGUILayout.IntField(timelineMarginFrames, GUILayout.Width(60));
+            EditorGUILayout.LabelField("frames", GUILayout.Width(50));
+            
+            EditorGUILayout.Space(20);
+            
+            EditorGUILayout.LabelField("Pre-roll:", GUILayout.Width(60));
+            preRollFrames = EditorGUILayout.IntField(preRollFrames, GUILayout.Width(60));
+            EditorGUILayout.LabelField("frames", GUILayout.Width(50));
+            
+            EditorGUILayout.EndHorizontal();
+            
+            // Help info for timeline margin
+            if (timelineMarginFrames > 0)
             {
-                if (GUILayout.Button("Debug: Show all PlayableDirectors"))
-                {
-                    var allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
-                    BatchRenderingToolLogger.LogVerbose($"[DEBUG] Total PlayableDirectors in scene: {allDirectors.Length}");
-                    foreach (var dir in allDirectors)
-                    {
-                        BatchRenderingToolLogger.LogVerbose($"[DEBUG] - {dir.name}: playableAsset={dir.playableAsset?.name ?? "null"} (Type: {dir.playableAsset?.GetType().Name ?? "null"})");
-                    }
-                }
+                float marginSeconds = timelineMarginFrames / (float)frameRate;
+                EditorGUILayout.LabelField($"Will add {marginSeconds:F2} seconds between each timeline for safe rendering.", EditorStyles.miniLabel);
             }
             
-            if (availableDirectors.Count > 0)
-            {
-                if (useMultiRecorder || isMultiTimelineMode)
-                {
-                    // Multiple timeline selection mode
-                    EditorGUILayout.LabelField("Select Timelines:", EditorStyles.miniBoldLabel);
-                    
-                    // Ensure GUI is enabled for timeline selection
-                    bool previousGUIState = GUI.enabled;
-                    GUI.enabled = true;
-                    
-                    // Display checkboxes for each timeline
-                    for (int i = 0; i < availableDirectors.Count; i++)
-                    {
-                        if (availableDirectors[i] != null && availableDirectors[i].gameObject != null)
-                        {
-                            EditorGUILayout.BeginHorizontal();
-                            
-                            bool isSelected = selectedDirectorIndices.Contains(i);
-                            bool newSelection = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
-                            
-                            if (newSelection != isSelected)
-                            {
-                                if (newSelection)
-                                {
-                                    selectedDirectorIndices.Add(i);
-                                }
-                                else
-                                {
-                                    selectedDirectorIndices.Remove(i);
-                                }
-                                
-                                // Sort to maintain order
-                                selectedDirectorIndices.Sort();
-                            }
-                            
-                            EditorGUILayout.LabelField(availableDirectors[i].gameObject.name);
-                            
-                            var timeline = availableDirectors[i].playableAsset as TimelineAsset;
-                            if (timeline != null)
-                            {
-                                EditorGUILayout.LabelField($"({timeline.duration:F2}s)", GUILayout.Width(60));
-                            }
-                            
-                            EditorGUILayout.EndHorizontal();
-                        }
-                    }
-                    
-                    // Show total duration
-                    if (selectedDirectorIndices.Count > 0)
-                    {
-                        EditorGUILayout.Space(5);
-                        float totalDuration = 0f;
-                        foreach (int idx in selectedDirectorIndices)
-                        {
-                            if (idx >= 0 && idx < availableDirectors.Count)
-                            {
-                                var timeline = availableDirectors[idx].playableAsset as TimelineAsset;
-                                if (timeline != null)
-                                {
-                                    totalDuration += (float)timeline.duration;
-                                }
-                            }
-                        }
-                        
-                        // Add margins
-                        if (selectedDirectorIndices.Count > 1)
-                        {
-                            float marginTime = (selectedDirectorIndices.Count - 1) * timelineMarginFrames / (float)frameRate;
-                            totalDuration += marginTime;
-                        }
-                        
-                        EditorGUILayout.LabelField($"Total Duration: {totalDuration:F2} seconds", EditorStyles.boldLabel);
-                        EditorGUILayout.LabelField($"Selected Timelines: {selectedDirectorIndices.Count}");
-                    }
-                    
-                    // Restore previous GUI state
-                    GUI.enabled = previousGUIState;
-                }
-                else
-                {
-                    // Single timeline selection mode (existing code)
-                    string[] directorNames = new string[availableDirectors.Count];
-                    for (int i = 0; i < availableDirectors.Count; i++)
-                    {
-                        if (availableDirectors[i] != null && availableDirectors[i].gameObject != null)
-                        {
-                            directorNames[i] = availableDirectors[i].gameObject.name;
-                        }
-                        else
-                        {
-                            directorNames[i] = "<Missing>";
-                        }
-                    }
-                    
-                    int previousIndex = selectedDirectorIndex;
-                    selectedDirectorIndex = EditorGUILayout.Popup("Select Timeline:", selectedDirectorIndex, directorNames);
-                    
-                    // Validate selected index and director
-                    if (selectedDirectorIndex >= availableDirectors.Count)
-                    {
-                        selectedDirectorIndex = 0;
-                    }
-                    
-                    // Update selectedDirectorIndices when selection changes
-                    if (previousIndex != selectedDirectorIndex)
-                    {
-                        selectedDirectorIndices.Clear();
-                        selectedDirectorIndices.Add(selectedDirectorIndex);
-                    }
-                    
-                    var selectedDirector = availableDirectors[selectedDirectorIndex];
-                    if (selectedDirector != null && selectedDirector.gameObject != null)
-                    {
-                        var timeline = selectedDirector.playableAsset as TimelineAsset;
-                        if (timeline != null)
-                        {
-                            EditorGUILayout.LabelField($"Duration: {timeline.duration:F2} seconds");
-                            EditorGUILayout.LabelField($"Frame Count: {(int)(timeline.duration * frameRate)}");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                EditorGUILayout.HelpBox("No timelines found in the scene.", MessageType.Warning);
-            }
-            
-            EditorGUILayout.EndVertical();
-        }
-        
-        private void DrawRenderSettings()
-        {
-            EditorGUILayout.LabelField("Render Settings", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            
-            // Multi-recorder mode toggle
-            useMultiRecorder = EditorGUILayout.Toggle("Multi-Recorder Mode", useMultiRecorder);
-            
-            EditorGUILayout.Space(5);
-            
-            if (useMultiRecorder)
-            {
-                DrawMultiRecorderSettings();
-            }
-            else
-            {
-                DrawSingleRecorderSettings();
-            }
-            
-            EditorGUILayout.EndVertical();
-        }
-        
-        private void DrawSingleRecorderSettings()
-        {
-            // Recorder type selection
-            RecorderSettingsType newRecorderType = (RecorderSettingsType)EditorGUILayout.EnumPopup("Recorder Type:", recorderType);
-            
-            // Handle recorder type change
-            if (newRecorderType != recorderType)
-            {
-                previousRecorderType = recorderType;
-                recorderType = newRecorderType;
-                
-                // Update default file name when recorder type changes
-                fileName = "<Scene>_<Recorder>_<Take>";
-                
-                // Create appropriate editor instance
-                UpdateRecorderEditor();
-            }
-            
-            // Ensure <Frame> wildcard is present for image sequence types
-            if ((recorderType == RecorderSettingsType.Image || recorderType == RecorderSettingsType.AOV) 
-                && !fileName.Contains("<Frame>"))
-            {
-                // Add <Frame> before extension if present, otherwise at the end
-                if (fileName.Contains("."))
-                {
-                    int lastDotIndex = fileName.LastIndexOf('.');
-                    fileName = fileName.Substring(0, lastDotIndex) + "_<Frame>" + fileName.Substring(lastDotIndex);
-                }
-                else
-                {
-                    fileName += "_<Frame>";
-                }
-            }
-            
-            // Check if recorder type is supported
-            if (!RecorderSettingsFactory.IsRecorderTypeSupported(recorderType))
-            {
-                string reason = "";
-                switch (recorderType)
-                {
-                    case RecorderSettingsType.AOV:
-                        reason = "AOV Recorder requires HDRP package to be installed";
-                        break;
-                    case RecorderSettingsType.Alembic:
-                        reason = "Alembic Recorder requires Unity Alembic package to be installed";
-                        break;
-                    default:
-                        reason = $"{recorderType} recorder is not available";
-                        break;
-                }
-                EditorGUILayout.HelpBox(reason, MessageType.Error);
-                EditorGUILayout.EndVertical();
-                return;
-            }
-            
-            EditorGUILayout.Space(5);
-            
-            // Common settings
-            frameRate = EditorGUILayout.IntField("Frame Rate:", frameRate);
-            
-            // Pre-roll frames for simulation warm-up
-            EditorGUILayout.Space(5);
-            preRollFrames = EditorGUILayout.IntField("Pre-roll Frames:", preRollFrames);
-            if (preRollFrames < 0) preRollFrames = 0;
-            
+            // Help info for pre-roll
             if (preRollFrames > 0)
             {
                 float preRollSeconds = preRollFrames / (float)frameRate;
-                EditorGUILayout.HelpBox($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts. " +
-                    "This allows physics simulations (cloth, particles, etc.) to stabilize.", MessageType.Info);
+                EditorGUILayout.LabelField($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts.", EditorStyles.miniLabel);
             }
             
-            // Use new recorder editor system
-            if (currentRecorderEditor == null)
-            {
-                UpdateRecorderEditor();
-            }
-            
-            EditorGUILayout.Space(5);
-            
-            // Draw recorder-specific UI using new editor system
-            if (currentRecorderEditor != null)
-            {
-                currentRecorderEditor.DrawRecorderSettings();
-            }
+            EditorGUILayout.EndVertical();
         }
         
-        private void DrawMultiRecorderSettings()
+        private void DrawMultiRecorderLayout()
         {
             // Three-column layout with draggable splitters
             EditorGUILayout.BeginHorizontal();
@@ -738,37 +471,8 @@ namespace BatchRenderingTool
             
             EditorGUILayout.EndHorizontal();
             
-            // Global settings at bottom
-            EditorGUILayout.Space(10);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Global Settings", EditorStyles.miniBoldLabel);
-            frameRate = EditorGUILayout.IntField("Frame Rate:", frameRate);
-            
-            // Timeline margin frames (for multiple timeline selection)
-            if (selectedDirectorIndices.Count > 1)
-            {
-                timelineMarginFrames = EditorGUILayout.IntField("Timeline Margin Frames:", timelineMarginFrames);
-                if (timelineMarginFrames < 0) timelineMarginFrames = 0;
-                
-                if (timelineMarginFrames > 0)
-                {
-                    float marginSeconds = timelineMarginFrames / (float)frameRate;
-                    EditorGUILayout.HelpBox($"Will add {marginSeconds:F2} seconds between each timeline for safe rendering.", MessageType.Info);
-                }
-            }
-            
-            // Pre-roll frames
-            preRollFrames = EditorGUILayout.IntField("Pre-roll Frames:", preRollFrames);
-            if (preRollFrames < 0) preRollFrames = 0;
-            
-            if (preRollFrames > 0)
-            {
-                float preRollSeconds = preRollFrames / (float)frameRate;
-                EditorGUILayout.HelpBox($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts.", MessageType.Info);
-            }
-            
-            // Summary of recorder configurations
-            EditorGUILayout.Space(5);
+            // Summary section at bottom
+            EditorGUILayout.Space(Styles.StandardSpacing);
             EditorGUILayout.LabelField("Timeline Recorder Summary:", EditorStyles.miniBoldLabel);
             int totalRecorders = 0;
             foreach (int idx in selectedDirectorIndices)
@@ -776,35 +480,57 @@ namespace BatchRenderingTool
                 var config = GetTimelineRecorderConfig(idx);
                 totalRecorders += config.GetEnabledRecorders().Count;
             }
-            EditorGUILayout.LabelField($"Total Active Recorders: {totalRecorders} across {selectedDirectorIndices.Count} timelines");
-            
-            EditorGUILayout.EndVertical();
+            EditorGUILayout.LabelField($"Total Active Recorders: {totalRecorders} across {selectedDirectorIndices.Count} timelines", EditorStyles.miniLabel);
         }
         
         private void DrawTimelineSelectionColumn()
         {
-            // Begin horizontal scroll view for the entire column
+            // Column container with background
+            Rect columnRect = EditorGUILayout.BeginVertical(GUILayout.ExpandHeight(true));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
+            }
+            
+            // Column header with background
+            Rect headerRect = EditorGUILayout.GetControlRect(false, 26);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // カスタム背景を描画
+                EditorGUI.DrawRect(headerRect, Styles.ColumnHeaderBackgroundColor);
+                
+                // 下部に薄い境界線
+                Rect bottomBorder = new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1);
+                EditorGUI.DrawRect(bottomBorder, new Color(0, 0, 0, 0.3f));
+            }
+            GUI.Label(headerRect, "Timelines", Styles.ColumnHeader);
+            
+            // Begin horizontal scroll view for the entire column content
             leftColumnScrollPos = EditorGUILayout.BeginScrollView(leftColumnScrollPos, 
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             
-            // Header with add button
-            EditorGUILayout.BeginHorizontal();
-            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 14 };
-            EditorGUILayout.LabelField("①Timeline 選択", headerStyle, GUILayout.MinWidth(200));
-            EditorGUILayout.EndHorizontal();
-            
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(Styles.StandardSpacing);
             
             // Refresh button
-            if (GUILayout.Button("Refresh Timelines", GUILayout.Height(25), GUILayout.MinWidth(200)))
+            EditorGUILayout.BeginHorizontal();
+            // Refresh button with icon
+            GUIContent refreshContent = new GUIContent(" Refresh", EditorGUIUtility.IconContent("d_Refresh").image);
+            if (GUILayout.Button(refreshContent, GUILayout.Height(20), GUILayout.Width(100)))
             {
                 ScanTimelines();
             }
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
             
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(Styles.StandardSpacing);
             
-            // Timeline list
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MinWidth(200));
+            // Timeline list with background
+            Rect listBackgroundRect = EditorGUILayout.BeginVertical(GUILayout.MinWidth(Styles.MinListItemWidth));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(listBackgroundRect, Styles.ListBackgroundColor);
+            }
+            
             if (availableDirectors.Count > 0)
             {
                 // Ensure GUI is enabled for timeline selection
@@ -816,21 +542,49 @@ namespace BatchRenderingTool
                     bool isSelected = selectedDirectorIndices.Contains(i);
                     bool isCurrentForRecorder = (i == currentTimelineIndexForRecorder);
                     
-                    if (isCurrentForRecorder)
+                    // リストアイテムの背景を描画
+                    Rect itemRect = EditorGUILayout.BeginHorizontal(GUILayout.Height(20));
+                    
+                    // 交互の行色
+                    if (Event.current.type == EventType.Repaint && i % 2 == 1)
                     {
-                        // Highlight the timeline currently selected for recorder configuration
-                        GUI.backgroundColor = new Color(0.8f, 0.5f, 0.3f, 0.5f);
-                    }
-                    else if (isSelected)
-                    {
-                        GUI.backgroundColor = new Color(0.3f, 0.5f, 0.8f, 0.3f);
+                        EditorGUI.DrawRect(itemRect, Styles.AlternateRowColor);
                     }
                     
-                    EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
+                    // マウスホバーとクリックの処理
+                    bool isHover = itemRect.Contains(Event.current.mousePosition);
+                    // チェックボックスの領域を定義
+                    Rect checkboxRect = new Rect(itemRect.x + 4, itemRect.y + 2, 16, 16);
+                    
+                    // チェックボックス以外の領域でクリックされた場合のみ、タイムラインを選択
+                    if (Event.current.type == EventType.MouseDown && isHover && !checkboxRect.Contains(Event.current.mousePosition))
+                    {
+                        currentTimelineIndexForRecorder = i;
+                        selectedRecorderIndex = -1;
+                        Event.current.Use();
+                    }
+                    
+                    // 選択状態の背景色
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        if (isCurrentForRecorder)
+                        {
+                            // アクティブな選択（レコーダー設定用）- 青色のハイライト
+                            var selectionRect = new Rect(itemRect.x + 1, itemRect.y, itemRect.width - 2, itemRect.height);
+                            EditorGUI.DrawRect(selectionRect, Styles.SelectionColor);
+                        }
+                        else if (isHover)
+                        {
+                            // ホバー
+                            EditorGUI.DrawRect(itemRect, Styles.HoverColor);
+                        }
+                        // チェックボックスの選択状態は背景色を変えない（一般的なUI）
+                    }
                     
                     // Checkbox for selection
-                    bool nowSelected = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
-                    if (nowSelected != isSelected)
+                    EditorGUI.BeginChangeCheck();
+                    bool nowSelected = EditorGUI.Toggle(new Rect(itemRect.x + 4, itemRect.y + 2, 16, 16), isSelected);
+                    if (EditorGUI.EndChangeCheck())
                     {
                         if (nowSelected)
                         {
@@ -855,101 +609,66 @@ namespace BatchRenderingTool
                         }
                     }
                     
-                    // Timeline name (clickable)
-                    string timelineName = availableDirectors[i] != null ? availableDirectors[i].gameObject.name : "<Missing>";
+                    GUILayout.Space(24); // Checkboxのスペース
                     
-                    if (isCurrentForRecorder)
-                    {
-                        GUIStyle boldStyle = new GUIStyle(EditorStyles.label) { fontStyle = FontStyle.Bold };
-                        if (GUILayout.Button(timelineName, boldStyle, GUILayout.MinWidth(150)))
-                        {
-                            // Already selected, do nothing
-                        }
-                    }
-                    else
-                    {
-                        if (GUILayout.Button(timelineName, EditorStyles.label, GUILayout.MinWidth(150)))
-                        {
-                            // Select this timeline for recorder configuration
-                            currentTimelineIndexForRecorder = i;
-                            selectedRecorderIndex = -1; // Reset recorder selection
-                        }
-                    }
+                    // Timeline name
+                    string timelineName = availableDirectors[i] != null ? availableDirectors[i].gameObject.name : "<Missing>";
+                    GUIStyle nameStyle = isCurrentForRecorder ? EditorStyles.boldLabel : Styles.StandardListItem;
+                    EditorGUILayout.LabelField(timelineName, nameStyle, GUILayout.ExpandWidth(true));
                     
                     // Show duration
-                    if (availableDirectors[i] != null)
+                    var director = availableDirectors[i];
+                    if (director != null)
                     {
-                        var timeline = availableDirectors[i].playableAsset as TimelineAsset;
+                        var timeline = director.playableAsset as TimelineAsset;
                         if (timeline != null)
                         {
-                            EditorGUILayout.LabelField($"({timeline.duration:F2}s)", GUILayout.Width(60));
+                            EditorGUILayout.LabelField($"{timeline.duration:F2}s", GUILayout.Width(50));
                         }
                     }
                     
                     EditorGUILayout.EndHorizontal();
-                    
-                    if (isSelected)
-                    {
-                        GUI.backgroundColor = Color.white;
-                    }
                 }
                 
-                // Show total duration and margin info
-                if (selectedDirectorIndices.Count > 0)
-                {
-                    EditorGUILayout.Space(5);
-                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                    
-                    float totalDuration = 0f;
-                    foreach (int idx in selectedDirectorIndices)
-                    {
-                        if (idx >= 0 && idx < availableDirectors.Count)
-                        {
-                            var timeline = availableDirectors[idx].playableAsset as TimelineAsset;
-                            if (timeline != null)
-                            {
-                                totalDuration += (float)timeline.duration;
-                            }
-                        }
-                    }
-                    
-                    // Add margins
-                    if (selectedDirectorIndices.Count > 1)
-                    {
-                        float marginTime = (selectedDirectorIndices.Count - 1) * timelineMarginFrames / (float)frameRate;
-                        totalDuration += marginTime;
-                        EditorGUILayout.LabelField($"Margin: {timelineMarginFrames} frames", EditorStyles.miniLabel);
-                    }
-                    
-                    EditorGUILayout.LabelField($"Total: {totalDuration:F2}s", EditorStyles.boldLabel);
-                    EditorGUILayout.LabelField($"Selected: {selectedDirectorIndices.Count}", EditorStyles.miniLabel);
-                    
-                    EditorGUILayout.EndVertical();
-                }
                 
                 // Restore GUI state
                 GUI.enabled = previousGUIState;
             }
             else
             {
-                EditorGUILayout.HelpBox("No timelines found in the scene.", MessageType.Warning);
+                EditorGUILayout.LabelField("No timelines found in the scene.", EditorStyles.wordWrappedMiniLabel);
             }
             EditorGUILayout.EndVertical();
             
             EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
         }
         
         private void DrawRecorderListColumn()
         {
-            // Begin horizontal scroll view for the entire column
+            // Column container with background
+            Rect columnRect = EditorGUILayout.BeginVertical(GUILayout.ExpandHeight(true));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
+            }
+            
+            // Column header with background
+            Rect headerRect = EditorGUILayout.GetControlRect(false, 26);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // カスタム背景を描画
+                EditorGUI.DrawRect(headerRect, Styles.ColumnHeaderBackgroundColor);
+                
+                // 下部に薄い境界線
+                Rect bottomBorder = new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1);
+                EditorGUI.DrawRect(bottomBorder, new Color(0, 0, 0, 0.3f));
+            }
+            GUI.Label(headerRect, "Recorders", Styles.ColumnHeader);
+            
+            // Begin horizontal scroll view for the entire column content
             centerColumnScrollPos = EditorGUILayout.BeginScrollView(centerColumnScrollPos,
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
-            
-            // Header with add button
-            EditorGUILayout.BeginHorizontal();
-            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 14 };
-            EditorGUILayout.LabelField("②Recorder 設定", headerStyle, GUILayout.MinWidth(200));
-            EditorGUILayout.EndHorizontal();
             
             // Show current timeline name
             if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < availableDirectors.Count)
@@ -957,7 +676,7 @@ namespace BatchRenderingTool
                 var currentDirector = availableDirectors[currentTimelineIndexForRecorder];
                 if (currentDirector != null)
                 {
-                    EditorGUILayout.Space(5);
+                    EditorGUILayout.Space(Styles.StandardSpacing);
                     EditorGUILayout.BeginHorizontal();
                     EditorGUILayout.LabelField("Timeline:", EditorStyles.miniBoldLabel, GUILayout.Width(60));
                     EditorGUILayout.LabelField(currentDirector.gameObject.name, EditorStyles.label);
@@ -966,8 +685,8 @@ namespace BatchRenderingTool
             }
             else
             {
-                EditorGUILayout.Space(5);
-                EditorGUILayout.HelpBox("Select a timeline from the left column to configure its recorders.", MessageType.Info);
+                EditorGUILayout.Space(Styles.StandardSpacing);
+                EditorGUILayout.LabelField("Select a timeline from the left column to configure its recorders.", EditorStyles.wordWrappedMiniLabel);
                 EditorGUILayout.EndScrollView();
                 return;
             }
@@ -975,10 +694,16 @@ namespace BatchRenderingTool
             // Get the recorder config for the current timeline
             var currentConfig = GetTimelineRecorderConfig(currentTimelineIndexForRecorder);
             
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(Styles.StandardSpacing);
             
-            // Add Recorder button
-            if (GUILayout.Button("+ Add Recorder", GUILayout.Height(25), GUILayout.MinWidth(200)))
+            // Add Recorder button and Copy to All button
+            EditorGUILayout.BeginHorizontal();
+            
+            // Add Recorder button with icon
+            Color originalBgColor = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0.2f, 0.6f, 0.2f); // Green for add
+            GUIContent addRecorderContent = new GUIContent(" Add Recorder", EditorGUIUtility.IconContent("d_Toolbar Plus").image);
+            if (GUILayout.Button(addRecorderContent, GUILayout.Height(22), GUILayout.Width(120)))
             {
                 GenericMenu menu = new GenericMenu();
                 menu.AddItem(new GUIContent("🎬 Movie"), false, () => AddRecorder(RecorderSettingsType.Movie));
@@ -990,50 +715,92 @@ namespace BatchRenderingTool
                 menu.ShowAsContext();
             }
             
-            EditorGUILayout.Space(5);
-            
-            // Apply to all timelines button
-            if (GUILayout.Button("Apply to All Selected Timelines", GUILayout.Height(25), GUILayout.MinWidth(200)))
+            // Copy settings button - only show if there are multiple selected timelines
+            if (selectedDirectorIndices.Count > 1)
             {
-                ApplyRecorderSettingsToAllTimelines();
+                GUILayout.Space(5);
+                // Copy to All button with icon
+                GUI.backgroundColor = new Color(0.3f, 0.5f, 0.8f); // Blue for copy
+                GUIContent copyContent = new GUIContent(" Copy to All", EditorGUIUtility.IconContent("d_TreeEditor.Duplicate").image, "Copy these recorder settings to all selected timelines");
+                if (GUILayout.Button(copyContent, GUILayout.Height(20), GUILayout.Width(100)))
+                {
+                    ApplyRecorderSettingsToAllTimelines();
+                }
             }
             
-            EditorGUILayout.Space(5);
+            GUILayout.FlexibleSpace();
+            GUI.backgroundColor = originalBgColor; // Restore original background color
+            EditorGUILayout.EndHorizontal();
             
-            // Recorder list with minimum width
-            EditorGUILayout.BeginVertical(GUILayout.MinWidth(200));
+            EditorGUILayout.Space(Styles.StandardSpacing);
+            
+            // Recorder list with background
+            Rect listBackgroundRect = EditorGUILayout.BeginVertical(GUILayout.MinWidth(Styles.MinListItemWidth));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(listBackgroundRect, Styles.ListBackgroundColor);
+            }
             
             for (int i = 0; i < currentConfig.RecorderItems.Count; i++)
             {
                 var item = currentConfig.RecorderItems[i];
                 
                 bool isSelected = (i == selectedRecorderIndex);
-                if (isSelected)
+                
+                // リストアイテムの背景を描画
+                Rect itemRect = EditorGUILayout.BeginHorizontal(GUILayout.Height(20));
+                
+                // 交互の行色
+                if (Event.current.type == EventType.Repaint && i % 2 == 1)
                 {
-                    GUI.backgroundColor = new Color(0.3f, 0.5f, 0.8f, 0.3f);
+                    EditorGUI.DrawRect(itemRect, Styles.AlternateRowColor);
                 }
                 
-                EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
-                
-                // Enable checkbox
-                item.enabled = EditorGUILayout.Toggle(item.enabled, GUILayout.Width(20));
-                
-                // Icon based on recorder type
-                string icon = GetRecorderIcon(item.recorderType);
-                EditorGUILayout.LabelField(icon, GUILayout.Width(25));
-                
-                // Recorder name - clickable with minimum width
-                GUIStyle labelStyle = new GUIStyle(EditorStyles.label);
-                if (isSelected) labelStyle.fontStyle = FontStyle.Bold;
-                
-                if (GUILayout.Button(item.name, labelStyle, GUILayout.MinWidth(100), GUILayout.ExpandWidth(true)))
+                // マウスホバーとクリックの処理
+                bool isHover = itemRect.Contains(Event.current.mousePosition);
+                if (Event.current.type == EventType.MouseDown && isHover)
                 {
                     selectedRecorderIndex = i;
                     GUI.FocusControl(null);
+                    Event.current.Use();
                 }
                 
+                // 選択状態の背景色
+                if (Event.current.type == EventType.Repaint)
+                {
+                    if (isSelected)
+                    {
+                        // 選択状態
+                        var selectionRect = new Rect(itemRect.x + 1, itemRect.y, itemRect.width - 2, itemRect.height);
+                        EditorGUI.DrawRect(selectionRect, Styles.SelectionColor);
+                    }
+                    else if (isHover)
+                    {
+                        // ホバー
+                        EditorGUI.DrawRect(itemRect, Styles.HoverColor);
+                    }
+                }
+                
+                // Enable checkbox
+                EditorGUI.BeginChangeCheck();
+                item.enabled = EditorGUI.Toggle(new Rect(itemRect.x + 4, itemRect.y + 2, 16, 16), item.enabled);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // 変更を反映
+                }
+                
+                GUILayout.Space(24); // Checkboxのスペース
+                
+                // Icon based on recorder type
+                GUIContent iconContent = GetRecorderIconContent(item.recorderType);
+                GUI.Label(new Rect(itemRect.x + 26, itemRect.y + 2, 16, 16), iconContent);
+                GUILayout.Space(Styles.IconWidth);
+                
+                // Recorder name
+                EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
+                
                 // Delete button
-                if (GUILayout.Button("×", GUILayout.Width(20)))
+                if (GUI.Button(new Rect(itemRect.x + itemRect.width - 20, itemRect.y + 2, 16, 16), "×", EditorStyles.miniButton))
                 {
                     currentConfig.RecorderItems.RemoveAt(i);
                     if (selectedRecorderIndex >= i) selectedRecorderIndex--;
@@ -1041,33 +808,42 @@ namespace BatchRenderingTool
                 }
                 
                 EditorGUILayout.EndHorizontal();
-                
-                if (isSelected)
-                {
-                    GUI.backgroundColor = Color.white;
-                }
             }
             
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
         }
         
         private void DrawRecorderDetailColumn()
         {
-            // Header
-            EditorGUILayout.BeginHorizontal();
-            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 14 };
-            EditorGUILayout.LabelField("③Recorder 詳細設定", headerStyle);
-            EditorGUILayout.EndHorizontal();
+            // Column container with background
+            Rect columnRect = EditorGUILayout.BeginVertical(GUILayout.ExpandHeight(true));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
+            }
             
-            EditorGUILayout.Space(5);
+            // Column header with background
+            Rect headerRect = EditorGUILayout.GetControlRect(false, 26);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // カスタム背景を描画
+                EditorGUI.DrawRect(headerRect, Styles.ColumnHeaderBackgroundColor);
+                
+                // 下部に薄い境界線
+                Rect bottomBorder = new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1);
+                EditorGUI.DrawRect(bottomBorder, new Color(0, 0, 0, 0.3f));
+            }
+            GUI.Label(headerRect, "Details", Styles.ColumnHeader);
+            
+            EditorGUILayout.Space(Styles.StandardSpacing);
             
             // Get the current timeline's recorder config
             if (currentTimelineIndexForRecorder < 0)
             {
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                EditorGUILayout.LabelField("Select a timeline from the left column first.", EditorStyles.wordWrappedLabel);
-                EditorGUILayout.EndVertical();
+                EditorGUILayout.LabelField("Select a timeline from the left column first.", EditorStyles.wordWrappedMiniLabel);
+                EditorGUILayout.EndVertical(); // End column
                 return;
             }
             
@@ -1075,9 +851,8 @@ namespace BatchRenderingTool
             
             if (selectedRecorderIndex < 0 || selectedRecorderIndex >= currentConfig.RecorderItems.Count)
             {
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                EditorGUILayout.LabelField("Select a recorder from the list to edit its settings.", EditorStyles.wordWrappedLabel);
-                EditorGUILayout.EndVertical();
+                EditorGUILayout.LabelField("Select a recorder from the list to edit its settings.", EditorStyles.wordWrappedMiniLabel);
+                EditorGUILayout.EndVertical(); // End column
                 return;
             }
             
@@ -1095,21 +870,42 @@ namespace BatchRenderingTool
             // Content wrapper with minimum width to ensure horizontal scrolling when needed
             EditorGUILayout.BeginVertical(GUILayout.MinWidth(300));
             
-            // Recorder Type header
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            string recorderTypeName = GetRecorderTypeName(item.recorderType);
-            EditorGUILayout.LabelField("Recorder Type", recorderTypeName, EditorStyles.boldLabel);
-            EditorGUILayout.EndVertical();
-            
+            // Recorder Type header with background
             EditorGUILayout.Space(5);
+            Rect typeHeaderRect = EditorGUILayout.GetControlRect(false, 22);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // 背景を描画
+                Color headerBg = EditorGUIUtility.isProSkin 
+                    ? new Color(0.18f, 0.18f, 0.18f, 1f)
+                    : new Color(0.8f, 0.8f, 0.8f, 1f);
+                EditorGUI.DrawRect(typeHeaderRect, headerBg);
+                
+                // 下線を描画
+                Color lineColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.3f, 0.3f, 0.3f, 1f)
+                    : new Color(0.6f, 0.6f, 0.6f, 1f);
+                Rect lineRect = new Rect(typeHeaderRect.x, typeHeaderRect.yMax - 1, typeHeaderRect.width, 1);
+                EditorGUI.DrawRect(lineRect, lineColor);
+            }
+            
+            // ラベルを描画
+            typeHeaderRect.x += 8;
+            string recorderTypeName = GetRecorderTypeName(item.recorderType);
+            GUI.Label(typeHeaderRect, $"Recorder Type: {recorderTypeName}", EditorStyles.boldLabel);
+            
+            EditorGUILayout.Space(10);
             
             // Check if recorder type is supported
             if (!RecorderSettingsFactory.IsRecorderTypeSupported(item.recorderType))
             {
                 string reason = GetUnsupportedReason(item.recorderType);
-                EditorGUILayout.HelpBox(reason, MessageType.Error);
+                var errorStyle = new GUIStyle(EditorStyles.wordWrappedLabel);
+                errorStyle.normal.textColor = Color.red;
+                EditorGUILayout.LabelField(reason, errorStyle);
                 EditorGUILayout.EndVertical(); // End content wrapper
                 EditorGUILayout.EndScrollView();
+                EditorGUILayout.EndVertical(); // End column
                 return;
             }
             
@@ -1120,11 +916,53 @@ namespace BatchRenderingTool
             }
             else
             {
-                EditorGUILayout.HelpBox("Recorder editor not available for this type.", MessageType.Warning);
+                EditorGUILayout.LabelField("Recorder editor not available for this type.", EditorStyles.wordWrappedMiniLabel);
             }
+            
+            // Output Path settings (moved to bottom as requested)
+            EditorGUILayout.Space(Styles.SectionSpacing);
+            
+            // Output Path header with background
+            Rect outputHeaderRect = EditorGUILayout.GetControlRect(false, 22);
+            if (Event.current.type == EventType.Repaint)
+            {
+                // 背景を描画
+                Color headerBg = EditorGUIUtility.isProSkin 
+                    ? new Color(0.18f, 0.18f, 0.18f, 1f)
+                    : new Color(0.8f, 0.8f, 0.8f, 1f);
+                EditorGUI.DrawRect(outputHeaderRect, headerBg);
+                
+                // 下線を描画
+                Color lineColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.3f, 0.3f, 0.3f, 1f)
+                    : new Color(0.6f, 0.6f, 0.6f, 1f);
+                Rect lineRect = new Rect(outputHeaderRect.x, outputHeaderRect.yMax - 1, outputHeaderRect.width, 1);
+                EditorGUI.DrawRect(lineRect, lineColor);
+            }
+            
+            // ラベルを描画
+            outputHeaderRect.x += 8;
+            GUI.Label(outputHeaderRect, "Output Path Settings", EditorStyles.boldLabel);
+            
+            EditorGUILayout.Space(5);
+            
+            // Get current timeline name for wildcard context
+            string timelineName = "Timeline";
+            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < availableDirectors.Count)
+            {
+                var director = availableDirectors[currentTimelineIndexForRecorder];
+                if (director != null && director.playableAsset != null)
+                {
+                    timelineName = director.playableAsset.name;
+                }
+            }
+            
+            OutputPathSettingsUI.DrawRecorderPathUI(globalOutputPath, item.outputPath, "Output Path", timelineName, item.name);
+            EditorGUILayout.Space(5);
             
             EditorGUILayout.EndVertical(); // End content wrapper
             EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical(); // End column
         }
         
         /// <summary>
@@ -1135,19 +973,23 @@ namespace BatchRenderingTool
             // Get the rect for the splitter
             Rect splitterRect = GUILayoutUtility.GetRect(splitterWidth, 1, GUILayout.ExpandHeight(true));
             
-            // Determine color based on state
+            // Determine color based on state - Unity standard colors
             Color splitterColor;
             if (isDragging)
             {
-                splitterColor = new Color(0.2f, 0.5f, 0.8f, 0.8f); // Blue when dragging
+                splitterColor = Styles.ActiveSelectionColor; // Active state
             }
             else if (splitterRect.Contains(Event.current.mousePosition))
             {
-                splitterColor = new Color(0.6f, 0.6f, 0.6f, 0.8f); // Lighter when hovering
+                splitterColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.7f, 0.7f, 0.7f, 0.5f)  // Pro Skin hover
+                    : new Color(0.4f, 0.4f, 0.4f, 0.5f); // Light Skin hover
             }
             else
             {
-                splitterColor = new Color(0.4f, 0.4f, 0.4f, 0.3f); // Default color
+                splitterColor = EditorGUIUtility.isProSkin
+                    ? new Color(0.15f, 0.15f, 0.15f, 1f)  // Pro Skin default
+                    : new Color(0.6f, 0.6f, 0.6f, 1f);    // Light Skin default
             }
             
             // Draw the splitter as a thin line
@@ -1190,17 +1032,24 @@ namespace BatchRenderingTool
             }
         }
         
-        private string GetRecorderIcon(RecorderSettingsType type)
+        private GUIContent GetRecorderIconContent(RecorderSettingsType type)
         {
             switch (type)
             {
-                case RecorderSettingsType.Movie: return "🎬";
-                case RecorderSettingsType.Image: return "🖼️";
-                case RecorderSettingsType.AOV: return "🌈";
-                case RecorderSettingsType.Animation: return "🎭";
-                case RecorderSettingsType.FBX: return "🗂️";
-                case RecorderSettingsType.Alembic: return "📦";
-                default: return "📹";
+                case RecorderSettingsType.Movie: 
+                    return EditorGUIUtility.IconContent("Animation.Record");
+                case RecorderSettingsType.Image: 
+                    return EditorGUIUtility.IconContent("RawImage Icon");
+                case RecorderSettingsType.AOV: 
+                    return EditorGUIUtility.IconContent("Texture Icon");
+                case RecorderSettingsType.Animation: 
+                    return EditorGUIUtility.IconContent("AnimationClip Icon");
+                case RecorderSettingsType.FBX: 
+                    return EditorGUIUtility.IconContent("PrefabModel Icon");
+                case RecorderSettingsType.Alembic: 
+                    return EditorGUIUtility.IconContent("Mesh Icon");
+                default: 
+                    return EditorGUIUtility.IconContent("Camera Icon");
             }
         }
         
@@ -1349,8 +1198,8 @@ namespace BatchRenderingTool
                 if (isRendering)
                 {
                     BatchRenderingToolLogger.Log("[SingleTimelineRenderer] Creating PlayModeTimelineRenderer GameObject");
-                    currentState = RenderState.Rendering;
-                    statusMessage = "Rendering in Play Mode...";
+                    currentState = RecordState.Recording;
+                    statusMessage = "Recording in Play Mode...";
                     
                     // レンダリングデータを準備
                     string directorName = EditorPrefs.GetString("STR_DirectorName", "");
@@ -1388,8 +1237,8 @@ namespace BatchRenderingTool
                             BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] File does not exist at path: {tempAssetPath}");
                         }
                         
-                        currentState = RenderState.Error;
-                        statusMessage = "Failed to load render timeline";
+                        currentState = RecordState.Error;
+                        statusMessage = "Failed to load recording timeline";
                         
                         // Clear rendering flag
                         EditorPrefs.SetBool("STR_IsRendering", false);
@@ -1441,11 +1290,11 @@ namespace BatchRenderingTool
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Exiting Play Mode");
                 
-                // 状態はすでにOnRenderingProgressUpdateで更新されているため、
+                // 状態はすでにOnRecordingProgressUpdateで更新されているため、
                 // ここでは最終的なクリーンアップのみ行う
                 
                 // 監視を停止
-                EditorApplication.update -= OnRenderingProgressUpdate;
+                EditorApplication.update -= OnRecordingProgressUpdate;
                 
                 // クリーンアップ
                 if (renderCoroutine != null)
@@ -1461,19 +1310,6 @@ namespace BatchRenderingTool
             }
         }
         
-        private void UpdateRecorderEditor()
-        {
-            currentRecorderEditor = recorderType switch
-            {
-                RecorderSettingsType.Image => new ImageRecorderEditor(this),
-                RecorderSettingsType.Movie => new MovieRecorderEditor(this),
-                RecorderSettingsType.AOV => new AOVRecorderEditor(this),
-                RecorderSettingsType.Alembic => new AlembicRecorderEditor(this),
-                RecorderSettingsType.Animation => new AnimationRecorderEditor(this),
-                RecorderSettingsType.FBX => new FBXRecorderEditor(this),
-                _ => null
-            };
-        }
         
         /// <summary>
         /// Creates recorder editor for specific recorder type with given host
@@ -1498,52 +1334,68 @@ namespace BatchRenderingTool
             
             // EditorWindowではコルーチンは使用できないため、
             // EditorApplication.updateを使用して進行状況を監視
-            EditorApplication.update += OnRenderingProgressUpdate;
+            EditorApplication.update += OnRecordingProgressUpdate;
         }
         
-        private void DrawRenderControls()
+        private void DrawRecordControls()
         {
             EditorGUILayout.BeginHorizontal();
             
-            bool canRender = currentState == RenderState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying;
+            bool canRecord = currentState == RecordState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying;
             
             // Validate timeline selection
-            canRender = canRender && selectedDirectorIndices.Count > 0;
+            canRecord = canRecord && selectedDirectorIndices.Count > 0;
             
-            // Additional validation for multi-recorder mode
-            if (useMultiRecorder)
+            // Validate recorder configurations for selected timelines
+            if (canRecord)
             {
-                canRender = canRender && multiRecorderConfig.GetEnabledRecorders().Count > 0;
-            }
-            else
-            {
-                canRender = canRender && RecorderSettingsFactory.IsRecorderTypeSupported(recorderType);
+                int validTimelineCount = 0;
+                foreach (int idx in selectedDirectorIndices)
+                {
+                    var config = GetTimelineRecorderConfig(idx);
+                    if (config.GetEnabledRecorders().Count > 0)
+                    {
+                        validTimelineCount++;
+                    }
+                }
+                canRecord = validTimelineCount > 0;
             }
             
             // Add Reset button if stuck in WaitingForPlayMode
-            if (currentState == RenderState.WaitingForPlayMode && !EditorApplication.isPlaying)
+            if (currentState == RecordState.WaitingForPlayMode && !EditorApplication.isPlaying)
             {
-                EditorGUILayout.HelpBox("Renderer is stuck in WaitingForPlayMode state. Click Reset to fix.", MessageType.Warning);
+                EditorGUILayout.LabelField("Recorder is stuck in WaitingForPlayMode state. Click Reset to fix.", EditorStyles.wordWrappedMiniLabel);
                 if (GUILayout.Button("Reset State", GUILayout.Height(25)))
                 {
-                    currentState = RenderState.Idle;
+                    currentState = RecordState.Idle;
                     renderCoroutine = null;
                     statusMessage = "State reset to Idle";
                     BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] State manually reset to Idle");
                 }
             }
             
-            GUI.enabled = canRender;
-            if (GUILayout.Button("Start Rendering", GUILayout.Height(30)))
+            // Record button with icon and color
+            GUI.enabled = canRecord;
+            Color originalColor = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0.8f, 0.2f, 0.2f); // Red for recording
+            
+            GUIContent recordContent = new GUIContent(" Start Recording", EditorGUIUtility.IconContent("d_Record").image);
+            if (GUILayout.Button(recordContent, GUILayout.Height(30), GUILayout.MinWidth(150)))
             {
-                StartRendering();
+                StartRecording();
             }
             
-            GUI.enabled = currentState == RenderState.Rendering || EditorApplication.isPlaying;
-            if (GUILayout.Button("Stop Rendering", GUILayout.Height(30)))
+            // Stop button with icon
+            GUI.enabled = currentState == RecordState.Recording || EditorApplication.isPlaying;
+            GUI.backgroundColor = new Color(0.5f, 0.5f, 0.5f); // Gray for stop
+            
+            GUIContent stopContent = new GUIContent(" Stop Recording", EditorGUIUtility.IconContent("d_PreMatQuad").image);
+            if (GUILayout.Button(stopContent, GUILayout.Height(30), GUILayout.MinWidth(150)))
             {
-                StopRendering();
+                StopRecording();
             }
+            
+            GUI.backgroundColor = originalColor;
             
             GUI.enabled = true;
             EditorGUILayout.EndHorizontal();
@@ -1552,33 +1404,62 @@ namespace BatchRenderingTool
         private void DrawStatusSection()
         {
             EditorGUILayout.LabelField("Status", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical();
             
             // Status message
             Color originalColor = GUI.color;
             switch (currentState)
             {
-                case RenderState.Error:
+                case RecordState.Error:
                     GUI.color = Color.red;
                     break;
-                case RenderState.Complete:
+                case RecordState.Complete:
                     GUI.color = Color.green;
                     break;
-                case RenderState.Rendering:
-                    GUI.color = Color.yellow;
+                case RecordState.Recording:
+                    GUI.color = new Color(1f, 0.3f, 0.3f); // Recording red
                     break;
             }
             
             EditorGUILayout.LabelField($"State: {currentState}");
             GUI.color = originalColor;
             
-            EditorGUILayout.LabelField($"Message: {statusMessage}");
-            
-            // Progress bar
-            if (currentState == RenderState.Rendering || currentState == RenderState.PreparingAssets || currentState == RenderState.WaitingForPlayMode)
+            // Show timeline progress
+            if (currentState == RecordState.Recording && totalTimelinesToRecord > 0)
             {
-                // 美しいプログレスバー
+                string timelineName = "";
+                if (currentRecordingTimelineIndex < selectedDirectorIndices.Count)
+                {
+                    int directorIdx = selectedDirectorIndices[currentRecordingTimelineIndex];
+                    if (directorIdx < availableDirectors.Count)
+                    {
+                        timelineName = availableDirectors[directorIdx].gameObject.name;
+                    }
+                }
+                
+                EditorGUILayout.LabelField($"Message: Processing {timelineName} ({currentRecordingTimelineIndex + 1}/{totalTimelinesToRecord})");
+            }
+            else if (currentState == RecordState.Complete && totalTimelinesToRecord > 0)
+            {
+                EditorGUILayout.LabelField($"Message: Completed all {totalTimelinesToRecord} timelines");
+            }
+            else
+            {
+                EditorGUILayout.LabelField($"Message: {statusMessage}");
+            }
+            
+            // Progress bar with recording color
+            if (currentState == RecordState.Recording || currentState == RecordState.PreparingAssets || currentState == RecordState.WaitingForPlayMode)
+            {
+                // Recording-themed progress bar
                 var rect = EditorGUILayout.GetControlRect(GUILayout.Height(25));
+                
+                // Draw custom progress bar with recording colors
+                Color barColor = currentState == RecordState.Recording 
+                    ? new Color(0.8f, 0.2f, 0.2f, 0.7f) // Red for active recording
+                    : new Color(0.5f, 0.5f, 0.5f, 0.7f); // Gray for preparing
+                    
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width * renderProgress, rect.height), barColor);
                 EditorGUI.ProgressBar(rect, renderProgress, $"{(int)(renderProgress * 100)}%");
                 
                 // 詳細な時間情報
@@ -1599,7 +1480,7 @@ namespace BatchRenderingTool
         private void DrawDebugSettings()
         {
             EditorGUILayout.LabelField("Debug Settings", EditorStyles.boldLabel);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical();
             
             // Debug mode toggle
             EditorGUI.BeginChangeCheck();
@@ -1612,12 +1493,12 @@ namespace BatchRenderingTool
             
             if (debugMode)
             {
-                EditorGUILayout.HelpBox("Debug Mode Active: Generated Timeline assets and GameObjects will not be deleted after rendering.", MessageType.Info);
+                EditorGUILayout.LabelField("Debug Mode Active: Generated Timeline assets and GameObjects will not be deleted after rendering.", EditorStyles.miniLabel);
                 
                 // Show last generated asset if available
                 if (!string.IsNullOrEmpty(lastGeneratedAssetPath))
                 {
-                    EditorGUILayout.Space(5);
+                    EditorGUILayout.Space(Styles.StandardSpacing);
                     EditorGUILayout.LabelField("Last Generated Asset:", EditorStyles.miniBoldLabel);
                     
                     EditorGUILayout.BeginHorizontal();
@@ -1640,7 +1521,7 @@ namespace BatchRenderingTool
                 }
                 
                 // Clean up debug assets button
-                EditorGUILayout.Space(10);
+                EditorGUILayout.Space(Styles.SectionSpacing);
                 EditorGUILayout.BeginHorizontal();
                 
                 if (GUILayout.Button("Clean Debug Assets", GUILayout.Height(25)))
@@ -1718,9 +1599,9 @@ namespace BatchRenderingTool
             }
         }
         
-        private void StartRendering()
+        private void StartRecording()
         {
-            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === StartRendering called ===");
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] === StartRecording called ===");
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Current state: {currentState}");
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Available directors: {availableDirectors.Count}");
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
@@ -1736,9 +1617,9 @@ namespace BatchRenderingTool
             renderCoroutine = EditorCoroutineUtility.StartCoroutine(RenderTimelineCoroutine(), this);
         }
         
-        private void StopRendering()
+        private void StopRecording()
         {
-            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRendering called");
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRecording called");
             
             if (renderCoroutine != null)
             {
@@ -1747,12 +1628,12 @@ namespace BatchRenderingTool
                 renderCoroutine = null;
             }
             
-            if (renderingDirector != null)
+            if (recordingDirector != null)
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Stopping rendering director");
                 try
                 {
-                    renderingDirector.Stop();
+                    recordingDirector.Stop();
                 }
                 catch (System.Exception e)
                 {
@@ -1777,23 +1658,23 @@ namespace BatchRenderingTool
                 BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Error during cleanup: {e.Message}");
             }
             
-            currentState = RenderState.Idle;
-            statusMessage = "Rendering stopped by user";
-            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRendering completed");
+            currentState = RecordState.Idle;
+            statusMessage = "Recording stopped by user";
+            BatchRenderingToolLogger.Log("[SingleTimelineRenderer] StopRecording completed");
         }
         
-        private void OnRenderingProgressUpdate()
+        private void OnRecordingProgressUpdate()
         {
             if (!EditorApplication.isPlaying)
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Rendering progress monitoring ended");
-                EditorApplication.update -= OnRenderingProgressUpdate;
+                EditorApplication.update -= OnRecordingProgressUpdate;
                 
                 // Play Mode終了時の最終状態チェック
                 if (EditorPrefs.GetBool("STR_IsRenderingComplete", false))
                 {
-                    currentState = RenderState.Complete;
-                    statusMessage = "Rendering complete!";
+                    currentState = RecordState.Complete;
+                    statusMessage = "Recording complete!";
                     renderProgress = 1f;
                     EditorPrefs.DeleteKey("STR_IsRenderingComplete");
                 }
@@ -1825,15 +1706,15 @@ namespace BatchRenderingTool
             else if (EditorPrefs.GetBool("STR_IsRenderingComplete", false))
             {
                 // レンダリング完了
-                currentState = RenderState.Complete;
-                statusMessage = "Rendering complete!";
+                currentState = RecordState.Complete;
+                statusMessage = "Recording complete!";
                 renderProgress = 1f;
                 
                 // UIを更新
                 Repaint();
                 
                 // 監視を停止
-                EditorApplication.update -= OnRenderingProgressUpdate;
+                EditorApplication.update -= OnRecordingProgressUpdate;
             }
             
             // フォールバック: RenderingDataオブジェクトを直接監視
@@ -1874,15 +1755,15 @@ namespace BatchRenderingTool
                 renderTimeline = null;
             }
             
-            // renderingDirectorのクリーンアップ
-            if (renderingDirector != null)
+            // recordingDirectorのクリーンアップ
+            if (recordingDirector != null)
             {
                 BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Destroying rendering director");
-                if (renderingDirector.gameObject != null)
+                if (recordingDirector.gameObject != null)
                 {
-                    DestroyImmediate(renderingDirector.gameObject);
+                    DestroyImmediate(recordingDirector.gameObject);
                 }
-                renderingDirector = null;
+                recordingDirector = null;
             }
             
             // クリーンアップ: RenderingDataオブジェクトを削除
@@ -1921,14 +1802,18 @@ namespace BatchRenderingTool
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Available directors count: {availableDirectors.Count}");
             BatchRenderingToolLogger.LogVerbose($"[SingleTimelineRenderer] Selected index: {selectedDirectorIndex}");
             
-            currentState = RenderState.Preparing;
+            currentState = RecordState.Preparing;
             statusMessage = "Preparing...";
             renderProgress = 0f;
+            
+            // Reset progress tracking
+            currentRecordingTimelineIndex = 0;
+            totalTimelinesToRecord = selectedDirectorIndices.Count;
             
             // Validate selection
             if (availableDirectors.Count == 0)
             {
-                currentState = RenderState.Error;
+                currentState = RecordState.Error;
                 statusMessage = "No timelines available";
                 BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No timelines available");
                 yield break;
@@ -1940,7 +1825,7 @@ namespace BatchRenderingTool
             // Collect selected directors based on selectedDirectorIndices
             if (selectedDirectorIndices.Count == 0)
             {
-                currentState = RenderState.Error;
+                currentState = RecordState.Error;
                 statusMessage = "No timelines selected";
                 BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No timelines selected");
                 yield break;
@@ -1963,7 +1848,7 @@ namespace BatchRenderingTool
             
             if (directorsToRender.Count == 0)
             {
-                currentState = RenderState.Error;
+                currentState = RecordState.Error;
                 statusMessage = "No valid timelines selected";
                 BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] No valid timelines in selection");
                 yield break;
@@ -1991,11 +1876,11 @@ namespace BatchRenderingTool
             }
             
             // Create render timeline
-            currentState = RenderState.PreparingAssets;
-            statusMessage = "Creating render timeline...";
+            currentState = RecordState.PreparingAssets;
+            statusMessage = "Creating recording timeline...";
             yield return null; // Allow UI to update
             
-            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating render timeline...");
+            BatchRenderingToolLogger.LogVerbose("[SingleTimelineRenderer] Creating recording timeline...");
             renderTimeline = null;
             try
             {
@@ -2012,9 +1897,9 @@ namespace BatchRenderingTool
             }
             catch (System.Exception e)
             {
-                currentState = RenderState.Error;
+                currentState = RecordState.Error;
                 statusMessage = $"Failed to create timeline: {e.Message}";
-                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create render timeline: {e}");
+                BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to create recording timeline: {e}");
                 
                 // Restore original playOnAwake values
                 foreach (var kvp in originalPlayOnAwakeValues)
@@ -2026,8 +1911,8 @@ namespace BatchRenderingTool
             
             if (renderTimeline == null)
             {
-                currentState = RenderState.Error;
-                statusMessage = "Failed to create render timeline";
+                currentState = RecordState.Error;
+                statusMessage = "Failed to create recording timeline";
                 BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] CreateRenderTimeline returned null");
                 
                 // Restore original playOnAwake values
@@ -2039,7 +1924,7 @@ namespace BatchRenderingTool
             }
             
             // Save assets and verify
-            currentState = RenderState.SavingAssets;
+            currentState = RecordState.SavingAssets;
             statusMessage = "Saving timeline asset...";
             yield return null; // Allow UI to update
             
@@ -2053,7 +1938,7 @@ namespace BatchRenderingTool
             var verifyAsset = AssetDatabase.LoadAssetAtPath<TimelineAsset>(tempAssetPath);
             if (verifyAsset == null)
             {
-                currentState = RenderState.Error;
+                currentState = RecordState.Error;
                 statusMessage = "Failed to save Timeline asset";
                 BatchRenderingToolLogger.LogError($"[SingleTimelineRenderer] Failed to verify saved asset at: {tempAssetPath}");
                 
@@ -2070,7 +1955,7 @@ namespace BatchRenderingTool
             yield return new WaitForSeconds(0.5f);
             
             // Enter Play Mode
-            currentState = RenderState.WaitingForPlayMode;
+            currentState = RecordState.WaitingForPlayMode;
             statusMessage = "Starting Unity Play Mode...";
             
             BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] === Current Play Mode state: {EditorApplication.isPlaying} ===");
@@ -2084,7 +1969,7 @@ namespace BatchRenderingTool
                 if (string.IsNullOrEmpty(tempAssetPath))
                 {
                     BatchRenderingToolLogger.LogError("[SingleTimelineRenderer] tempAssetPath is null or empty!");
-                    currentState = RenderState.Error;
+                    currentState = RecordState.Error;
                     statusMessage = "Timeline asset path is invalid";
                     
                     // Restore original playOnAwake values
@@ -2106,7 +1991,10 @@ namespace BatchRenderingTool
                 EditorPrefs.SetBool("STR_IsRendering", true);
                 EditorPrefs.SetInt("STR_TakeNumber", takeNumber);
                 EditorPrefs.SetString("STR_OutputFile", fileName);
-                EditorPrefs.SetInt("STR_RecorderType", (int)recorderType);
+                // Store first recorder type for single recorder mode
+                var firstRecorderType = multiRecorderConfig.RecorderItems.Count > 0 ? 
+                    multiRecorderConfig.RecorderItems[0].recorderType : RecorderSettingsType.Image;
+                EditorPrefs.SetInt("STR_RecorderType", (int)firstRecorderType);
                 EditorPrefs.SetInt("STR_FrameRate", frameRate);
                 EditorPrefs.SetInt("STR_PreRollFrames", preRollFrames);
                 // exposedNameも保存（CreateRenderTimelineで生成されたもの）
@@ -2149,11 +2037,11 @@ namespace BatchRenderingTool
             if (!timelineRecorderConfigs.ContainsKey(timelineIndex))
             {
                 var newConfig = new MultiRecorderConfig();
-                // Copy global settings from the main multiRecorderConfig
+                // Note: Do NOT copy globalOutputPath to maintain independence
+                // Only copy resolution and frame rate settings
                 newConfig.useGlobalResolution = multiRecorderConfig.useGlobalResolution;
                 newConfig.globalWidth = multiRecorderConfig.globalWidth;
                 newConfig.globalHeight = multiRecorderConfig.globalHeight;
-                newConfig.globalOutputPath = multiRecorderConfig.globalOutputPath;
                 newConfig.useGlobalFrameRate = multiRecorderConfig.useGlobalFrameRate;
                 newConfig.globalFrameRate = multiRecorderConfig.globalFrameRate;
                 
@@ -2198,7 +2086,10 @@ namespace BatchRenderingTool
                 }
             }
             
-            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Applied recorder settings to {selectedDirectorIndices.Count - 1} timelines");
+            BatchRenderingToolLogger.Log($"[SingleTimelineRenderer] Copied recorder settings to {selectedDirectorIndices.Count - 1} other timelines");
+            EditorUtility.DisplayDialog("Copy Complete", 
+                $"Recorder settings have been copied to {selectedDirectorIndices.Count - 1} other timeline{(selectedDirectorIndices.Count - 1 > 1 ? "s" : "")}.", 
+                "OK");
         }
         
         /// <summary>
@@ -2222,16 +2113,30 @@ namespace BatchRenderingTool
             public int frameRate { get => renderer.frameRate; set => renderer.frameRate = value; }
             public int width 
             { 
-                get => renderer.multiRecorderConfig.useGlobalResolution ? renderer.multiRecorderConfig.globalWidth : item.width; 
+                get => item.width; 
                 set => item.width = value; 
             }
             public int height 
             { 
-                get => renderer.multiRecorderConfig.useGlobalResolution ? renderer.multiRecorderConfig.globalHeight : item.height; 
+                get => item.height; 
                 set => item.height = value; 
             }
             public string fileName { get => item.fileName; set => item.fileName = value; }
-            public string filePath { get => renderer.multiRecorderConfig.globalOutputPath; set => renderer.multiRecorderConfig.globalOutputPath = value; }
+            public string filePath 
+            { 
+                get => OutputPathManager.ResolveRecorderPath(renderer.globalOutputPath, item.outputPath); 
+                set 
+                { 
+                    // This property should not modify global settings
+                    // Instead, update the recorder's specific output path
+                    if (item.outputPath.pathMode == RecorderPathMode.UseGlobal)
+                    {
+                        // If using global path, switch to custom mode to allow individual configuration
+                        item.outputPath.pathMode = RecorderPathMode.Custom;
+                    }
+                    item.outputPath.path = value;
+                } 
+            }
             public int takeNumber { get => item.takeNumber; set => item.takeNumber = value; }
             public string cameraTag { get => renderer.cameraTag; set => renderer.cameraTag = value; }
             public OutputResolution outputResolution { get => renderer.outputResolution; set => renderer.outputResolution = value; }
@@ -2510,5 +2415,6 @@ namespace BatchRenderingTool
             public FBXExportPreset fbxPreset { get => FBXExportPreset.Custom; set { } }
             public bool useFBXPreset { get => false; set { } }
         }
+        
     }
 }
