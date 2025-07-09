@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__linear__list_issues",
+      "mcp__linear__list_projects"
     ]
   },
   "enableAllProjectMcpServers": true,
