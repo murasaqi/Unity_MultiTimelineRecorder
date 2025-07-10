@@ -562,17 +562,13 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
             }
             
-            // Draw content AFTER background
-            GUI.BeginGroup(headerRect);
-            Rect contentRect = new Rect(0, 0, headerRect.width, headerRect.height);
-            GUI.BeginGroup(new Rect(4, 2, contentRect.width - 8, contentRect.height - 4));
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
-            GUILayout.Label("Add Timeline", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            GUI.EndGroup();
-            GUI.EndGroup();
+            // Draw content AFTER background using GUI methods
+            var iconContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
+            var iconRect = new Rect(headerRect.x + 4, headerRect.y + 2, 20, 20);
+            GUI.Label(iconRect, iconContent);
+            
+            var textRect = new Rect(headerRect.x + 28, headerRect.y + 2, headerRect.width - 32, 20);
+            GUI.Label(textRect, "Add Timeline", EditorStyles.boldLabel);
             
             // Make entire header clickable
             if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
@@ -651,25 +647,40 @@ namespace BatchRenderingTool
                     // チェックボックス以外の領域でクリックされた場合のみ、タイムラインを選択
                     if (Event.current.type == EventType.MouseDown && isHover && !checkboxRect.Contains(Event.current.mousePosition))
                     {
-                        // Save current selection before switching
-                        if (currentTimelineIndexForRecorder >= 0)
+                        if (Event.current.button == 0) // Left click
                         {
-                            timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                            // Save current selection before switching
+                            if (currentTimelineIndexForRecorder >= 0)
+                            {
+                                timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                            }
+                            
+                            currentTimelineIndexForRecorder = i;
+                            
+                            // Restore previous selection for this timeline
+                            if (timelineSelectedRecorderIndices.TryGetValue(i, out int savedIndex))
+                            {
+                                selectedRecorderIndex = savedIndex;
+                            }
+                            else
+                            {
+                                selectedRecorderIndex = -1;
+                            }
+                            
+                            Event.current.Use();
                         }
-                        
-                        currentTimelineIndexForRecorder = i;
-                        
-                        // Restore previous selection for this timeline
-                        if (timelineSelectedRecorderIndices.TryGetValue(i, out int savedIndex))
+                        else if (Event.current.button == 1) // Right click
                         {
-                            selectedRecorderIndex = savedIndex;
+                            GenericMenu menu = new GenericMenu();
+                            int index = i; // Capture index for closure
+                            
+                            menu.AddItem(new GUIContent("Remove Timeline"), false, () => {
+                                RemoveTimeline(index);
+                            });
+                            
+                            menu.ShowAsContext();
+                            Event.current.Use();
                         }
-                        else
-                        {
-                            selectedRecorderIndex = -1;
-                        }
-                        
-                        Event.current.Use();
                     }
                     
                     // 選択状態の背景色
@@ -788,47 +799,7 @@ namespace BatchRenderingTool
                         }
                     }
                     
-                    // Remove button
-                    if (GUILayout.Button("×", GUILayout.Width(20), GUILayout.Height(16)))
-                    {
-                        selectedTimelineDirectors.RemoveAt(i);
-                        
-                        // Update selected indices
-                        selectedDirectorIndices.Remove(i);
-                        for (int j = 0; j < selectedDirectorIndices.Count; j++)
-                        {
-                            if (selectedDirectorIndices[j] > i)
-                                selectedDirectorIndices[j]--;
-                        }
-                        
-                        // Update current timeline index if needed
-                        if (currentTimelineIndexForRecorder == i)
-                        {
-                            currentTimelineIndexForRecorder = selectedDirectorIndices.Count > 0 ? selectedDirectorIndices[0] : -1;
-                        }
-                        else if (currentTimelineIndexForRecorder > i)
-                        {
-                            currentTimelineIndexForRecorder--;
-                        }
-                        
-                        // Update selected recorder indices
-                        if (timelineSelectedRecorderIndices.ContainsKey(i))
-                        {
-                            timelineSelectedRecorderIndices.Remove(i);
-                        }
-                        
-                        // Reindex the dictionary
-                        var newIndices = new Dictionary<int, int>();
-                        foreach (var kvp in timelineSelectedRecorderIndices)
-                        {
-                            int newKey = kvp.Key > i ? kvp.Key - 1 : kvp.Key;
-                            newIndices[newKey] = kvp.Value;
-                        }
-                        timelineSelectedRecorderIndices = newIndices;
-                        
-                        BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Removed timeline at index {i}");
-                        break; // Exit loop since list has changed
-                    }
+                    // No remove button - use right-click menu instead
                     
                     EditorGUILayout.EndHorizontal();
                 }
@@ -888,17 +859,13 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
             }
             
-            // Draw content AFTER background
-            GUI.BeginGroup(headerRect);
-            Rect contentRect = new Rect(0, 0, headerRect.width, headerRect.height);
-            GUI.BeginGroup(new Rect(4, 2, contentRect.width - 8, contentRect.height - 4));
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
-            GUILayout.Label("Add Recorder", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            GUI.EndGroup();
-            GUI.EndGroup();
+            // Draw content AFTER background using GUI methods
+            var addRecorderIcon = EditorGUIUtility.IconContent("d_Toolbar Plus");
+            var addRecorderIconRect = new Rect(headerRect.x + 4, headerRect.y + 2, 20, 20);
+            GUI.Label(addRecorderIconRect, addRecorderIcon);
+            
+            var addRecorderTextRect = new Rect(headerRect.x + 28, headerRect.y + 2, headerRect.width - 32, 20);
+            GUI.Label(addRecorderTextRect, "Add Recorder", EditorStyles.boldLabel);
             
             // Make entire header clickable
             if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
@@ -1518,6 +1485,49 @@ namespace BatchRenderingTool
             }
             
             BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Added timeline: {director.gameObject.name}");
+        }
+        
+        private void RemoveTimeline(int index)
+        {
+            if (index < 0 || index >= selectedTimelineDirectors.Count)
+                return;
+                
+            selectedTimelineDirectors.RemoveAt(index);
+            
+            // Update selected indices
+            selectedDirectorIndices.Remove(index);
+            for (int j = 0; j < selectedDirectorIndices.Count; j++)
+            {
+                if (selectedDirectorIndices[j] > index)
+                    selectedDirectorIndices[j]--;
+            }
+            
+            // Update current timeline index if needed
+            if (currentTimelineIndexForRecorder == index)
+            {
+                currentTimelineIndexForRecorder = selectedDirectorIndices.Count > 0 ? selectedDirectorIndices[0] : -1;
+            }
+            else if (currentTimelineIndexForRecorder > index)
+            {
+                currentTimelineIndexForRecorder--;
+            }
+            
+            // Update selected recorder indices
+            if (timelineSelectedRecorderIndices.ContainsKey(index))
+            {
+                timelineSelectedRecorderIndices.Remove(index);
+            }
+            
+            // Reindex the dictionary
+            var newIndices = new Dictionary<int, int>();
+            foreach (var kvp in timelineSelectedRecorderIndices)
+            {
+                int newKey = kvp.Key > index ? kvp.Key - 1 : kvp.Key;
+                newIndices[newKey] = kvp.Value;
+            }
+            timelineSelectedRecorderIndices = newIndices;
+            
+            BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Removed timeline at index {index}");
         }
         
         private void OnEditorUpdate()
