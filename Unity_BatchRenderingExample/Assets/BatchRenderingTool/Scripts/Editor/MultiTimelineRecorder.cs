@@ -436,14 +436,15 @@ namespace BatchRenderingTool
             // Timeline settings on same line
             EditorGUILayout.BeginHorizontal();
             
-            EditorGUILayout.LabelField("Timeline Margin:", GUILayout.Width(100));
-            timelineMarginFrames = EditorGUILayout.IntField(timelineMarginFrames, GUILayout.Width(60));
+            // Pre-roll at the left
+            EditorGUILayout.LabelField("Pre-roll:", GUILayout.Width(60));
+            preRollFrames = EditorGUILayout.IntField(preRollFrames, GUILayout.Width(60));
             EditorGUILayout.LabelField("frames", GUILayout.Width(50));
             
             EditorGUILayout.Space(20);
             
-            EditorGUILayout.LabelField("Pre-roll:", GUILayout.Width(60));
-            preRollFrames = EditorGUILayout.IntField(preRollFrames, GUILayout.Width(60));
+            EditorGUILayout.LabelField("Timeline Margin:", GUILayout.Width(100));
+            timelineMarginFrames = EditorGUILayout.IntField(timelineMarginFrames, GUILayout.Width(60));
             EditorGUILayout.LabelField("frames", GUILayout.Width(50));
             
             EditorGUILayout.EndHorizontal();
@@ -700,11 +701,27 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
             }
             
-            // シンプルなヘッダー
+            // Header with Add Recorder button
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(EditorGUIUtility.IconContent("UnityEditor.AnimationWindow"), GUILayout.Width(20), GUILayout.Height(20));
-            GUILayout.Label("Recorders", EditorStyles.boldLabel);
+            
+            // Add Recorder button in header
+            Color originalBgColor = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0.2f, 0.6f, 0.2f); // Green for add
+            GUIContent addRecorderContent = new GUIContent(" Add Recorder", EditorGUIUtility.IconContent("d_Toolbar Plus").image);
+            if (GUILayout.Button(addRecorderContent, GUILayout.Height(22), GUILayout.Width(120)))
+            {
+                GenericMenu menu = new GenericMenu();
+                menu.AddItem(new GUIContent("🎬 Movie"), false, () => AddRecorder(RecorderSettingsType.Movie));
+                menu.AddItem(new GUIContent("🖼️ Image Sequence"), false, () => AddRecorder(RecorderSettingsType.Image));
+                menu.AddItem(new GUIContent("🌈 AOV Image Sequence"), false, () => AddRecorder(RecorderSettingsType.AOV));
+                menu.AddItem(new GUIContent("🎭 Animation Clip"), false, () => AddRecorder(RecorderSettingsType.Animation));
+                menu.AddItem(new GUIContent("🗂️ FBX"), false, () => AddRecorder(RecorderSettingsType.FBX));
+                menu.AddItem(new GUIContent("📦 Alembic"), false, () => AddRecorder(RecorderSettingsType.Alembic));
+                menu.ShowAsContext();
+            }
+            GUI.backgroundColor = originalBgColor;
+            
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
@@ -753,40 +770,27 @@ namespace BatchRenderingTool
             
             EditorGUILayout.Space(Styles.StandardSpacing);
             
-            // Add Recorder button and Copy to All button
+            // Recorders label and Copy to All button
             EditorGUILayout.BeginHorizontal();
-            
-            // Add Recorder button with icon
-            Color originalBgColor = GUI.backgroundColor;
-            GUI.backgroundColor = new Color(0.2f, 0.6f, 0.2f); // Green for add
-            GUIContent addRecorderContent = new GUIContent(" Add Recorder", EditorGUIUtility.IconContent("d_Toolbar Plus").image);
-            if (GUILayout.Button(addRecorderContent, GUILayout.Height(22), GUILayout.Width(120)))
-            {
-                GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("🎬 Movie"), false, () => AddRecorder(RecorderSettingsType.Movie));
-                menu.AddItem(new GUIContent("🖼️ Image Sequence"), false, () => AddRecorder(RecorderSettingsType.Image));
-                menu.AddItem(new GUIContent("🌈 AOV Image Sequence"), false, () => AddRecorder(RecorderSettingsType.AOV));
-                menu.AddItem(new GUIContent("🎭 Animation Clip"), false, () => AddRecorder(RecorderSettingsType.Animation));
-                menu.AddItem(new GUIContent("🗂️ FBX"), false, () => AddRecorder(RecorderSettingsType.FBX));
-                menu.AddItem(new GUIContent("📦 Alembic"), false, () => AddRecorder(RecorderSettingsType.Alembic));
-                menu.ShowAsContext();
-            }
+            GUILayout.Label(EditorGUIUtility.IconContent("UnityEditor.AnimationWindow"), GUILayout.Width(20), GUILayout.Height(20));
+            GUILayout.Label("Recorders", EditorStyles.boldLabel);
             
             // Copy settings button - only show if there are multiple selected timelines
             if (selectedDirectorIndices.Count > 1)
             {
                 GUILayout.Space(5);
                 // Copy to All button with icon
+                Color originalBg = GUI.backgroundColor;
                 GUI.backgroundColor = new Color(0.3f, 0.5f, 0.8f); // Blue for copy
                 GUIContent copyContent = new GUIContent(" Copy to All", EditorGUIUtility.IconContent("d_TreeEditor.Duplicate").image, "Copy these recorder settings to all selected timelines");
                 if (GUILayout.Button(copyContent, GUILayout.Height(20), GUILayout.Width(100)))
                 {
                     ApplyRecorderSettingsToAllTimelines();
                 }
+                GUI.backgroundColor = originalBg;
             }
             
             GUILayout.FlexibleSpace();
-            GUI.backgroundColor = originalBgColor; // Restore original background color
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.Space(Styles.StandardSpacing);
