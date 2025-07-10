@@ -56,8 +56,8 @@ MonoBehaviour:
       useGlobalFrameRate: 1
       globalFrameRate: 24
   timelineTakeNumbers: []
-  leftColumnWidth: 99
-  centerColumnWidth: 108
+  leftColumnWidth: 235
+  centerColumnWidth: 246
   debugMode: 0
   showStatusSection: 1
   showDebugSettings: 0

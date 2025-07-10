@@ -869,8 +869,12 @@ namespace BatchRenderingTool
         
         private void DrawRecorderDetailColumn()
         {
-            // Inspector風のコンテナ
-            EditorGUILayout.BeginVertical(EditorStyles.inspectorDefaultMargins, GUILayout.ExpandHeight(true));
+            // Column container with background
+            Rect columnRect = EditorGUILayout.BeginVertical(GUILayout.ExpandHeight(true));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
+            }
             
             // Inspector風のヘッダー
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
