@@ -7,7 +7,7 @@ namespace BatchRenderingTool
 {
     /// <summary>
     /// Interface for classes that host recorder settings
-    /// Allows RecorderEditors to work with both SingleTimelineRenderer and MultiTimelineRenderer
+    /// Allows RecorderEditors to work with both MultiTimelineRecorder and MultiTimelineRenderer
     /// </summary>
     public interface IRecorderSettingsHost
     {
@@ -18,6 +18,7 @@ namespace BatchRenderingTool
         string fileName { get; set; }
         string filePath { get; set; }
         int takeNumber { get; set; }
+        RecorderTakeMode takeMode { get; set; }
         string cameraTag { get; set; }
         OutputResolution outputResolution { get; set; }
         
@@ -84,7 +85,7 @@ namespace BatchRenderingTool
         FBXExportPreset fbxPreset { get; set; }
         bool useFBXPreset { get; set; }
         
-        // For SingleTimelineRenderer
+        // For MultiTimelineRecorder
         PlayableDirector selectedDirector { get; }
     }
 }

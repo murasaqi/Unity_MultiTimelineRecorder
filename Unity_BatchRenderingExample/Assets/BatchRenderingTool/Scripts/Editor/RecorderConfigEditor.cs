@@ -222,6 +222,7 @@ namespace BatchRenderingTool
             public string fileName { get => config.fileName; set => config.fileName = value; }
             public string filePath { get => config.filePath; set => config.filePath = value; }
             public int takeNumber { get => config.takeNumber; set => config.takeNumber = value; }
+            public RecorderTakeMode takeMode { get => RecorderTakeMode.ClipTake; set { /* RecorderConfig doesn't support take mode */ } }
             public string cameraTag { get => config.cameraTag; set => config.cameraTag = value; }
             public OutputResolution outputResolution { get => config.outputResolution; set => config.outputResolution = value; }
             

@@ -7,6 +7,22 @@ using UnityEditor.Recorder.Input;
 namespace BatchRenderingTool
 {
     /// <summary>
+    /// Take番号の管理モード
+    /// </summary>
+    public enum RecorderTakeMode
+    {
+        /// <summary>
+        /// RecordersカラムのTimeline固有のTake番号を使用
+        /// </summary>
+        RecordersTake,
+        
+        /// <summary>
+        /// 各ClipごとのTake番号を使用（従来の動作）
+        /// </summary>
+        ClipTake
+    }
+    
+    /// <summary>
     /// 複数のレコーダー設定を管理するためのコンフィグクラス
     /// </summary>
     [Serializable]
@@ -25,6 +41,7 @@ namespace BatchRenderingTool
             // 各レコーダータイプ固有の設定
             public string fileName = "Recording_<Take>";
             public int takeNumber = 1;
+            public RecorderTakeMode takeMode = RecorderTakeMode.ClipTake;
             
             // Output path settings
             public OutputPathSettings outputPath = new OutputPathSettings() { pathMode = RecorderPathMode.UseGlobal };
@@ -69,8 +86,12 @@ namespace BatchRenderingTool
                     recorderType = this.recorderType,
                     fileName = this.fileName,
                     takeNumber = this.takeNumber,
+                    takeMode = this.takeMode,
                     imageFormat = this.imageFormat,
                     imageQuality = this.imageQuality,
+                    captureAlpha = this.captureAlpha,
+                    jpegQuality = this.jpegQuality,
+                    exrCompression = this.exrCompression,
                     width = this.width,
                     height = this.height,
                     frameRate = this.frameRate,
@@ -86,6 +107,14 @@ namespace BatchRenderingTool
                 clone.fbxConfig = this.fbxConfig?.Clone();
                 
                 return clone;
+            }
+            
+            /// <summary>
+            /// DeepCopyメソッド（エイリアス）
+            /// </summary>
+            public RecorderConfigItem DeepCopy()
+            {
+                return Clone();
             }
             
             /// <summary>
@@ -323,7 +352,6 @@ namespace BatchRenderingTool
                 {
                     exportTargets = source.alembicConfig.exportTargets,
                     exportScope = source.alembicConfig.exportScope,
-                    targetGameObject = source.alembicConfig.targetGameObject,
                     handedness = source.alembicConfig.handedness,
                     scaleFactor = source.alembicConfig.scaleFactor,
                     frameRate = source.alembicConfig.frameRate,
@@ -331,6 +359,9 @@ namespace BatchRenderingTool
                     includeChildren = source.alembicConfig.includeChildren,
                     flattenHierarchy = source.alembicConfig.flattenHierarchy
                 };
+                // GameObject参照もコピー
+                clone.alembicConfig.targetGameObject = source.alembicConfig.targetGameObject;
+                clone.alembicConfig.customSelection = new List<GameObject>(source.alembicConfig.customSelection);
             }
             
             if (source.animationConfig != null)
@@ -338,7 +369,6 @@ namespace BatchRenderingTool
                 clone.animationConfig = new AnimationRecorderSettingsConfig
                 {
                     recordingProperties = source.animationConfig.recordingProperties,
-                    targetGameObject = source.animationConfig.targetGameObject,
                     recordingScope = source.animationConfig.recordingScope,
                     interpolationMode = source.animationConfig.interpolationMode,
                     compressionLevel = source.animationConfig.compressionLevel,
@@ -346,21 +376,25 @@ namespace BatchRenderingTool
                     clampedTangents = source.animationConfig.clampedTangents,
                     recordBlendShapes = source.animationConfig.recordBlendShapes
                 };
+                // GameObject参照もコピー
+                clone.animationConfig.targetGameObject = source.animationConfig.targetGameObject;
+                clone.animationConfig.customSelection = new List<GameObject>(source.animationConfig.customSelection);
             }
             
             if (source.fbxConfig != null)
             {
                 clone.fbxConfig = new FBXRecorderSettingsConfig
                 {
-                    targetGameObject = source.fbxConfig.targetGameObject,
                     recordedComponent = source.fbxConfig.recordedComponent,
                     recordHierarchy = source.fbxConfig.recordHierarchy,
                     clampedTangents = source.fbxConfig.clampedTangents,
                     animationCompression = source.fbxConfig.animationCompression,
-                    exportGeometry = source.fbxConfig.exportGeometry,
-                    transferAnimationSource = source.fbxConfig.transferAnimationSource,
-                    transferAnimationDest = source.fbxConfig.transferAnimationDest
+                    exportGeometry = source.fbxConfig.exportGeometry
                 };
+                // GameObject参照もコピー
+                clone.fbxConfig.targetGameObject = source.fbxConfig.targetGameObject;
+                clone.fbxConfig.transferAnimationSource = source.fbxConfig.transferAnimationSource;
+                clone.fbxConfig.transferAnimationDest = source.fbxConfig.transferAnimationDest;
             }
             
             return clone;

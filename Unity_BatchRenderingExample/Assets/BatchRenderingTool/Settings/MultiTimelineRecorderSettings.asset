@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a2e3ab16352dda4f8d2eb8e9d513ace, type: 3}
+  m_Name: MultiTimelineRecorderSettings
+  m_EditorClassIdentifier: 
+  frameRate: 24
+  width: 1920
+  height: 1080
+  fileName: <Scene>_<Recorder>_<Take>
+  globalOutputPath:
+    location: 0
+    path: Recordings/<Timeline>
+    pathMode: 0
+    customPath: 
+  takeNumber: 1
+  preRollFrames: 0
+  cameraTag: MainCamera
+  outputResolution: 1
+  selectedDirectorIndex: 0
+  selectedDirectorIndices: 00000000
+  timelineMarginFrames: 30
+  multiRecorderConfig:
+    recorderItems: []
+    globalOutputPath: Recordings
+    useGlobalResolution: 1
+    globalWidth: 1920
+    globalHeight: 1080
+    useGlobalFrameRate: 1
+    globalFrameRate: 24
+  timelineRecorderConfigEntries:
+  - timelineIndex: 0
+    config:
+      recorderItems: []
+      globalOutputPath: Recordings
+      useGlobalResolution: 1
+      globalWidth: 1920
+      globalHeight: 1080
+      useGlobalFrameRate: 1
+      globalFrameRate: 24
+  timelineTakeNumbers: []
+  leftColumnWidth: 496
+  centerColumnWidth: 250
+  debugMode: 0
+  showStatusSection: 1
+  showDebugSettings: 0

@@ -23,6 +23,7 @@ namespace BatchRenderingTool
             public const string Recorder = "<Recorder>";
             public const string GameObject = "<GameObject>";
             public const string Timeline = "<Timeline>";
+            public const string TimelineTake = "<TimelineTake>";
         }
         
         /// <summary>
@@ -47,6 +48,7 @@ namespace BatchRenderingTool
             result = result.Replace(Wildcards.Recorder, context.RecorderName ?? "Recorder");
             result = result.Replace(Wildcards.GameObject, context.GameObjectName ?? "GameObject");
             result = result.Replace(Wildcards.Timeline, context.TimelineName ?? "Timeline");
+            result = result.Replace(Wildcards.TimelineTake, context.TimelineTakeNumber.HasValue ? $"Take{context.TimelineTakeNumber.Value:D2}" : $"Take{context.TakeNumber:D2}");
             
             return result;
         }
@@ -191,6 +193,7 @@ namespace BatchRenderingTool
         public string RecorderName { get; set; }
         public string GameObjectName { get; set; }
         public string TimelineName { get; set; }
+        public int? TimelineTakeNumber { get; set; }
         
         public WildcardContext() { }
         

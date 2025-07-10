@@ -6,16 +6,14 @@
   <component name="ChangeListManager">
     <list default="true" id="915eec3e-4ec0-4f08-b582-cd97b778b29c" name="変更" comment="">
       <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.mcp.json" beforeDir="false" afterPath="$PROJECT_DIR$/.mcp.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/AOVRecorderSettingsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/AOVRecorderSettingsConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/AlembicRecorderSettingsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/AlembicRecorderSettingsConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/AnimationRecorderSettingsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/AnimationRecorderSettingsConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/FBXRecorderSettingsConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/FBXRecorderSettingsConfig.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/MultiRecorderConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/MultiRecorderConfig.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/RecorderConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/RecorderConfig.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/RecorderEditors/RecorderSettingsEditorBase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/RecorderEditors/RecorderSettingsEditorBase.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/SingleTimelineRenderer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/SingleTimelineRenderer.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/SingleTimelineRenderer_CreateMethods.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/SingleTimelineRenderer_CreateMethods.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/SingleTimelineRenderer_RecorderSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/SingleTimelineRenderer_RecorderSettings.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/SampleSceneAssets/Animations/CinematicsTimeline.playable" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SampleSceneAssets/Animations/CinematicsTimeline.playable" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/SampleSceneAssets/Settings/Volumes/CinematicPhysicalCamera.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SampleSceneAssets/Settings/Volumes/CinematicPhysicalCamera.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/WildcardProcessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/BatchRenderingTool/Scripts/Editor/WildcardProcessor.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

@@ -178,11 +178,36 @@ namespace BatchRenderingTool.RecorderEditors
             string exampleFileName = GetFullOutputPath();
             EditorGUILayout.LabelField($"Example: {exampleFileName}", EditorStyles.miniLabel);
             
-            // Path settings are now handled by OutputPathSettingsUI in SingleTimelineRenderer
+            // Path settings are now handled by OutputPathSettingsUI in MultiTimelineRecorder
             // This prevents duplicate path UI elements
             
+            // Take Mode
+            host.takeMode = (RecorderTakeMode)EditorGUILayout.EnumPopup("Take Mode", host.takeMode);
+            
             // Take number
-            host.takeNumber = EditorGUILayout.IntField("Take Number", host.takeNumber);
+            EditorGUI.BeginDisabledGroup(host.takeMode == RecorderTakeMode.RecordersTake);
+            if (host.takeMode == RecorderTakeMode.RecordersTake)
+            {
+                // Show the timeline's take number as read-only
+                // Try to get timeline take number through reflection or interface
+                var hostType = host.GetType();
+                var methodInfo = hostType.GetMethod("GetTimelineTakeNumber");
+                if (methodInfo != null)
+                {
+                    int timelineTakeNumber = (int)methodInfo.Invoke(host, null);
+                    EditorGUILayout.IntField("Take Number", timelineTakeNumber);
+                }
+                else
+                {
+                    EditorGUILayout.IntField("Take Number", host.takeNumber);
+                }
+            }
+            else
+            {
+                // Clip Take mode - editable
+                host.takeNumber = EditorGUILayout.IntField("Take Number", host.takeNumber);
+            }
+            EditorGUI.EndDisabledGroup();
         }
         
         /// <summary>

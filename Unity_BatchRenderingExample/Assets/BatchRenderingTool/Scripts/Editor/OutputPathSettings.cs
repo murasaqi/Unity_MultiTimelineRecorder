@@ -33,7 +33,7 @@ namespace BatchRenderingTool
     public class OutputPathSettings
     {
         public OutputPathLocation location = OutputPathLocation.Project;
-        public string path = "Recordings";
+        public string path = "Recordings/<Timeline>";
         public RecorderPathMode pathMode = RecorderPathMode.UseGlobal;
         public string customPath = "";
         
@@ -349,12 +349,16 @@ namespace BatchRenderingTool
                     settings.path += "/" + wildcard;
                 }
                 GUI.changed = true;
+                GUI.FocusControl(null); // Clear focus to force immediate update
+                GUIUtility.keyboardControl = 0; // Reset keyboard control
+                GUIUtility.ExitGUI(); // Force immediate GUI update
             };
             
             // Basic wildcards
             menu.AddItem(new GUIContent("<Scene>"), false, () => insertWildcard("<Scene>"));
             menu.AddItem(new GUIContent("<Timeline>"), false, () => insertWildcard("<Timeline>"));
             menu.AddItem(new GUIContent("<Take>"), false, () => insertWildcard("<Take>"));
+            menu.AddItem(new GUIContent("<TimelineTake>"), false, () => insertWildcard("<TimelineTake>"));
             menu.AddItem(new GUIContent("<Date>"), false, () => insertWildcard("<Date>"));
             menu.AddItem(new GUIContent("<Time>"), false, () => insertWildcard("<Time>"));
             menu.AddItem(new GUIContent("<Resolution>"), false, () => insertWildcard("<Resolution>"));
@@ -367,16 +371,25 @@ namespace BatchRenderingTool
             {
                 settings.path = "Recordings/<Timeline>";
                 GUI.changed = true;
+                GUI.FocusControl(null);
+                GUIUtility.keyboardControl = 0;
+                GUIUtility.ExitGUI();
             });
             menu.AddItem(new GUIContent("Examples/By Scene: Recordings/<Scene>/<Timeline>"), false, () => 
             {
                 settings.path = "Recordings/<Scene>/<Timeline>";
                 GUI.changed = true;
+                GUI.FocusControl(null);
+                GUIUtility.keyboardControl = 0;
+                GUIUtility.ExitGUI();
             });
             menu.AddItem(new GUIContent("Examples/By Date: Recordings/<Date>/<Timeline>"), false, () => 
             {
                 settings.path = "Recordings/<Date>/<Timeline>";
                 GUI.changed = true;
+                GUI.FocusControl(null);
+                GUIUtility.keyboardControl = 0;
+                GUIUtility.ExitGUI();
             });
             
             menu.ShowAsContext();
@@ -408,12 +421,16 @@ namespace BatchRenderingTool
                     settings.customPath += wildcard;
                 }
                 GUI.changed = true;
+                GUI.FocusControl(null); // Clear focus to force immediate update
+                GUIUtility.keyboardControl = 0; // Reset keyboard control
+                GUIUtility.ExitGUI(); // Force immediate GUI update
             };
             
             // Basic wildcards
             menu.AddItem(new GUIContent("<Timeline>"), false, () => insertWildcard("<Timeline>"));
             menu.AddItem(new GUIContent("<Recorder>"), false, () => insertWildcard("<Recorder>"));
             menu.AddItem(new GUIContent("<Take>"), false, () => insertWildcard("<Take>"));
+            menu.AddItem(new GUIContent("<TimelineTake>"), false, () => insertWildcard("<TimelineTake>"));
             menu.AddItem(new GUIContent("<Date>"), false, () => insertWildcard("<Date>"));
             
             menu.ShowAsContext();

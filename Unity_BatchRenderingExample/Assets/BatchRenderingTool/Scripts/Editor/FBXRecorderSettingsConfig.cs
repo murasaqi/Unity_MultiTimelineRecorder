@@ -8,16 +8,43 @@ namespace BatchRenderingTool
     /// <summary>
     /// Configuration for FBX Recorder settings
     /// </summary>
+    [Serializable]
     public class FBXRecorderSettingsConfig
     {
-        public GameObject targetGameObject = null;
+        // GameObject参照を保持するためのGameObjectReference
+        [SerializeField]
+        private GameObjectReference targetGameObjectRef = new GameObjectReference();
+        
+        public GameObject targetGameObject 
+        { 
+            get { return targetGameObjectRef?.GameObject; }
+            set { if (targetGameObjectRef == null) targetGameObjectRef = new GameObjectReference(); targetGameObjectRef.GameObject = value; }
+        }
+        
         public FBXRecordedComponent recordedComponent = FBXRecordedComponent.Camera;
         public bool recordHierarchy = true;
         public bool clampedTangents = true;
         public FBXAnimationCompressionLevel animationCompression = FBXAnimationCompressionLevel.Lossy;
         public bool exportGeometry = true;
-        public Transform transferAnimationSource = null;
-        public Transform transferAnimationDest = null;
+        
+        // Transform参照もGameObjectReferenceで管理
+        [SerializeField]
+        private GameObjectReference transferAnimationSourceRef = new GameObjectReference();
+        [SerializeField]
+        private GameObjectReference transferAnimationDestRef = new GameObjectReference();
+        
+        public Transform transferAnimationSource 
+        { 
+            get { return transferAnimationSourceRef?.GetTransform(); }
+            set { if (transferAnimationSourceRef == null) transferAnimationSourceRef = new GameObjectReference(); transferAnimationSourceRef.GameObject = value != null ? value.gameObject : null; }
+        }
+        
+        public Transform transferAnimationDest
+        { 
+            get { return transferAnimationDestRef?.GetTransform(); }
+            set { if (transferAnimationDestRef == null) transferAnimationDestRef = new GameObjectReference(); transferAnimationDestRef.GameObject = value != null ? value.gameObject : null; }
+        }
+        
         public float frameRate = 24f;
         
         /// <summary>
@@ -517,18 +544,22 @@ namespace BatchRenderingTool
         /// </summary>
         public FBXRecorderSettingsConfig Clone()
         {
-            return new FBXRecorderSettingsConfig
+            var clone = new FBXRecorderSettingsConfig
             {
-                targetGameObject = this.targetGameObject,
                 recordedComponent = this.recordedComponent,
                 recordHierarchy = this.recordHierarchy,
                 clampedTangents = this.clampedTangents,
                 animationCompression = this.animationCompression,
                 exportGeometry = this.exportGeometry,
-                transferAnimationSource = this.transferAnimationSource,
-                transferAnimationDest = this.transferAnimationDest,
                 frameRate = this.frameRate
             };
+            
+            // GameObject参照もコピー
+            clone.targetGameObject = this.targetGameObject;
+            clone.transferAnimationSource = this.transferAnimationSource;
+            clone.transferAnimationDest = this.transferAnimationDest;
+            
+            return clone;
         }
         
     }

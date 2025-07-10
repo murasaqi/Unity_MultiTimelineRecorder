@@ -1,4 +1,4 @@
-# Unity Timeline Batch Rendering Tool
+# Unity Multi Timeline Recorder
 
 複数のTimelineを一括でレンダリングするUnityエディタ拡張ツールです。
 

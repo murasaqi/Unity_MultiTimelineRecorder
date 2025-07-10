@@ -17,8 +17,47 @@ namespace BatchRenderingTool
         // Export targets
         public AlembicExportTargets exportTargets = AlembicExportTargets.MeshRenderer | AlembicExportTargets.Transform;
         public AlembicExportScope exportScope = AlembicExportScope.EntireScene;
-        public GameObject targetGameObject = null;
-        public List<GameObject> customSelection = new List<GameObject>();
+        
+        // GameObject参照を保持するためのGameObjectReference
+        [SerializeField]
+        private GameObjectReference targetGameObjectRef = new GameObjectReference();
+        
+        public GameObject targetGameObject 
+        { 
+            get { return targetGameObjectRef?.GameObject; }
+            set { if (targetGameObjectRef == null) targetGameObjectRef = new GameObjectReference(); targetGameObjectRef.GameObject = value; }
+        }
+        
+        // カスタム選択用のGameObjectリストの参照も管理
+        [SerializeField]
+        private List<GameObjectReference> customSelectionRefs = new List<GameObjectReference>();
+        
+        public List<GameObject> customSelection 
+        {
+            get 
+            {
+                var list = new List<GameObject>();
+                foreach (var refObj in customSelectionRefs)
+                {
+                    var go = refObj?.GameObject;
+                    if (go != null) list.Add(go);
+                }
+                return list;
+            }
+            set 
+            {
+                customSelectionRefs.Clear();
+                if (value != null)
+                {
+                    foreach (var go in value)
+                    {
+                        var refObj = new GameObjectReference();
+                        refObj.GameObject = go;
+                        customSelectionRefs.Add(refObj);
+                    }
+                }
+            }
+        }
         
         // Time sampling settings
         public AlembicTimeSamplingMode timeSamplingMode = AlembicTimeSamplingMode.Uniform;

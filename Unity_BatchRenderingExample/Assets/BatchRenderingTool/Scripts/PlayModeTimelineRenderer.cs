@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using System.Collections;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -155,7 +156,22 @@ namespace BatchRenderingTool
             EditorPrefs.SetBool("STR_IsRenderingInProgress", false);
             EditorPrefs.SetBool("STR_IsRenderingComplete", true);
             
-            // Play Mode終了を予約（少し待ってから）
+            // 1秒後にPlay Mode終了とTake Numberインクリメントを実行
+            StartCoroutine(ExitPlayModeAfterDelay(1f));
+            #endif
+        }
+        
+        #if UNITY_EDITOR
+        private IEnumerator ExitPlayModeAfterDelay(float delay)
+        {
+            Debug.Log($"[PlayModeTimelineRenderer] Waiting {delay} seconds before exiting Play Mode...");
+            
+            yield return new WaitForSeconds(delay);
+            
+            // Take Numberインクリメントのフラグを設定
+            EditorPrefs.SetBool("STR_IncrementTakeNumber", true);
+            
+            // Play Mode終了を予約
             EditorApplication.delayCall += () =>
             {
                 if (EditorPrefs.GetBool("STR_AutoExitPlayMode", true))
@@ -164,8 +180,8 @@ namespace BatchRenderingTool
                     EditorApplication.isPlaying = false;
                 }
             };
-            #endif
         }
+        #endif
         
         void OnDestroy()
         {

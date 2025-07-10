@@ -11,18 +11,20 @@
       "mcp__unity-natural-mcp__run_edit_mode_tests",
       "mcp__unity-natural-mcp__run_play_mode_tests",
       "mcp__snap-happy__TakeScreenshot",
-      "WebFetch(domain:linear.app)",
-      "mcp__linear__list_teams",
-      "mcp__linear__list_projects",
-      "mcp__linear__list_my_issues",
       "Bash(claude settings mcp add:*)",
       "Bash(claude)",
-      "mcp__linear__search_documentation"
+      "Bash(rm:*)",
+      "Bash(true)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(env)",
+      "Bash(mcp remove:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "unity-natural-mcp",
-    "linear"
-  ]
+    "unity-natural-mcp"
+  ],
+  "mcpServers": {
+  }
 }
