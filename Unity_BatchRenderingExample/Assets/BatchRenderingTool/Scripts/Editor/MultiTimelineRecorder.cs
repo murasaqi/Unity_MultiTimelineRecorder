@@ -527,7 +527,8 @@ namespace BatchRenderingTool
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label(EditorGUIUtility.IconContent("UnityEditor.Timeline.TimelineWindow"), GUILayout.Width(20), GUILayout.Height(20));
-            EditorGUILayout.LabelField("Timelines", EditorStyles.boldLabel);
+            GUILayout.Label("Timelines", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
             
@@ -677,7 +678,8 @@ namespace BatchRenderingTool
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label(EditorGUIUtility.IconContent("UnityEditor.AnimationWindow"), GUILayout.Width(20), GUILayout.Height(20));
-            EditorGUILayout.LabelField("Recorders", EditorStyles.boldLabel);
+            GUILayout.Label("Recorders", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
             
@@ -874,7 +876,8 @@ namespace BatchRenderingTool
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label(EditorGUIUtility.IconContent("Settings"), GUILayout.Width(20), GUILayout.Height(20));
-            EditorGUILayout.LabelField("Recorder Settings", EditorStyles.boldLabel);
+            GUILayout.Label("Recorder Settings", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
             
