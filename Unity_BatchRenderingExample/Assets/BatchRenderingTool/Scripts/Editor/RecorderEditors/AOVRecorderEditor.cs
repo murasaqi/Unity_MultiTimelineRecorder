@@ -52,32 +52,14 @@ namespace BatchRenderingTool.RecorderEditors
             // Camera selection dropdown
             host.cameraTag = EditorGUILayout.TagField("Camera", host.cameraTag ?? "MainCamera");
             
-            // Output Resolution dropdown
-            host.outputResolution = (OutputResolution)EditorGUILayout.EnumPopup("Output Resolution", host.outputResolution);
-            
-            if (host.outputResolution == OutputResolution.Custom)
-            {
-                EditorGUI.indentLevel++;
-                host.width = EditorGUILayout.IntField("W", host.width);
-                host.height = EditorGUILayout.IntField("H", host.height);
-                EditorGUI.indentLevel--;
-            }
-            else
-            {
-                // Apply preset resolution
-                ApplyResolutionPreset(host.outputResolution);
-                
-                // Show current resolution (read-only)
-                EditorGUI.indentLevel++;
-                using (new EditorGUI.DisabledScope(true))
-                {
-                    EditorGUILayout.IntField("W", host.width);
-                    EditorGUILayout.IntField("H", host.height);
-                }
-                EditorGUI.indentLevel--;
-            }
-            
             EditorGUI.indentLevel--;
+            
+            // Call base to handle resolution settings
+            base.DrawInputSettings();
+            
+            // Frame Rate
+            EditorGUILayout.Space(5);
+            host.frameRate = EditorGUILayout.IntField("Frame Rate", host.frameRate);
         }
         
         protected override void DrawOutputFormatSettings()

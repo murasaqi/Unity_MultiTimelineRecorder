@@ -182,10 +182,6 @@ namespace BatchRenderingTool
         /// </summary>
         public string globalOutputPath = "Recordings";
         public bool useGlobalResolution = true;
-        public int globalWidth = 1920;
-        public int globalHeight = 1080;
-        public bool useGlobalFrameRate = true;
-        public int globalFrameRate = 24;
         
         /// <summary>
         /// レコーダー設定のリストを取得

@@ -15,6 +15,7 @@ namespace BatchRenderingTool
         int frameRate { get; set; }
         int width { get; set; }
         int height { get; set; }
+        bool useGlobalResolution { get; set; }
         string fileName { get; set; }
         string filePath { get; set; }
         int takeNumber { get; set; }

@@ -132,6 +132,63 @@ namespace BatchRenderingTool.RecorderEditors
         protected virtual void DrawInputSettings()
         {
             EditorGUILayout.LabelField("Source", "Game View");
+            
+            // Resolution settings (common for most recorders)
+            EditorGUILayout.Space(5);
+            DrawSubsectionHeader("Resolution");
+            
+            // Use Global Resolution toggle
+            EditorGUI.BeginChangeCheck();
+            host.useGlobalResolution = EditorGUILayout.Toggle("Use Global Resolution", host.useGlobalResolution);
+            bool resolutionChanged = EditorGUI.EndChangeCheck();
+            
+            // Show resolution fields
+            using (new EditorGUI.DisabledScope(host.useGlobalResolution))
+            {
+                EditorGUI.indentLevel++;
+                
+                if (host.useGlobalResolution)
+                {
+                    // Show global values as read-only
+                    EditorGUILayout.LabelField("Width", "Using global setting", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField("Height", "Using global setting", EditorStyles.miniLabel);
+                }
+                else
+                {
+                    // Allow editing local values
+                    host.width = EditorGUILayout.IntField("Width", host.width);
+                    host.height = EditorGUILayout.IntField("Height", host.height);
+                    
+                    // Resolution presets
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.Space(EditorGUIUtility.labelWidth);
+                    if (GUILayout.Button("HD", GUILayout.Width(40)))
+                    {
+                        host.width = 1920;
+                        host.height = 1080;
+                    }
+                    if (GUILayout.Button("2K", GUILayout.Width(40)))
+                    {
+                        host.width = 2048;
+                        host.height = 1080;
+                    }
+                    if (GUILayout.Button("4K", GUILayout.Width(40)))
+                    {
+                        host.width = 3840;
+                        host.height = 2160;
+                    }
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+                }
+                
+                EditorGUI.indentLevel--;
+            }
+            
+            // If resolution changed and using global, sync with global values
+            if (resolutionChanged && host.useGlobalResolution)
+            {
+                // The host will handle syncing with global values
+            }
         }
         
         /// <summary>

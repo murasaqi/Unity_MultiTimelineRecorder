@@ -19,17 +19,16 @@ namespace BatchRenderingTool.RecorderEditors
         {
             base.DrawInputSettings();
             
-            // Resolution settings
+            // Movie-specific presets
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Resolution", EditorStyles.boldLabel);
-            
-            EditorGUI.indentLevel++;
+            DrawSubsectionHeader("Movie Presets");
             
             // Preset selection
             host.useMoviePreset = EditorGUILayout.Toggle("Use Preset", host.useMoviePreset);
             
             if (host.useMoviePreset)
             {
+                EditorGUI.indentLevel++;
                 host.moviePreset = (MovieRecorderPreset)EditorGUILayout.EnumPopup("Preset", host.moviePreset);
                 
                 if (host.moviePreset != MovieRecorderPreset.Custom)
@@ -40,9 +39,9 @@ namespace BatchRenderingTool.RecorderEditors
                     EditorGUI.indentLevel++;
                     using (new EditorGUI.DisabledScope(true))
                     {
-                        EditorGUILayout.IntField("Width", presetConfig.width);
-                        EditorGUILayout.IntField("Height", presetConfig.height);
-                        EditorGUILayout.IntField("Frame Rate", presetConfig.frameRate);
+                        EditorGUILayout.IntField("Preset Width", presetConfig.width);
+                        EditorGUILayout.IntField("Preset Height", presetConfig.height);
+                        EditorGUILayout.IntField("Preset Frame Rate", presetConfig.frameRate);
                     }
                     EditorGUI.indentLevel--;
                     
@@ -54,38 +53,16 @@ namespace BatchRenderingTool.RecorderEditors
                     host.movieQuality = presetConfig.videoBitrateMode;
                     host.movieCaptureAudio = presetConfig.captureAudio;
                     host.movieCaptureAlpha = presetConfig.captureAlpha;
+                    
+                    // Override useGlobalResolution when using preset
+                    host.useGlobalResolution = false;
                 }
+                EditorGUI.indentLevel--;
             }
             
-            if (!host.useMoviePreset || host.moviePreset == MovieRecorderPreset.Custom)
-            {
-                host.width = EditorGUILayout.IntField("Width", host.width);
-                host.height = EditorGUILayout.IntField("Height", host.height);
-                host.frameRate = EditorGUILayout.IntField("Frame Rate", host.frameRate);
-                
-                // Common resolution presets
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(EditorGUIUtility.labelWidth);
-                if (GUILayout.Button("HD", GUILayout.Width(40)))
-                {
-                    host.width = 1920;
-                    host.height = 1080;
-                }
-                if (GUILayout.Button("2K", GUILayout.Width(40)))
-                {
-                    host.width = 2048;
-                    host.height = 1080;
-                }
-                if (GUILayout.Button("4K", GUILayout.Width(40)))
-                {
-                    host.width = 3840;
-                    host.height = 2160;
-                }
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.EndHorizontal();
-            }
-            
-            EditorGUI.indentLevel--;
+            // Frame Rate (always show, not part of resolution)
+            EditorGUILayout.Space(5);
+            host.frameRate = EditorGUILayout.IntField("Frame Rate", host.frameRate);
         }
         
         protected override void DrawOutputFormatSettings()

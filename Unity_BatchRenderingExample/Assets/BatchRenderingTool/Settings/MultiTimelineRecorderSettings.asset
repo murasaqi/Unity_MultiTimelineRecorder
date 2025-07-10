@@ -32,10 +32,6 @@ MonoBehaviour:
     recorderItems: []
     globalOutputPath: Recordings
     useGlobalResolution: 1
-    globalWidth: 1920
-    globalHeight: 1080
-    useGlobalFrameRate: 1
-    globalFrameRate: 24
   timelineRecorderConfigEntries:
   - timelineIndex: 0
     config:
@@ -296,10 +292,6 @@ MonoBehaviour:
         capFrameRate: 1
       globalOutputPath: Recordings
       useGlobalResolution: 1
-      globalWidth: 1920
-      globalHeight: 1080
-      useGlobalFrameRate: 1
-      globalFrameRate: 24
   - timelineIndex: 1
     config:
       recorderItems:
@@ -558,32 +550,20 @@ MonoBehaviour:
         frameRate: 24
         capFrameRate: 1
       globalOutputPath: Recordings
-      useGlobalResolution: 1
-      globalWidth: 1920
-      globalHeight: 1080
-      useGlobalFrameRate: 1
-      globalFrameRate: 24
+      useGlobalResolution: 0
   - timelineIndex: 2
     config:
       recorderItems: []
       globalOutputPath: Recordings
       useGlobalResolution: 1
-      globalWidth: 1920
-      globalHeight: 1080
-      useGlobalFrameRate: 1
-      globalFrameRate: 24
   - timelineIndex: 3
     config:
       recorderItems: []
       globalOutputPath: Recordings
       useGlobalResolution: 1
-      globalWidth: 1920
-      globalHeight: 1080
-      useGlobalFrameRate: 1
-      globalFrameRate: 24
   timelineTakeNumbers: []
-  leftColumnWidth: 268
-  centerColumnWidth: 221
+  leftColumnWidth: 298
+  centerColumnWidth: 283
   debugMode: 0
   showStatusSection: 1
   showDebugSettings: 0

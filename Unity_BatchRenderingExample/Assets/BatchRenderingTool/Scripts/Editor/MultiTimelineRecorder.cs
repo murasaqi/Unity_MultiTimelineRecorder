@@ -1408,8 +1408,8 @@ namespace BatchRenderingTool
             // Apply global settings
             if (currentConfig.useGlobalResolution)
             {
-                item.width = currentConfig.globalWidth;
-                item.height = currentConfig.globalHeight;
+                item.width = width;
+                item.height = height;
             }
             item.frameRate = frameRate;
             
@@ -2459,10 +2459,6 @@ namespace BatchRenderingTool
                 // Note: Do NOT copy globalOutputPath to maintain independence
                 // Only copy resolution and frame rate settings
                 newConfig.useGlobalResolution = multiRecorderConfig.useGlobalResolution;
-                newConfig.globalWidth = multiRecorderConfig.globalWidth;
-                newConfig.globalHeight = multiRecorderConfig.globalHeight;
-                newConfig.useGlobalFrameRate = multiRecorderConfig.useGlobalFrameRate;
-                newConfig.globalFrameRate = multiRecorderConfig.globalFrameRate;
                 
                 timelineRecorderConfigs[timelineIndex] = newConfig;
             }
@@ -2499,8 +2495,6 @@ namespace BatchRenderingTool
                     
                     // Copy global settings
                     targetConfig.useGlobalResolution = sourceConfig.useGlobalResolution;
-                    targetConfig.globalWidth = sourceConfig.globalWidth;
-                    targetConfig.globalHeight = sourceConfig.globalHeight;
                     targetConfig.globalOutputPath = sourceConfig.globalOutputPath;
                 }
             }
@@ -2591,6 +2585,20 @@ namespace BatchRenderingTool
             { 
                 get => item.height; 
                 set => item.height = value; 
+            }
+            public bool useGlobalResolution 
+            { 
+                get => renderer.GetTimelineRecorderConfig(renderer.currentTimelineIndexForRecorder).useGlobalResolution; 
+                set 
+                { 
+                    renderer.GetTimelineRecorderConfig(renderer.currentTimelineIndexForRecorder).useGlobalResolution = value;
+                    // Sync with global values when enabled
+                    if (value)
+                    {
+                        item.width = renderer.width;
+                        item.height = renderer.height;
+                    }
+                } 
             }
             public string fileName { get => item.fileName; set => item.fileName = value; }
             public string filePath 

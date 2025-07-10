@@ -219,6 +219,7 @@ namespace BatchRenderingTool
             public int frameRate { get => config.frameRate; set => config.frameRate = value; }
             public int width { get => config.width; set => config.width = value; }
             public int height { get => config.height; set => config.height = value; }
+            public bool useGlobalResolution { get => false; set { /* RecorderConfig always uses local resolution */ } }
             public string fileName { get => config.fileName; set => config.fileName = value; }
             public string filePath { get => config.filePath; set => config.filePath = value; }
             public int takeNumber { get => config.takeNumber; set => config.takeNumber = value; }

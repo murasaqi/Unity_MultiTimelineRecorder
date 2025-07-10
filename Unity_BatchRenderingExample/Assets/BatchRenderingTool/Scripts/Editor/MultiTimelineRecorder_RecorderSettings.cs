@@ -360,8 +360,8 @@ namespace BatchRenderingTool
                 }
                 
                 var context = new WildcardContext(effectiveTakeNumber,
-                    timelineConfig.useGlobalResolution ? timelineConfig.globalWidth : recorderItem.width,
-                    timelineConfig.useGlobalResolution ? timelineConfig.globalHeight : recorderItem.height);
+                    timelineConfig.useGlobalResolution ? width : recorderItem.width,
+                    timelineConfig.useGlobalResolution ? height : recorderItem.height);
                 context.TimelineName = director.gameObject.name;
                 context.RecorderName = recorderItem.recorderType.ToString();
                 

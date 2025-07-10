@@ -18,35 +18,9 @@ namespace BatchRenderingTool.RecorderEditors
         {
             base.DrawInputSettings();
             
-            // Resolution settings
+            // Frame Rate (image sequences still need frame rate for timing)
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Resolution", EditorStyles.boldLabel);
-            
-            EditorGUI.indentLevel++;
-            host.width = EditorGUILayout.IntField("Width", host.width);
-            host.height = EditorGUILayout.IntField("Height", host.height);
-            
-            // Common resolution presets
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Space(EditorGUIUtility.labelWidth);
-            if (GUILayout.Button("HD", GUILayout.Width(40)))
-            {
-                host.width = 1920;
-                host.height = 1080;
-            }
-            if (GUILayout.Button("2K", GUILayout.Width(40)))
-            {
-                host.width = 2048;
-                host.height = 1080;
-            }
-            if (GUILayout.Button("4K", GUILayout.Width(40)))
-            {
-                host.width = 3840;
-                host.height = 2160;
-            }
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            EditorGUI.indentLevel--;
+            host.frameRate = EditorGUILayout.IntField("Frame Rate", host.frameRate);
         }
         
         protected override void DrawOutputFormatSettings()
