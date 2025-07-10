@@ -566,15 +566,18 @@ namespace BatchRenderingTool
                     bool isCurrentForRecorder = (i == currentTimelineIndexForRecorder);
                     
                     // リストアイテム
-                    EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
+                    var controlRect = EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
                     
-                    // 最初にダミースペースを描画してRectを取得
-                    GUILayout.Space(1);
-                    Rect itemRect = GUILayoutUtility.GetLastRect();
-                    itemRect.width = leftColumnWidth - 10; // 幅を列幅に合わせる
+                    // 正確なRectを取得
+                    Rect itemRect = controlRect;
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        itemRect = GUILayoutUtility.GetLastRect();
+                    }
                     
                     // マウスホバーとクリックの処理
                     bool isHover = itemRect.Contains(Event.current.mousePosition);
+                    
                     // チェックボックスの領域を定義
                     Rect checkboxRect = new Rect(itemRect.x + 4, itemRect.y + 2, 16, 16);
                     
@@ -635,7 +638,7 @@ namespace BatchRenderingTool
                         }
                     }
                     
-                    GUILayout.Space(23); // Checkboxのスペース (最初の1pxを引く)
+                    GUILayout.Space(24); // Checkboxのスペース
                     
                     // Draw vertical separator after checkbox
                     if (Event.current.type == EventType.Repaint)
@@ -802,12 +805,14 @@ namespace BatchRenderingTool
                 bool isSelected = (i == selectedRecorderIndex);
                 
                 // リストアイテム
-                EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
+                var controlRect = EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
                 
-                // 最初にダミースペースを描画してRectを取得
-                GUILayout.Space(1);
-                Rect itemRect = GUILayoutUtility.GetLastRect();
-                itemRect.width = centerColumnWidth - 10; // 幅を列幅に合わせる
+                // 正確なRectを取得
+                Rect itemRect = controlRect;
+                if (Event.current.type == EventType.Repaint)
+                {
+                    itemRect = GUILayoutUtility.GetLastRect();
+                }
                 
                 // マウスホバーとクリックの処理
                 bool isHover = itemRect.Contains(Event.current.mousePosition);
@@ -842,7 +847,7 @@ namespace BatchRenderingTool
                     // 変更を反映
                 }
                 
-                GUILayout.Space(23); // Checkboxのスペース (最初の1pxを引く)
+                GUILayout.Space(24); // Checkboxのスペース
                 
                 // Draw vertical separator after checkbox
                 if (Event.current.type == EventType.Repaint)
