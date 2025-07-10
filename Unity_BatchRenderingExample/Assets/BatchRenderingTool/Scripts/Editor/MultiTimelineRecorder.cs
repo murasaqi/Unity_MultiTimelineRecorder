@@ -780,6 +780,9 @@ namespace BatchRenderingTool
                 
                 // リストアイテム
                 EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
+                
+                // ダミーのスペースを描画してからRectを取得
+                GUILayout.Space(0);
                 Rect itemRect = GUILayoutUtility.GetLastRect();
                 
                 // マウスホバーとクリックの処理
