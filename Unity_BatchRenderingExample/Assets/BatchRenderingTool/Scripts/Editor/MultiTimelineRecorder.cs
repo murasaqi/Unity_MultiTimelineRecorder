@@ -636,10 +636,32 @@ namespace BatchRenderingTool
                     
                     GUILayout.Space(24); // Checkboxのスペース
                     
+                    // Draw vertical separator after checkbox
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        Color separatorColor = EditorGUIUtility.isProSkin 
+                            ? new Color(0.2f, 0.2f, 0.2f, 0.5f)
+                            : new Color(0.6f, 0.6f, 0.6f, 0.5f);
+                        Rect separatorRect = new Rect(itemRect.x + 28, itemRect.y + 2, 1, itemRect.height - 4);
+                        EditorGUI.DrawRect(separatorRect, separatorColor);
+                    }
+                    
+                    GUILayout.Space(8); // Separator後のスペース
+                    
                     // Timeline name
                     string timelineName = availableDirectors[i] != null ? availableDirectors[i].gameObject.name : "<Missing>";
                     GUIStyle nameStyle = isCurrentForRecorder ? EditorStyles.boldLabel : Styles.StandardListItem;
                     EditorGUILayout.LabelField(timelineName, nameStyle, GUILayout.ExpandWidth(true));
+                    
+                    // Draw vertical separator before duration
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        Color separatorColor = EditorGUIUtility.isProSkin 
+                            ? new Color(0.2f, 0.2f, 0.2f, 0.5f)
+                            : new Color(0.6f, 0.6f, 0.6f, 0.5f);
+                        Rect separatorRect = new Rect(itemRect.x + itemRect.width - 60, itemRect.y + 2, 1, itemRect.height - 4);
+                        EditorGUI.DrawRect(separatorRect, separatorColor);
+                    }
                     
                     // Show duration
                     var director = availableDirectors[i];
@@ -820,10 +842,34 @@ namespace BatchRenderingTool
                 
                 GUILayout.Space(24); // Checkboxのスペース
                 
+                // Draw vertical separator after checkbox
+                if (Event.current.type == EventType.Repaint)
+                {
+                    Color separatorColor = EditorGUIUtility.isProSkin 
+                        ? new Color(0.2f, 0.2f, 0.2f, 0.5f)
+                        : new Color(0.6f, 0.6f, 0.6f, 0.5f);
+                    Rect separatorRect = new Rect(itemRect.x + 28, itemRect.y + 2, 1, itemRect.height - 4);
+                    EditorGUI.DrawRect(separatorRect, separatorColor);
+                }
+                
+                GUILayout.Space(8); // Separator後のスペース
+                
                 // Icon based on recorder type
                 GUIContent iconContent = GetRecorderIconContent(item.recorderType);
-                GUI.Label(new Rect(itemRect.x + 26, itemRect.y + 2, 16, 16), iconContent);
-                GUILayout.Space(Styles.IconWidth);
+                GUI.Label(new Rect(itemRect.x + 38, itemRect.y + 2, 16, 16), iconContent);
+                GUILayout.Space(Styles.IconWidth + 8);
+                
+                // Draw vertical separator after icon
+                if (Event.current.type == EventType.Repaint)
+                {
+                    Color separatorColor = EditorGUIUtility.isProSkin 
+                        ? new Color(0.2f, 0.2f, 0.2f, 0.5f)
+                        : new Color(0.6f, 0.6f, 0.6f, 0.5f);
+                    Rect separatorRect = new Rect(itemRect.x + 62, itemRect.y + 2, 1, itemRect.height - 4);
+                    EditorGUI.DrawRect(separatorRect, separatorColor);
+                }
+                
+                GUILayout.Space(8); // Separator後のスペース
                 
                 // Recorder name
                 EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
