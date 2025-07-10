@@ -433,19 +433,22 @@ namespace BatchRenderingTool
             // Output path using OutputPathSettingsUI
             OutputPathSettingsUI.DrawOutputPathUI(globalOutputPath);
             
-            // Timeline settings on same line
+            // Timeline settings on same line, left-aligned
             EditorGUILayout.BeginHorizontal();
             
-            // Pre-roll at the left
+            // Pre-roll
             EditorGUILayout.LabelField("Pre-roll:", GUILayout.Width(60));
             preRollFrames = EditorGUILayout.IntField(preRollFrames, GUILayout.Width(60));
             EditorGUILayout.LabelField("frames", GUILayout.Width(50));
             
             EditorGUILayout.Space(20);
             
+            // Timeline Margin
             EditorGUILayout.LabelField("Timeline Margin:", GUILayout.Width(100));
             timelineMarginFrames = EditorGUILayout.IntField(timelineMarginFrames, GUILayout.Width(60));
             EditorGUILayout.LabelField("frames", GUILayout.Width(50));
+            
+            GUILayout.FlexibleSpace(); // Push everything to the left
             
             EditorGUILayout.EndHorizontal();
             
@@ -957,8 +960,8 @@ namespace BatchRenderingTool
             detailPanelScrollPos = EditorGUILayout.BeginScrollView(detailPanelScrollPos,
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             
-            // Content wrapper with minimum width to ensure horizontal scrolling when needed
-            EditorGUILayout.BeginVertical(GUILayout.MinWidth(300));
+            // Content wrapper that expands with column width
+            EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true));
             
             // Recorder Type header with background
             EditorGUILayout.Space(5);
