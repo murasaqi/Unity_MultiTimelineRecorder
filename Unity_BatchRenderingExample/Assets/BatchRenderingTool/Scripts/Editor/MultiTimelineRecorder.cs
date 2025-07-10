@@ -778,31 +778,6 @@ namespace BatchRenderingTool
             
             EditorGUILayout.Space(Styles.StandardSpacing);
             
-            // Recorders label and Copy to All button
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(EditorGUIUtility.IconContent("UnityEditor.AnimationWindow"), GUILayout.Width(20), GUILayout.Height(20));
-            GUILayout.Label("Recorders", EditorStyles.boldLabel);
-            
-            // Copy settings button - only show if there are multiple selected timelines
-            if (selectedDirectorIndices.Count > 1)
-            {
-                GUILayout.Space(5);
-                // Copy to All button with icon
-                Color originalBg = GUI.backgroundColor;
-                GUI.backgroundColor = new Color(0.3f, 0.5f, 0.8f); // Blue for copy
-                GUIContent copyContent = new GUIContent(" Copy to All", EditorGUIUtility.IconContent("d_TreeEditor.Duplicate").image, "Copy these recorder settings to all selected timelines");
-                if (GUILayout.Button(copyContent, GUILayout.Height(20), GUILayout.Width(100)))
-                {
-                    ApplyRecorderSettingsToAllTimelines();
-                }
-                GUI.backgroundColor = originalBg;
-            }
-            
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            
-            EditorGUILayout.Space(Styles.StandardSpacing);
-            
             // マトリクスビュー風のリスト表示
             EditorGUILayout.BeginVertical("RL Background", GUILayout.MinWidth(Styles.MinListItemWidth));
             
@@ -885,11 +860,70 @@ namespace BatchRenderingTool
                 // Recorder name
                 EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
                 
-                // 右クリックメニュー対応
+                // Three-dot menu button
+                GUIContent menuContent = new GUIContent("⋮");
+                Rect menuButtonRect = GUILayoutUtility.GetRect(menuContent, EditorStyles.label, GUILayout.Width(20));
+                
+                if (GUI.Button(menuButtonRect, menuContent, EditorStyles.label))
+                {
+                    GenericMenu menu = new GenericMenu();
+                    int index = i;
+                    
+                    // Copy to All option (only if multiple timelines are selected)
+                    if (selectedDirectorIndices.Count > 1)
+                    {
+                        menu.AddItem(new GUIContent("Copy to All Timelines"), false, () => {
+                            ApplySingleRecorderToAllTimelines(index);
+                        });
+                        menu.AddSeparator("");
+                    }
+                    
+                    menu.AddItem(new GUIContent("削除"), false, () => {
+                        currentConfig.RecorderItems.RemoveAt(index);
+                        if (selectedRecorderIndex >= index) selectedRecorderIndex--;
+                    });
+                    menu.AddItem(new GUIContent("複製"), false, () => {
+                        var duplicatedItem = item.DeepCopy();
+                        duplicatedItem.name = item.name + " Copy";
+                        currentConfig.RecorderItems.Insert(index + 1, duplicatedItem);
+                    });
+                    menu.AddSeparator("");
+                    menu.AddItem(new GUIContent("上に移動"), index > 0, () => {
+                        var temp = currentConfig.RecorderItems[index];
+                        currentConfig.RecorderItems[index] = currentConfig.RecorderItems[index - 1];
+                        currentConfig.RecorderItems[index - 1] = temp;
+                        selectedRecorderIndex = index - 1;
+                    });
+                    menu.AddItem(new GUIContent("下に移動"), index < currentConfig.RecorderItems.Count - 1, () => {
+                        var temp = currentConfig.RecorderItems[index];
+                        currentConfig.RecorderItems[index] = currentConfig.RecorderItems[index + 1];
+                        currentConfig.RecorderItems[index + 1] = temp;
+                        selectedRecorderIndex = index + 1;
+                    });
+                    menu.ShowAsContext();
+                }
+                
+                // Show hover effect for menu button
+                if (Event.current.type == EventType.Repaint && menuButtonRect.Contains(Event.current.mousePosition))
+                {
+                    EditorGUI.DrawRect(menuButtonRect, new Color(1f, 1f, 1f, 0.1f));
+                }
+                
+                // 右クリックメニュー対応（既存の機能を維持）
                 if (Event.current.type == EventType.ContextClick && isHover)
                 {
                     GenericMenu menu = new GenericMenu();
                     int index = i;
+                    
+                    // Copy to All option (only if multiple timelines are selected)
+                    if (selectedDirectorIndices.Count > 1)
+                    {
+                        menu.AddItem(new GUIContent("Copy to All Timelines"), false, () => {
+                            ApplySingleRecorderToAllTimelines(index);
+                        });
+                        menu.AddSeparator("");
+                    }
+                    
                     menu.AddItem(new GUIContent("削除"), false, () => {
                         currentConfig.RecorderItems.RemoveAt(index);
                         if (selectedRecorderIndex >= index) selectedRecorderIndex--;
@@ -2234,6 +2268,58 @@ namespace BatchRenderingTool
             BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Copied recorder settings to {selectedDirectorIndices.Count - 1} other timelines");
             EditorUtility.DisplayDialog("Copy Complete", 
                 $"Recorder settings have been copied to {selectedDirectorIndices.Count - 1} other timeline{(selectedDirectorIndices.Count - 1 > 1 ? "s" : "")}.", 
+                "OK");
+        }
+        
+        /// <summary>
+        /// Apply a single recorder to all selected timelines
+        /// </summary>
+        private void ApplySingleRecorderToAllTimelines(int recorderIndex)
+        {
+            if (currentTimelineIndexForRecorder < 0 || !timelineRecorderConfigs.ContainsKey(currentTimelineIndexForRecorder))
+            {
+                BatchRenderingToolLogger.LogWarning("[MultiTimelineRecorder] No recorder configuration to apply");
+                return;
+            }
+            
+            var sourceConfig = timelineRecorderConfigs[currentTimelineIndexForRecorder];
+            if (recorderIndex < 0 || recorderIndex >= sourceConfig.RecorderItems.Count)
+            {
+                BatchRenderingToolLogger.LogWarning("[MultiTimelineRecorder] Invalid recorder index");
+                return;
+            }
+            
+            var sourceRecorder = sourceConfig.RecorderItems[recorderIndex];
+            int appliedCount = 0;
+            
+            foreach (int timelineIndex in selectedDirectorIndices)
+            {
+                if (timelineIndex != currentTimelineIndexForRecorder)
+                {
+                    var targetConfig = GetTimelineRecorderConfig(timelineIndex);
+                    
+                    // Check if a recorder with the same name already exists
+                    var existingIndex = targetConfig.RecorderItems.FindIndex(r => r.name == sourceRecorder.name);
+                    
+                    if (existingIndex >= 0)
+                    {
+                        // Replace existing recorder
+                        targetConfig.RecorderItems[existingIndex] = MultiRecorderConfig.CloneRecorderItem(sourceRecorder);
+                    }
+                    else
+                    {
+                        // Add new recorder
+                        var clonedItem = MultiRecorderConfig.CloneRecorderItem(sourceRecorder);
+                        targetConfig.AddRecorder(clonedItem);
+                    }
+                    
+                    appliedCount++;
+                }
+            }
+            
+            BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Copied recorder '{sourceRecorder.name}' to {appliedCount} other timelines");
+            EditorUtility.DisplayDialog("Copy Complete", 
+                $"Recorder '{sourceRecorder.name}' has been copied to {appliedCount} other timeline{(appliedCount > 1 ? "s" : "")}.", 
                 "OK");
         }
         
