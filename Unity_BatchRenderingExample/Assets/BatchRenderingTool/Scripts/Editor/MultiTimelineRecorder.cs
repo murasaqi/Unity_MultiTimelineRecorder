@@ -590,9 +590,13 @@ namespace BatchRenderingTool
                     {
                         if (isCurrentForRecorder)
                         {
-                            // アクティブな選択（レコーダー設定用）- 青色のハイライト
+                            // アクティブな選択（レコーダー設定用）- 強調された青色のハイライト
                             var selectionRect = new Rect(itemRect.x + 1, itemRect.y, itemRect.width - 2, itemRect.height);
-                            EditorGUI.DrawRect(selectionRect, Styles.SelectionColor);
+                            EditorGUI.DrawRect(selectionRect, Styles.ActiveSelectionColor);
+                            
+                            // 左側にアクセントバーを追加
+                            var accentRect = new Rect(itemRect.x + 1, itemRect.y, 3, itemRect.height);
+                            EditorGUI.DrawRect(accentRect, new Color(0.2f, 0.6f, 1f, 1f));
                         }
                         else if (isHover)
                         {
@@ -687,37 +691,30 @@ namespace BatchRenderingTool
             centerColumnScrollPos = EditorGUILayout.BeginScrollView(centerColumnScrollPos,
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             
-            // Show current timeline name
+            // Show take number for current timeline
             if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < availableDirectors.Count)
             {
                 var currentDirector = availableDirectors[currentTimelineIndexForRecorder];
-                if (currentDirector != null)
+                if (currentDirector != null && settings != null)
                 {
                     EditorGUILayout.Space(Styles.StandardSpacing);
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField("Timeline:", EditorStyles.miniBoldLabel, GUILayout.Width(60));
-                    EditorGUILayout.LabelField(currentDirector.gameObject.name, EditorStyles.label);
-                    EditorGUILayout.EndHorizontal();
                     
                     // Timeline-specific Take number
-                    if (settings != null)
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField("Take Number:", EditorStyles.miniBoldLabel, GUILayout.Width(85));
+                    
+                    int currentTake = settings.GetTimelineTakeNumber(currentTimelineIndexForRecorder);
+                    EditorGUI.BeginChangeCheck();
+                    int newTake = EditorGUILayout.IntField(currentTake, GUILayout.Width(50));
+                    if (EditorGUI.EndChangeCheck())
                     {
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField("Take Number:", EditorStyles.miniBoldLabel, GUILayout.Width(85));
-                        
-                        int currentTake = settings.GetTimelineTakeNumber(currentTimelineIndexForRecorder);
-                        EditorGUI.BeginChangeCheck();
-                        int newTake = EditorGUILayout.IntField(currentTake, GUILayout.Width(50));
-                        if (EditorGUI.EndChangeCheck())
-                        {
-                            // 値の範囲をチェック（1以上）
-                            newTake = Mathf.Max(1, newTake);
-                            settings.SetTimelineTakeNumber(currentTimelineIndexForRecorder, newTake);
-                        }
-                        
-                        EditorGUILayout.LabelField("", GUILayout.ExpandWidth(true)); // スペーサー
-                        EditorGUILayout.EndHorizontal();
+                        // 値の範囲をチェック（1以上）
+                        newTake = Mathf.Max(1, newTake);
+                        settings.SetTimelineTakeNumber(currentTimelineIndexForRecorder, newTake);
                     }
+                    
+                    EditorGUILayout.LabelField("", GUILayout.ExpandWidth(true)); // スペーサー
+                    EditorGUILayout.EndHorizontal();
                 }
             }
             else
