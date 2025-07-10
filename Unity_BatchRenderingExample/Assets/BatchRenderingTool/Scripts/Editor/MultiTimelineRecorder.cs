@@ -779,7 +779,7 @@ namespace BatchRenderingTool
             EditorGUILayout.Space(Styles.StandardSpacing);
             
             // マトリクスビュー風のリスト表示
-            EditorGUILayout.BeginVertical("RL Background", GUILayout.MinWidth(Styles.MinListItemWidth));
+            EditorGUILayout.BeginVertical("RL Background", GUILayout.ExpandWidth(true));
             
             for (int i = 0; i < currentConfig.RecorderItems.Count; i++)
             {
@@ -788,7 +788,7 @@ namespace BatchRenderingTool
                 bool isSelected = (i == selectedRecorderIndex);
                 
                 // リストアイテム
-                var controlRect = EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
+                var controlRect = EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20), GUILayout.ExpandWidth(true));
                 
                 // 正確なRectを取得
                 Rect itemRect = controlRect;
@@ -857,12 +857,51 @@ namespace BatchRenderingTool
                 
                 GUILayout.Space(8); // Separator後のスペース
                 
-                // Recorder name
-                EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
+                // Recorder name with clipping
+                GUIContent nameContent = new GUIContent(item.name);
+                Vector2 nameSize = Styles.StandardListItem.CalcSize(nameContent);
                 
-                // Three-dot menu button
+                // Calculate available width for name (leave space for menu button and other elements)
+                // Checkbox: 24, Separator: 1, Space: 8, Icon: 16+8, Separator: 1, Space: 8, Menu: 24, Padding: 4 = ~95
+                float availableWidth = Mathf.Max(50, itemRect.width - 95);
+                float nameWidth = Mathf.Min(nameSize.x, availableWidth);
+                
+                // Draw name with clipping if necessary
+                var nameRect = GUILayoutUtility.GetRect(nameContent, Styles.StandardListItem, 
+                    GUILayout.MinWidth(50), GUILayout.MaxWidth(nameWidth), GUILayout.ExpandWidth(true));
+                
+                if (Event.current.type == EventType.Repaint)
+                {
+                    // Enable clipping for long names
+                    string displayName = item.name;
+                    if (nameSize.x > availableWidth)
+                    {
+                        // Calculate how many characters fit
+                        string ellipsis = "...";
+                        float ellipsisWidth = Styles.StandardListItem.CalcSize(new GUIContent(ellipsis)).x;
+                        float charWidth = nameSize.x / item.name.Length;
+                        int maxChars = Mathf.Max(1, (int)((availableWidth - ellipsisWidth) / charWidth));
+                        
+                        if (maxChars < item.name.Length)
+                        {
+                            displayName = item.name.Substring(0, maxChars) + ellipsis;
+                        }
+                    }
+                    
+                    Styles.StandardListItem.Draw(nameRect, displayName, false, false, false, false);
+                }
+                else
+                {
+                    EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.Width(nameRect.width));
+                }
+                
+                // Add flexible space to push menu button to the right
+                GUILayout.FlexibleSpace();
+                
+                // Three-dot menu button - fixed at the right edge
                 GUIContent menuContent = new GUIContent("⋮");
-                Rect menuButtonRect = GUILayoutUtility.GetRect(menuContent, EditorStyles.label, GUILayout.Width(20));
+                Rect menuButtonRect = GUILayoutUtility.GetRect(menuContent, EditorStyles.label, 
+                    GUILayout.Width(20), GUILayout.Height(16));
                 
                 if (GUI.Button(menuButtonRect, menuContent, EditorStyles.label))
                 {
@@ -949,6 +988,9 @@ namespace BatchRenderingTool
                     menu.ShowAsContext();
                     Event.current.Use();
                 }
+                
+                // Add small padding to ensure menu button doesn't get cut off
+                GUILayout.Space(4);
                 
                 EditorGUILayout.EndHorizontal();
             }
