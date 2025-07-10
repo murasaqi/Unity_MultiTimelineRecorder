@@ -177,6 +177,7 @@ namespace BatchRenderingTool
         
         // Timeline-specific recorder configurations
         private Dictionary<int, MultiRecorderConfig> timelineRecorderConfigs = new Dictionary<int, MultiRecorderConfig>();
+        private Dictionary<int, int> timelineSelectedRecorderIndices = new Dictionary<int, int>(); // Store selected recorder index per timeline
         private int currentTimelineIndexForRecorder = -1; // Currently selected timeline for recorder configuration
         
         // Recording progress tracking
@@ -564,8 +565,24 @@ namespace BatchRenderingTool
                     // チェックボックス以外の領域でクリックされた場合のみ、タイムラインを選択
                     if (Event.current.type == EventType.MouseDown && isHover && !checkboxRect.Contains(Event.current.mousePosition))
                     {
+                        // Save current selection before switching
+                        if (currentTimelineIndexForRecorder >= 0)
+                        {
+                            timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                        }
+                        
                         currentTimelineIndexForRecorder = i;
-                        selectedRecorderIndex = -1;
+                        
+                        // Restore previous selection for this timeline
+                        if (timelineSelectedRecorderIndices.TryGetValue(i, out int savedIndex))
+                        {
+                            selectedRecorderIndex = savedIndex;
+                        }
+                        else
+                        {
+                            selectedRecorderIndex = -1;
+                        }
+                        
                         Event.current.Use();
                     }
                     
@@ -602,8 +619,23 @@ namespace BatchRenderingTool
                             // Update current timeline for recorder
                             if (currentTimelineIndexForRecorder < 0 || !selectedDirectorIndices.Contains(currentTimelineIndexForRecorder))
                             {
+                                // Save current selection before switching
+                                if (currentTimelineIndexForRecorder >= 0)
+                                {
+                                    timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                                }
+                                
                                 currentTimelineIndexForRecorder = i;
-                                selectedRecorderIndex = -1; // Reset recorder selection
+                                
+                                // Restore previous selection for this timeline
+                                if (timelineSelectedRecorderIndices.TryGetValue(i, out int savedIndex))
+                                {
+                                    selectedRecorderIndex = savedIndex;
+                                }
+                                else
+                                {
+                                    selectedRecorderIndex = -1;
+                                }
                             }
                         }
                         else
@@ -612,8 +644,20 @@ namespace BatchRenderingTool
                             // If we removed the current timeline, select another one
                             if (currentTimelineIndexForRecorder == i && selectedDirectorIndices.Count > 0)
                             {
+                                // Save current selection before switching
+                                timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                                
                                 currentTimelineIndexForRecorder = selectedDirectorIndices[0];
-                                selectedRecorderIndex = -1; // Reset recorder selection
+                                
+                                // Restore previous selection for the new timeline
+                                if (timelineSelectedRecorderIndices.TryGetValue(currentTimelineIndexForRecorder, out int savedIndex))
+                                {
+                                    selectedRecorderIndex = savedIndex;
+                                }
+                                else
+                                {
+                                    selectedRecorderIndex = -1;
+                                }
                             }
                         }
                     }
@@ -781,6 +825,11 @@ namespace BatchRenderingTool
                 if (Event.current.type == EventType.MouseDown && isHover)
                 {
                     selectedRecorderIndex = i;
+                    // Save selection for current timeline
+                    if (currentTimelineIndexForRecorder >= 0)
+                    {
+                        timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = i;
+                    }
                     GUI.FocusControl(null);
                     Event.current.Use();
                 }
@@ -861,6 +910,11 @@ namespace BatchRenderingTool
                     menu.AddItem(new GUIContent("削除"), false, () => {
                         currentConfig.RecorderItems.RemoveAt(index);
                         if (selectedRecorderIndex >= index) selectedRecorderIndex--;
+                        // Update saved selection
+                        if (currentTimelineIndexForRecorder >= 0)
+                        {
+                            timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                        }
                     });
                     menu.AddItem(new GUIContent("複製"), false, () => {
                         var duplicatedItem = item.DeepCopy();
@@ -873,12 +927,22 @@ namespace BatchRenderingTool
                         currentConfig.RecorderItems[index] = currentConfig.RecorderItems[index - 1];
                         currentConfig.RecorderItems[index - 1] = temp;
                         selectedRecorderIndex = index - 1;
+                        // Update saved selection
+                        if (currentTimelineIndexForRecorder >= 0)
+                        {
+                            timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                        }
                     });
                     menu.AddItem(new GUIContent("下に移動"), index < currentConfig.RecorderItems.Count - 1, () => {
                         var temp = currentConfig.RecorderItems[index];
                         currentConfig.RecorderItems[index] = currentConfig.RecorderItems[index + 1];
                         currentConfig.RecorderItems[index + 1] = temp;
                         selectedRecorderIndex = index + 1;
+                        // Update saved selection
+                        if (currentTimelineIndexForRecorder >= 0)
+                        {
+                            timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                        }
                     });
                     menu.ShowAsContext();
                     Event.current.Use();
