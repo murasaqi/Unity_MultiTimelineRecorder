@@ -701,15 +701,17 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
             }
             
-            // Header with Add Recorder button
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            // Clickable header
+            var headerRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
+            GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
+            GUILayout.Label("Add Recorder", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
             
-            // Add Recorder button in header
-            Color originalBgColor = GUI.backgroundColor;
-            GUI.backgroundColor = new Color(0.2f, 0.6f, 0.2f); // Green for add
-            GUIContent addRecorderContent = new GUIContent(" Add Recorder", EditorGUIUtility.IconContent("d_Toolbar Plus").image);
-            if (GUILayout.Button(addRecorderContent, GUILayout.Height(22), GUILayout.Width(120)))
+            // Make entire header clickable
+            if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
             {
                 GenericMenu menu = new GenericMenu();
                 menu.AddItem(new GUIContent("🎬 Movie"), false, () => AddRecorder(RecorderSettingsType.Movie));
@@ -719,12 +721,18 @@ namespace BatchRenderingTool
                 menu.AddItem(new GUIContent("🗂️ FBX"), false, () => AddRecorder(RecorderSettingsType.FBX));
                 menu.AddItem(new GUIContent("📦 Alembic"), false, () => AddRecorder(RecorderSettingsType.Alembic));
                 menu.ShowAsContext();
+                Event.current.Use();
             }
-            GUI.backgroundColor = originalBgColor;
             
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
+            // Show hover effect and cursor
+            if (headerRect.Contains(Event.current.mousePosition))
+            {
+                EditorGUIUtility.AddCursorRect(headerRect, MouseCursor.Link);
+                if (Event.current.type == EventType.Repaint)
+                {
+                    EditorGUI.DrawRect(headerRect, new Color(1f, 1f, 1f, 0.05f));
+                }
+            }
             
             // Begin horizontal scroll view for the entire column content
             centerColumnScrollPos = EditorGUILayout.BeginScrollView(centerColumnScrollPos,
