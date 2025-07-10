@@ -496,26 +496,6 @@ namespace BatchRenderingTool
             EditorGUILayout.EndVertical();
             
             EditorGUILayout.EndHorizontal();
-            
-            // Summary section at bottom
-            if (selectedDirectorIndices != null && selectedDirectorIndices.Count > 0)
-            {
-                EditorGUILayout.Space(Styles.StandardSpacing);
-                EditorGUILayout.LabelField("Timeline Recorder Summary:", EditorStyles.miniBoldLabel);
-                int totalRecorders = 0;
-                foreach (int idx in selectedDirectorIndices)
-                {
-                    if (idx >= 0 && idx < availableDirectors.Count)
-                    {
-                        var config = GetTimelineRecorderConfig(idx);
-                        if (config != null)
-                        {
-                            totalRecorders += config.GetEnabledRecorders().Count;
-                        }
-                    }
-                }
-                EditorGUILayout.LabelField($"Total Active Recorders: {totalRecorders} across {selectedDirectorIndices.Count} timelines", EditorStyles.miniLabel);
-            }
         }
         
         private void DrawTimelineSelectionColumn()
@@ -556,7 +536,7 @@ namespace BatchRenderingTool
             EditorGUILayout.Space(Styles.StandardSpacing);
             
             // マトリクスビュー風のリスト表示
-            EditorGUILayout.BeginVertical("RL Background", GUILayout.MinWidth(Styles.MinListItemWidth));
+            EditorGUILayout.BeginVertical("RL Background", GUILayout.ExpandWidth(true));
             
             if (availableDirectors.Count > 0)
             {
@@ -570,7 +550,7 @@ namespace BatchRenderingTool
                     bool isCurrentForRecorder = (i == currentTimelineIndexForRecorder);
                     
                     // リストアイテム
-                    var controlRect = EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20));
+                    var controlRect = EditorGUILayout.BeginHorizontal("RL Element", GUILayout.Height(20), GUILayout.ExpandWidth(true));
                     
                     // 正確なRectを取得
                     Rect itemRect = controlRect;
