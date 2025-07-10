@@ -857,48 +857,8 @@ namespace BatchRenderingTool
                 
                 GUILayout.Space(8); // Separator後のスペース
                 
-                // Recorder name - let it expand but leave room for menu
+                // Recorder name
                 EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
-                
-                // Three-dot menu button
-                if (GUILayout.Button("⋮", EditorStyles.label, GUILayout.Width(20), GUILayout.Height(16)))
-                {
-                    GenericMenu menu = new GenericMenu();
-                    int index = i;
-                    
-                    // Copy to All option (only if multiple timelines are selected)
-                    if (selectedDirectorIndices.Count > 1)
-                    {
-                        menu.AddItem(new GUIContent("Copy to All Timelines"), false, () => {
-                            ApplySingleRecorderToAllTimelines(index);
-                        });
-                        menu.AddSeparator("");
-                    }
-                    
-                    menu.AddItem(new GUIContent("削除"), false, () => {
-                        currentConfig.RecorderItems.RemoveAt(index);
-                        if (selectedRecorderIndex >= index) selectedRecorderIndex--;
-                    });
-                    menu.AddItem(new GUIContent("複製"), false, () => {
-                        var duplicatedItem = item.DeepCopy();
-                        duplicatedItem.name = item.name + " Copy";
-                        currentConfig.RecorderItems.Insert(index + 1, duplicatedItem);
-                    });
-                    menu.AddSeparator("");
-                    menu.AddItem(new GUIContent("上に移動"), index > 0, () => {
-                        var temp = currentConfig.RecorderItems[index];
-                        currentConfig.RecorderItems[index] = currentConfig.RecorderItems[index - 1];
-                        currentConfig.RecorderItems[index - 1] = temp;
-                        selectedRecorderIndex = index - 1;
-                    });
-                    menu.AddItem(new GUIContent("下に移動"), index < currentConfig.RecorderItems.Count - 1, () => {
-                        var temp = currentConfig.RecorderItems[index];
-                        currentConfig.RecorderItems[index] = currentConfig.RecorderItems[index + 1];
-                        currentConfig.RecorderItems[index + 1] = temp;
-                        selectedRecorderIndex = index + 1;
-                    });
-                    menu.ShowAsContext();
-                }
                 
                 // 右クリックメニュー対応（既存の機能を維持）
                 if (Event.current.type == EventType.ContextClick && isHover)
