@@ -686,6 +686,12 @@ namespace BatchRenderingTool
                     // 選択状態の背景色
                     if (Event.current.type == EventType.Repaint)
                     {
+                        // 偶数行に薄い背景色を適用（ゼブラストライプ）
+                        if (i % 2 == 0)
+                        {
+                            EditorGUI.DrawRect(itemRect, Styles.AlternateRowColor);
+                        }
+                        
                         if (isCurrentForRecorder)
                         {
                             // アクティブな選択（レコーダー設定用）- 強調された青色のハイライト
@@ -701,7 +707,13 @@ namespace BatchRenderingTool
                             // ホバー
                             EditorGUI.DrawRect(itemRect, Styles.HoverColor);
                         }
-                        // チェックボックスの選択状態は背景色を変えない（一般的なUI）
+                        
+                        // 下部に区切り線を追加
+                        Color separatorColor = EditorGUIUtility.isProSkin 
+                            ? new Color(0.15f, 0.15f, 0.15f, 0.5f)
+                            : new Color(0.35f, 0.35f, 0.35f, 0.5f);
+                        Rect bottomBorder = new Rect(itemRect.x, itemRect.yMax - 1, itemRect.width, 1);
+                        EditorGUI.DrawRect(bottomBorder, separatorColor);
                     }
                     
                     // Checkbox for selection
@@ -963,6 +975,12 @@ namespace BatchRenderingTool
                 // 選択状態の背景色
                 if (Event.current.type == EventType.Repaint)
                 {
+                    // 偶数行に薄い背景色を適用（ゼブラストライプ）
+                    if (i % 2 == 0)
+                    {
+                        EditorGUI.DrawRect(itemRect, Styles.AlternateRowColor);
+                    }
+                    
                     if (isSelected)
                     {
                         // 選択状態
@@ -974,6 +992,13 @@ namespace BatchRenderingTool
                         // ホバー
                         EditorGUI.DrawRect(itemRect, Styles.HoverColor);
                     }
+                    
+                    // 下部に区切り線を追加
+                    Color separatorColor = EditorGUIUtility.isProSkin 
+                        ? new Color(0.15f, 0.15f, 0.15f, 0.5f)
+                        : new Color(0.35f, 0.35f, 0.35f, 0.5f);
+                    Rect bottomBorder = new Rect(itemRect.x, itemRect.yMax - 1, itemRect.width, 1);
+                    EditorGUI.DrawRect(bottomBorder, separatorColor);
                 }
                 
                 // Enable checkbox
