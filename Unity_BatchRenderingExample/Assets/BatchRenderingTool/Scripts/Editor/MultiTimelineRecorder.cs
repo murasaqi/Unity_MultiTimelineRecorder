@@ -141,6 +141,19 @@ namespace BatchRenderingTool
             public static readonly Color ColumnHeaderBackgroundColor = EditorGUIUtility.isProSkin
                 ? new Color(0.15f, 0.15f, 0.15f, 1f)  // Pro Skin: 濃い暗色
                 : new Color(0.7f, 0.7f, 0.7f, 1f);     // Light Skin: 濃いグレー
+                
+            // Button-like header colors
+            public static readonly Color HeaderButtonColor = EditorGUIUtility.isProSkin
+                ? new Color(0.25f, 0.25f, 0.25f, 1f)  // Pro Skin: Dark button
+                : new Color(0.85f, 0.85f, 0.85f, 1f); // Light Skin: Light button
+                
+            public static readonly Color HeaderButtonHoverColor = EditorGUIUtility.isProSkin
+                ? new Color(0.3f, 0.3f, 0.3f, 1f)     // Pro Skin: Lighter on hover
+                : new Color(0.8f, 0.8f, 0.8f, 1f);    // Light Skin: Darker on hover
+                
+            public static readonly Color HeaderButtonPressedColor = EditorGUIUtility.isProSkin
+                ? new Color(0.2f, 0.2f, 0.2f, 1f)     // Pro Skin: Darker when pressed
+                : new Color(0.9f, 0.9f, 0.9f, 1f);    // Light Skin: Lighter when pressed
         }
         
         public enum RecordState
@@ -162,7 +175,8 @@ namespace BatchRenderingTool
         private float renderProgress = 0f;
         
         // Timeline selection
-        private List<PlayableDirector> availableDirectors = new List<PlayableDirector>();
+        private List<PlayableDirector> availableDirectors = new List<PlayableDirector>(); // All timelines in scene
+        private List<PlayableDirector> selectedTimelineDirectors = new List<PlayableDirector>(); // Manually added timelines
         private int selectedDirectorIndex = 0;
         
         // Multiple timeline selection support
@@ -232,8 +246,8 @@ namespace BatchRenderingTool
         
         // Properties for easy access
         public PlayableDirector selectedDirector => 
-            availableDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count 
-            ? availableDirectors[selectedDirectorIndex] 
+            selectedTimelineDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < selectedTimelineDirectors.Count 
+            ? selectedTimelineDirectors[selectedDirectorIndex] 
             : null;
         
         [MenuItem("Window/Batch Recording Tool/Multi Timeline Recorder")]
@@ -262,13 +276,17 @@ namespace BatchRenderingTool
                 BatchRenderingToolLogger.LogVerbose("[MultiTimelineRecorder] Reset to Idle state");
             }
             
-            ScanTimelines();
+            // For backward compatibility, scan timelines if we have none selected
+            if (selectedTimelineDirectors.Count == 0)
+            {
+                ScanTimelines();
+            }
             
             // Initialize selection if empty
-            if (selectedDirectorIndices.Count == 0 && availableDirectors.Count > 0)
+            if (selectedDirectorIndices.Count == 0 && selectedTimelineDirectors.Count > 0)
             {
                 // Initialize from selectedDirectorIndex if valid
-                if (selectedDirectorIndex >= 0 && selectedDirectorIndex < availableDirectors.Count)
+                if (selectedDirectorIndex >= 0 && selectedDirectorIndex < selectedTimelineDirectors.Count)
                 {
                     selectedDirectorIndices.Add(selectedDirectorIndex);
                 }
@@ -357,11 +375,15 @@ namespace BatchRenderingTool
             // Debug info at the top
             if (Event.current.type == EventType.Layout)
             {
+                if (selectedTimelineDirectors == null)
+                {
+                    BatchRenderingToolLogger.LogError("[MultiTimelineRecorder] selectedTimelineDirectors is null!");
+                    selectedTimelineDirectors = new List<PlayableDirector>();
+                }
+                
                 if (availableDirectors == null)
                 {
-                    BatchRenderingToolLogger.LogError("[MultiTimelineRecorder] availableDirectors is null!");
                     availableDirectors = new List<PlayableDirector>();
-                    ScanTimelines();
                 }
             }
             
@@ -508,14 +530,85 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
             }
             
-            // シンプルなヘッダー
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            // Clickable header
+            var headerRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(EditorGUIUtility.IconContent("UnityEditor.Timeline.TimelineWindow"), GUILayout.Width(20), GUILayout.Height(20));
-            GUILayout.Label("Timelines", EditorStyles.boldLabel);
+            GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
+            GUILayout.Label("Add Timeline", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
+            
+            // Make entire header clickable
+            if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
+            {
+                // Scan for available timelines
+                ScanAvailableTimelines();
+                
+                GenericMenu menu = new GenericMenu();
+                
+                if (availableDirectors.Count > 0)
+                {
+                    foreach (var director in availableDirectors)
+                    {
+                        // Skip if already added
+                        if (selectedTimelineDirectors.Contains(director))
+                            continue;
+                            
+                        var timelineName = director.playableAsset != null ? director.playableAsset.name : director.name;
+                        menu.AddItem(new GUIContent($"📽️ {timelineName}"), false, () => {
+                            AddTimelineDirector(director);
+                        });
+                    }
+                    
+                    if (menu.GetItemCount() == 0)
+                    {
+                        menu.AddDisabledItem(new GUIContent("All timelines already added"));
+                    }
+                }
+                else
+                {
+                    menu.AddDisabledItem(new GUIContent("No timelines found in scene"));
+                }
+                
+                menu.ShowAsContext();
+                Event.current.Use();
+            }
+            
+            // Show hover effect and cursor
+            if (headerRect.Contains(Event.current.mousePosition))
+            {
+                EditorGUIUtility.AddCursorRect(headerRect, MouseCursor.Link);
+            }
+            
+            // Draw button-like background
+            if (Event.current.type == EventType.Repaint)
+            {
+                bool isHovered = headerRect.Contains(Event.current.mousePosition);
+                bool isPressed = isHovered && Event.current.type == EventType.MouseDown;
+                
+                Color bgColor = isPressed ? Styles.HeaderButtonPressedColor :
+                               isHovered ? Styles.HeaderButtonHoverColor :
+                               Styles.HeaderButtonColor;
+                
+                // Draw background
+                var bgRect = new Rect(headerRect.x + 1, headerRect.y + 1, headerRect.width - 2, headerRect.height - 2);
+                EditorGUI.DrawRect(bgRect, bgColor);
+                
+                // Draw border
+                Color borderColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.1f, 0.1f, 0.1f, 1f)
+                    : new Color(0.5f, 0.5f, 0.5f, 1f);
+                    
+                // Top border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1), borderColor);
+                // Bottom border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1), borderColor);
+                // Left border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1, headerRect.height), borderColor);
+                // Right border
+                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
+            }
             
             // Begin horizontal scroll view for the entire column content
             leftColumnScrollPos = EditorGUILayout.BeginScrollView(leftColumnScrollPos, 
@@ -523,29 +616,16 @@ namespace BatchRenderingTool
             
             EditorGUILayout.Space(Styles.StandardSpacing);
             
-            // Refresh button
-            EditorGUILayout.BeginHorizontal();
-            // Refresh button with icon
-            GUIContent refreshContent = new GUIContent(" Refresh", EditorGUIUtility.IconContent("d_Refresh").image);
-            if (GUILayout.Button(refreshContent, GUILayout.Height(20), GUILayout.Width(100)))
-            {
-                ScanTimelines();
-            }
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            
-            EditorGUILayout.Space(Styles.StandardSpacing);
-            
             // マトリクスビュー風のリスト表示
             EditorGUILayout.BeginVertical("RL Background", GUILayout.ExpandWidth(true));
             
-            if (availableDirectors.Count > 0)
+            if (selectedTimelineDirectors.Count > 0)
             {
                 // Ensure GUI is enabled for timeline selection
                 bool previousGUIState = GUI.enabled;
                 GUI.enabled = true;
                 
-                for (int i = 0; i < availableDirectors.Count; i++)
+                for (int i = 0; i < selectedTimelineDirectors.Count; i++)
                 {
                     bool isSelected = selectedDirectorIndices.Contains(i);
                     bool isCurrentForRecorder = (i == currentTimelineIndexForRecorder);
@@ -677,7 +757,7 @@ namespace BatchRenderingTool
                     GUILayout.Space(8); // Separator後のスペース
                     
                     // Timeline name
-                    string timelineName = availableDirectors[i] != null ? availableDirectors[i].gameObject.name : "<Missing>";
+                    string timelineName = selectedTimelineDirectors[i] != null ? selectedTimelineDirectors[i].gameObject.name : "<Missing>";
                     GUIStyle nameStyle = isCurrentForRecorder ? EditorStyles.boldLabel : Styles.StandardListItem;
                     EditorGUILayout.LabelField(timelineName, nameStyle, GUILayout.ExpandWidth(true));
                     
@@ -692,7 +772,7 @@ namespace BatchRenderingTool
                     }
                     
                     // Show duration
-                    var director = availableDirectors[i];
+                    var director = selectedTimelineDirectors[i];
                     if (director != null)
                     {
                         var timeline = director.playableAsset as TimelineAsset;
@@ -700,6 +780,48 @@ namespace BatchRenderingTool
                         {
                             EditorGUILayout.LabelField($"{timeline.duration:F2}s", GUILayout.Width(50));
                         }
+                    }
+                    
+                    // Remove button
+                    if (GUILayout.Button("×", GUILayout.Width(20), GUILayout.Height(16)))
+                    {
+                        selectedTimelineDirectors.RemoveAt(i);
+                        
+                        // Update selected indices
+                        selectedDirectorIndices.Remove(i);
+                        for (int j = 0; j < selectedDirectorIndices.Count; j++)
+                        {
+                            if (selectedDirectorIndices[j] > i)
+                                selectedDirectorIndices[j]--;
+                        }
+                        
+                        // Update current timeline index if needed
+                        if (currentTimelineIndexForRecorder == i)
+                        {
+                            currentTimelineIndexForRecorder = selectedDirectorIndices.Count > 0 ? selectedDirectorIndices[0] : -1;
+                        }
+                        else if (currentTimelineIndexForRecorder > i)
+                        {
+                            currentTimelineIndexForRecorder--;
+                        }
+                        
+                        // Update selected recorder indices
+                        if (timelineSelectedRecorderIndices.ContainsKey(i))
+                        {
+                            timelineSelectedRecorderIndices.Remove(i);
+                        }
+                        
+                        // Reindex the dictionary
+                        var newIndices = new Dictionary<int, int>();
+                        foreach (var kvp in timelineSelectedRecorderIndices)
+                        {
+                            int newKey = kvp.Key > i ? kvp.Key - 1 : kvp.Key;
+                            newIndices[newKey] = kvp.Value;
+                        }
+                        timelineSelectedRecorderIndices = newIndices;
+                        
+                        BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Removed timeline at index {i}");
+                        break; // Exit loop since list has changed
                     }
                     
                     EditorGUILayout.EndHorizontal();
@@ -755,10 +877,35 @@ namespace BatchRenderingTool
             if (headerRect.Contains(Event.current.mousePosition))
             {
                 EditorGUIUtility.AddCursorRect(headerRect, MouseCursor.Link);
-                if (Event.current.type == EventType.Repaint)
-                {
-                    EditorGUI.DrawRect(headerRect, new Color(1f, 1f, 1f, 0.05f));
-                }
+            }
+            
+            // Draw button-like background
+            if (Event.current.type == EventType.Repaint)
+            {
+                bool isHovered = headerRect.Contains(Event.current.mousePosition);
+                bool isPressed = isHovered && Event.current.type == EventType.MouseDown;
+                
+                Color bgColor = isPressed ? Styles.HeaderButtonPressedColor :
+                               isHovered ? Styles.HeaderButtonHoverColor :
+                               Styles.HeaderButtonColor;
+                
+                // Draw background
+                var bgRect = new Rect(headerRect.x + 1, headerRect.y + 1, headerRect.width - 2, headerRect.height - 2);
+                EditorGUI.DrawRect(bgRect, bgColor);
+                
+                // Draw border
+                Color borderColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.1f, 0.1f, 0.1f, 1f)
+                    : new Color(0.5f, 0.5f, 0.5f, 1f);
+                    
+                // Top border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1), borderColor);
+                // Bottom border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1), borderColor);
+                // Left border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1, headerRect.height), borderColor);
+                // Right border
+                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
             }
             
             // Begin horizontal scroll view for the entire column content
@@ -766,9 +913,9 @@ namespace BatchRenderingTool
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             
             // Show take number for current timeline
-            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < availableDirectors.Count)
+            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < selectedTimelineDirectors.Count)
             {
-                var currentDirector = availableDirectors[currentTimelineIndexForRecorder];
+                var currentDirector = selectedTimelineDirectors[currentTimelineIndexForRecorder];
                 if (currentDirector != null && settings != null)
                 {
                     EditorGUILayout.Space(Styles.StandardSpacing);
@@ -1085,9 +1232,9 @@ namespace BatchRenderingTool
             
             // Get current timeline name for wildcard context
             string timelineName = "Timeline";
-            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < availableDirectors.Count)
+            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < selectedTimelineDirectors.Count)
             {
-                var director = availableDirectors[currentTimelineIndexForRecorder];
+                var director = selectedTimelineDirectors[currentTimelineIndexForRecorder];
                 if (director != null && director.playableAsset != null)
                 {
                     timelineName = director.playableAsset.name;
@@ -1279,7 +1426,7 @@ namespace BatchRenderingTool
         private void ScanTimelines()
         {
             BatchRenderingToolLogger.LogVerbose("[MultiTimelineRecorder] ScanTimelines called");
-            availableDirectors.Clear();
+            selectedTimelineDirectors.Clear();
             PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
             BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Found {allDirectors.Length} total PlayableDirectors");
             
@@ -1287,7 +1434,7 @@ namespace BatchRenderingTool
             {
                 if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
                 {
-                    availableDirectors.Add(director);
+                    selectedTimelineDirectors.Add(director);
                     BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Added director: {director.name}");
                 }
                 else if (director != null)
@@ -1297,20 +1444,68 @@ namespace BatchRenderingTool
             }
             
             // Remove any null entries that might have been destroyed
+            selectedTimelineDirectors.RemoveAll(d => d == null || d.gameObject == null);
+            
+            selectedTimelineDirectors.Sort((a, b) => {
+                if (a == null || a.gameObject == null) return 1;
+                if (b == null || b.gameObject == null) return -1;
+                return a.gameObject.name.CompareTo(b.gameObject.name);
+            });
+            
+            if (selectedDirectorIndex >= selectedTimelineDirectors.Count)
+            {
+                selectedDirectorIndex = 0;
+            }
+            
+            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] ScanTimelines completed - Found {selectedTimelineDirectors.Count} valid directors");
+        }
+        
+        private void ScanAvailableTimelines()
+        {
+            BatchRenderingToolLogger.LogVerbose("[MultiTimelineRecorder] ScanAvailableTimelines called");
+            availableDirectors.Clear();
+            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
+            
+            foreach (var director in allDirectors)
+            {
+                if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
+                {
+                    availableDirectors.Add(director);
+                }
+            }
+            
+            // Remove any null entries
             availableDirectors.RemoveAll(d => d == null || d.gameObject == null);
             
+            // Sort by name
             availableDirectors.Sort((a, b) => {
                 if (a == null || a.gameObject == null) return 1;
                 if (b == null || b.gameObject == null) return -1;
                 return a.gameObject.name.CompareTo(b.gameObject.name);
             });
             
-            if (selectedDirectorIndex >= availableDirectors.Count)
+            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Found {availableDirectors.Count} available timelines");
+        }
+        
+        private void AddTimelineDirector(PlayableDirector director)
+        {
+            if (director == null || selectedTimelineDirectors.Contains(director))
+                return;
+                
+            selectedTimelineDirectors.Add(director);
+            
+            // Add to selected indices
+            int newIndex = selectedTimelineDirectors.Count - 1;
+            selectedDirectorIndices.Add(newIndex);
+            
+            // If this is the first timeline, set it as current
+            if (selectedTimelineDirectors.Count == 1)
             {
+                currentTimelineIndexForRecorder = 0;
                 selectedDirectorIndex = 0;
             }
             
-            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] ScanTimelines completed - Found {availableDirectors.Count} valid directors");
+            BatchRenderingToolLogger.Log($"[MultiTimelineRecorder] Added timeline: {director.gameObject.name}");
         }
         
         private void OnEditorUpdate()
@@ -1501,7 +1696,7 @@ namespace BatchRenderingTool
         {
             EditorGUILayout.BeginHorizontal();
             
-            bool canRecord = currentState == RecordState.Idle && availableDirectors.Count > 0 && !EditorApplication.isPlaying;
+            bool canRecord = currentState == RecordState.Idle && selectedTimelineDirectors.Count > 0 && !EditorApplication.isPlaying;
             
             // Validate timeline selection
             canRecord = canRecord && selectedDirectorIndices.Count > 0;
@@ -1593,9 +1788,9 @@ namespace BatchRenderingTool
                 if (currentRecordingTimelineIndex < selectedDirectorIndices.Count)
                 {
                     int directorIdx = selectedDirectorIndices[currentRecordingTimelineIndex];
-                    if (directorIdx < availableDirectors.Count)
+                    if (directorIdx < selectedTimelineDirectors.Count)
                     {
-                        timelineName = availableDirectors[directorIdx].gameObject.name;
+                        timelineName = selectedTimelineDirectors[directorIdx].gameObject.name;
                     }
                 }
                 
@@ -1767,7 +1962,7 @@ namespace BatchRenderingTool
         {
             BatchRenderingToolLogger.Log("[MultiTimelineRecorder] === StartRecording called ===");
             BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Current state: {currentState}");
-            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Available directors: {availableDirectors.Count}");
+            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Selected directors: {selectedTimelineDirectors.Count}");
             BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Selected index: {selectedDirectorIndex}");
             BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Is Playing: {EditorApplication.isPlaying}");
             
@@ -1976,7 +2171,7 @@ namespace BatchRenderingTool
         private IEnumerator RenderTimelineCoroutine()
         {
             BatchRenderingToolLogger.LogVerbose("[MultiTimelineRecorder] RenderTimelineCoroutine started");
-            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Available directors count: {availableDirectors.Count}");
+            BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Selected directors count: {selectedTimelineDirectors.Count}");
             BatchRenderingToolLogger.LogVerbose($"[MultiTimelineRecorder] Selected index: {selectedDirectorIndex}");
             
             currentState = RecordState.Preparing;
@@ -1988,7 +2183,7 @@ namespace BatchRenderingTool
             totalTimelinesToRecord = selectedDirectorIndices.Count;
             
             // Validate selection
-            if (availableDirectors.Count == 0)
+            if (selectedTimelineDirectors.Count == 0)
             {
                 currentState = RecordState.Error;
                 statusMessage = "No timelines available";
@@ -2011,9 +2206,9 @@ namespace BatchRenderingTool
             // Collect selected directors
             foreach (int idx in selectedDirectorIndices)
             {
-                if (idx >= 0 && idx < availableDirectors.Count)
+                if (idx >= 0 && idx < selectedTimelineDirectors.Count)
                 {
-                    var director = availableDirectors[idx];
+                    var director = selectedTimelineDirectors[idx];
                     if (director != null && director.gameObject != null && director.playableAsset is TimelineAsset)
                     {
                         directorsToRender.Add(director);

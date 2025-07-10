@@ -18,13 +18,15 @@
       "Bash(kill:*)",
       "Bash(pkill:*)",
       "Bash(env)",
-      "Bash(mcp remove:*)"
+      "Bash(mcp remove:*)",
+      "mcp__linear__create_issue",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "unity-natural-mcp"
   ],
-  "mcpServers": {
-  }
+  "mcpServers": {}
 }
