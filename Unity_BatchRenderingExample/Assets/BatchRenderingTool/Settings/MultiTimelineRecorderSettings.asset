@@ -26,7 +26,7 @@ MonoBehaviour:
   cameraTag: MainCamera
   outputResolution: 1
   selectedDirectorIndex: 0
-  selectedDirectorIndices: 0000000001000000
+  selectedDirectorIndices: 0200000003000000
   timelineMarginFrames: 30
   multiRecorderConfig:
     recorderItems: []
@@ -557,6 +557,24 @@ MonoBehaviour:
         height: 1080
         frameRate: 24
         capFrameRate: 1
+      globalOutputPath: Recordings
+      useGlobalResolution: 1
+      globalWidth: 1920
+      globalHeight: 1080
+      useGlobalFrameRate: 1
+      globalFrameRate: 24
+  - timelineIndex: 2
+    config:
+      recorderItems: []
+      globalOutputPath: Recordings
+      useGlobalResolution: 1
+      globalWidth: 1920
+      globalHeight: 1080
+      useGlobalFrameRate: 1
+      globalFrameRate: 24
+  - timelineIndex: 3
+    config:
+      recorderItems: []
       globalOutputPath: Recordings
       useGlobalResolution: 1
       globalWidth: 1920

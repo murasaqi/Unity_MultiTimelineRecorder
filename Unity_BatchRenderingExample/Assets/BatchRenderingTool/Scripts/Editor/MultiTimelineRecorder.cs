@@ -530,14 +530,49 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
             }
             
-            // Clickable header
-            var headerRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            // Clickable header - Start with getting the rect first
+            Rect headerRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.helpBox, GUILayout.Height(24));
+            
+            // Draw button-like background FIRST
+            if (Event.current.type == EventType.Repaint)
+            {
+                bool isHovered = headerRect.Contains(Event.current.mousePosition);
+                bool isPressed = isHovered && Event.current.type == EventType.MouseDown;
+                
+                Color bgColor = isPressed ? Styles.HeaderButtonPressedColor :
+                               isHovered ? Styles.HeaderButtonHoverColor :
+                               Styles.HeaderButtonColor;
+                
+                // Draw background
+                var bgRect = new Rect(headerRect.x + 1, headerRect.y + 1, headerRect.width - 2, headerRect.height - 2);
+                EditorGUI.DrawRect(bgRect, bgColor);
+                
+                // Draw border
+                Color borderColor = EditorGUIUtility.isProSkin 
+                    ? new Color(0.1f, 0.1f, 0.1f, 1f)
+                    : new Color(0.5f, 0.5f, 0.5f, 1f);
+                    
+                // Top border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1), borderColor);
+                // Bottom border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1), borderColor);
+                // Left border
+                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1, headerRect.height), borderColor);
+                // Right border
+                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
+            }
+            
+            // Draw content AFTER background
+            GUI.BeginGroup(headerRect);
+            Rect contentRect = new Rect(0, 0, headerRect.width, headerRect.height);
+            GUI.BeginGroup(new Rect(4, 2, contentRect.width - 8, contentRect.height - 4));
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
             GUILayout.Label("Add Timeline", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
+            GUI.EndGroup();
+            GUI.EndGroup();
             
             // Make entire header clickable
             if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
@@ -579,35 +614,6 @@ namespace BatchRenderingTool
             if (headerRect.Contains(Event.current.mousePosition))
             {
                 EditorGUIUtility.AddCursorRect(headerRect, MouseCursor.Link);
-            }
-            
-            // Draw button-like background
-            if (Event.current.type == EventType.Repaint)
-            {
-                bool isHovered = headerRect.Contains(Event.current.mousePosition);
-                bool isPressed = isHovered && Event.current.type == EventType.MouseDown;
-                
-                Color bgColor = isPressed ? Styles.HeaderButtonPressedColor :
-                               isHovered ? Styles.HeaderButtonHoverColor :
-                               Styles.HeaderButtonColor;
-                
-                // Draw background
-                var bgRect = new Rect(headerRect.x + 1, headerRect.y + 1, headerRect.width - 2, headerRect.height - 2);
-                EditorGUI.DrawRect(bgRect, bgColor);
-                
-                // Draw border
-                Color borderColor = EditorGUIUtility.isProSkin 
-                    ? new Color(0.1f, 0.1f, 0.1f, 1f)
-                    : new Color(0.5f, 0.5f, 0.5f, 1f);
-                    
-                // Top border
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, headerRect.width, 1), borderColor);
-                // Bottom border
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1, headerRect.width, 1), borderColor);
-                // Left border
-                EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1, headerRect.height), borderColor);
-                // Right border
-                EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
             }
             
             // Begin horizontal scroll view for the entire column content
@@ -850,36 +856,10 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(columnRect, Styles.ColumnBackgroundColor);
             }
             
-            // Clickable header
-            var headerRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
-            GUILayout.Label("Add Recorder", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
+            // Clickable header - Start with getting the rect first
+            Rect headerRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.helpBox, GUILayout.Height(24));
             
-            // Make entire header clickable
-            if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
-            {
-                GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("🎬 Movie"), false, () => AddRecorder(RecorderSettingsType.Movie));
-                menu.AddItem(new GUIContent("🖼️ Image Sequence"), false, () => AddRecorder(RecorderSettingsType.Image));
-                menu.AddItem(new GUIContent("🌈 AOV Image Sequence"), false, () => AddRecorder(RecorderSettingsType.AOV));
-                menu.AddItem(new GUIContent("🎭 Animation Clip"), false, () => AddRecorder(RecorderSettingsType.Animation));
-                menu.AddItem(new GUIContent("🗂️ FBX"), false, () => AddRecorder(RecorderSettingsType.FBX));
-                menu.AddItem(new GUIContent("📦 Alembic"), false, () => AddRecorder(RecorderSettingsType.Alembic));
-                menu.ShowAsContext();
-                Event.current.Use();
-            }
-            
-            // Show hover effect and cursor
-            if (headerRect.Contains(Event.current.mousePosition))
-            {
-                EditorGUIUtility.AddCursorRect(headerRect, MouseCursor.Link);
-            }
-            
-            // Draw button-like background
+            // Draw button-like background FIRST
             if (Event.current.type == EventType.Repaint)
             {
                 bool isHovered = headerRect.Contains(Event.current.mousePosition);
@@ -906,6 +886,38 @@ namespace BatchRenderingTool
                 EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 1, headerRect.height), borderColor);
                 // Right border
                 EditorGUI.DrawRect(new Rect(headerRect.xMax - 1, headerRect.y, 1, headerRect.height), borderColor);
+            }
+            
+            // Draw content AFTER background
+            GUI.BeginGroup(headerRect);
+            Rect contentRect = new Rect(0, 0, headerRect.width, headerRect.height);
+            GUI.BeginGroup(new Rect(4, 2, contentRect.width - 8, contentRect.height - 4));
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label(EditorGUIUtility.IconContent("d_Toolbar Plus"), GUILayout.Width(20), GUILayout.Height(20));
+            GUILayout.Label("Add Recorder", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            GUI.EndGroup();
+            GUI.EndGroup();
+            
+            // Make entire header clickable
+            if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
+            {
+                GenericMenu menu = new GenericMenu();
+                menu.AddItem(new GUIContent("🎬 Movie"), false, () => AddRecorder(RecorderSettingsType.Movie));
+                menu.AddItem(new GUIContent("🖼️ Image Sequence"), false, () => AddRecorder(RecorderSettingsType.Image));
+                menu.AddItem(new GUIContent("🌈 AOV Image Sequence"), false, () => AddRecorder(RecorderSettingsType.AOV));
+                menu.AddItem(new GUIContent("🎭 Animation Clip"), false, () => AddRecorder(RecorderSettingsType.Animation));
+                menu.AddItem(new GUIContent("🗂️ FBX"), false, () => AddRecorder(RecorderSettingsType.FBX));
+                menu.AddItem(new GUIContent("📦 Alembic"), false, () => AddRecorder(RecorderSettingsType.Alembic));
+                menu.ShowAsContext();
+                Event.current.Use();
+            }
+            
+            // Show hover effect and cursor
+            if (headerRect.Contains(Event.current.mousePosition))
+            {
+                EditorGUIUtility.AddCursorRect(headerRect, MouseCursor.Link);
             }
             
             // Begin horizontal scroll view for the entire column content
