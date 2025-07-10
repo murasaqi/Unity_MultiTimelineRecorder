@@ -570,10 +570,6 @@ namespace BatchRenderingTool
                     
                     // 正確なRectを取得
                     Rect itemRect = controlRect;
-                    if (Event.current.type == EventType.Repaint)
-                    {
-                        itemRect = GUILayoutUtility.GetLastRect();
-                    }
                     
                     // マウスホバーとクリックの処理
                     bool isHover = itemRect.Contains(Event.current.mousePosition);
@@ -809,10 +805,6 @@ namespace BatchRenderingTool
                 
                 // 正確なRectを取得
                 Rect itemRect = controlRect;
-                if (Event.current.type == EventType.Repaint)
-                {
-                    itemRect = GUILayoutUtility.GetLastRect();
-                }
                 
                 // マウスホバーとクリックの処理
                 bool isHover = itemRect.Contains(Event.current.mousePosition);
