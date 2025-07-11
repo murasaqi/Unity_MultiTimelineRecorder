@@ -163,10 +163,10 @@ MonoBehaviour:
         height: 1080
         frameRate: 24
         capFrameRate: 1
-      - name: Image Sequence
+      - name: FBX Animation
         enabled: 1
-        recorderType: 0
-        fileName: <Scene>_<Take>_image_<Frame>
+        recorderType: 5
+        fileName: <Scene>_<Take>_fbx
         takeNumber: 1
         takeMode: 1
         outputPath:
@@ -550,7 +550,7 @@ MonoBehaviour:
         frameRate: 24
         capFrameRate: 1
       globalOutputPath: Recordings
-      useGlobalResolution: 0
+      useGlobalResolution: 1
   - timelineIndex: 2
     config:
       recorderItems: []
