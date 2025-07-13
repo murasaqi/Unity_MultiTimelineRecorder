@@ -1,0 +1,30 @@
+{
+  "name": "jp.iridescent.multitimelinerecorder",
+  "version": "1.0.0",
+  "displayName": "Unity Multi Timeline Recorder",
+  "description": "A comprehensive tool for batch recording multiple Unity Timelines with various output formats including Movie, Image Sequence, Animation, AOV, Alembic, and FBX.",
+  "unity": "2021.3",
+  "unityRelease": "0f1",
+  "keywords": [
+    "unity",
+    "timeline",
+    "recorder",
+    "batch",
+    "rendering",
+    "animation",
+    "video",
+    "export"
+  ],
+  "author": "Murasaqi",
+  "type": "tool",
+  "dependencies": {
+    "com.unity.recorder": "5.1.2",
+    "com.unity.timeline": "1.6.0",
+    "com.unity.editorcoroutines": "1.0.0"
+  },
+  "hideInEditor": false,
+  "license": "SEE LICENSE IN LICENSE",
+  "documentationUrl": "https://github.com/murasaqi/Unity_MultiTimelineRecorder/wiki",
+  "changelogUrl": "https://github.com/murasaqi/Unity_MultiTimelineRecorder/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/murasaqi/Unity_MultiTimelineRecorder/blob/main/LICENSE"
+}

@@ -1,0 +1,33 @@
+{
+    "name": "Unity.MultiTimelineRecorder.Editor",
+    "rootNamespace": "Unity.MultiTimelineRecorder.Editor",
+    "references": [
+        "Unity.MultiTimelineRecorder.Runtime",
+        "Unity.Timeline",
+        "Unity.Timeline.Editor",
+        "Unity.RecorderCoreModule",
+        "Unity.RecorderCore",
+        "Unity.RecorderCore.Editor",
+        "Unity.RecorderMovieModule",
+        "Unity.RecorderImageSequenceModule",
+        "Unity.RecorderAlembicModule",
+        "Unity.RecorderAOVModule",
+        "Unity.RecorderAnimationModule",
+        "Unity.RecorderFBXModule",
+        "Unity.Recorder.RecorderLibrary",
+        "Unity.Recorder.Timeline",
+        "Unity.Recorder.Editor",
+        "Unity.EditorCoroutines.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
