@@ -839,6 +839,9 @@ namespace Unity.MultiTimelineRecorder
                     // Draw Timeline icon on the left
                     GUILayout.Label(timelineIcon, GUILayout.Width(20), GUILayout.Height(20));
                     
+                    // Reduce margin between icons
+                    GUILayout.Space(-2);
+                    
                     // Create content for timeline name with optional marker icon
                     GUIContent timelineContent;
                     bool showMarkerIcon = false;
@@ -853,10 +856,11 @@ namespace Unity.MultiTimelineRecorder
                             
                             if (recordingRange.isValid)
                             {
-                                showMarkerIcon = true;
-                                
                                 bool hasSignalTrack = SignalEmitterRecordControl.HasSignalTrackWithValidEmitters(
                                     timelineAsset, startTimingName, endTimingName);
+                                
+                                // SignalEmitterで実際に期間が検知された場合のみマーカーを表示
+                                showMarkerIcon = hasSignalTrack;
                                 
                                 string rangeText;
                                 if (showTimingInFrames)
@@ -897,12 +901,12 @@ namespace Unity.MultiTimelineRecorder
                     {
                         // Use SignalAsset icon for detected SignalEmitters
                         var markerIcon = EditorGUIUtility.IconContent("SignalAsset Icon");
-                        GUILayout.Label(markerIcon, GUILayout.Width(20), GUILayout.Height(20));
+                        GUILayout.Label(markerIcon, GUILayout.Width(16), GUILayout.Height(16));
                     }
                     else
                     {
-                        // Add space to align text when no marker icon
-                        GUILayout.Space(20);
+                        // Add minimal space to align text when no marker icon
+                        GUILayout.Space(16);
                     }
                     
                     GUIStyle nameStyle = isCurrentForRecorder ? EditorStyles.boldLabel : Styles.StandardListItem;
