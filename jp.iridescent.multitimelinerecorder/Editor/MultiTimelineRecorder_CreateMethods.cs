@@ -300,10 +300,10 @@ namespace Unity.MultiTimelineRecorder
                     : (float)originalTimeline.duration + oneFrameDuration;
                 
                 // Find the timeline index in the selected directors list
-                int timelineIndex = selectedTimelineDirectors.IndexOf(director);
+                int timelineIndex = recordingQueueDirectors.IndexOf(director);
                 if (timelineIndex < 0) 
                 {
-                    MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Director {director.gameObject.name} not found in selectedTimelineDirectors");
+                    MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Director {director.gameObject.name} not found in recordingQueueDirectors");
                     continue;
                 }
                 
@@ -934,9 +934,9 @@ namespace Unity.MultiTimelineRecorder
                 // Get the recorder config for this timeline
                 // Find which selected timeline this director corresponds to
                 int timelineIndex = -1;
-                for (int i = 0; i < selectedTimelineDirectors.Count; i++)
+                for (int i = 0; i < recordingQueueDirectors.Count; i++)
                 {
-                    if (selectedTimelineDirectors[i] == originalDirector)
+                    if (recordingQueueDirectors[i] == originalDirector)
                     {
                         timelineIndex = i;
                         break;
@@ -945,7 +945,7 @@ namespace Unity.MultiTimelineRecorder
                 
                 if (timelineIndex < 0)
                 {
-                    MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Director {originalDirector.gameObject.name} not found in selectedTimelineDirectors");
+                    MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Director {originalDirector.gameObject.name} not found in recordingQueueDirectors");
                     return null;
                 }
                 
@@ -1023,8 +1023,8 @@ namespace Unity.MultiTimelineRecorder
             int effectiveTakeNumber = recorderItem.takeNumber;
             if (recorderItem.takeMode == RecorderTakeMode.RecordersTake && settings != null)
             {
-                // Find the index of this director in selectedTimelineDirectors  
-                int directorIndex = selectedTimelineDirectors.IndexOf(originalDirector);
+                // Find the index of this director in recordingQueueDirectors  
+                int directorIndex = recordingQueueDirectors.IndexOf(originalDirector);
                 if (directorIndex >= 0)
                 {
                     effectiveTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
@@ -1040,8 +1040,8 @@ namespace Unity.MultiTimelineRecorder
             // Always set TimelineTakeNumber for <TimelineTake> wildcard
             if (settings != null)
             {
-                // Find the index of this director in selectedTimelineDirectors
-                int directorIndex = selectedTimelineDirectors.IndexOf(originalDirector);
+                // Find the index of this director in recordingQueueDirectors
+                int directorIndex = recordingQueueDirectors.IndexOf(originalDirector);
                 if (directorIndex >= 0)
                 {
                     context.TimelineTakeNumber = settings.GetTimelineTakeNumber(directorIndex);

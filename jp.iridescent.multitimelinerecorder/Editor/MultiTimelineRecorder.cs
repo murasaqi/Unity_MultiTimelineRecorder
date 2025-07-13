@@ -176,8 +176,8 @@ namespace Unity.MultiTimelineRecorder
         private float renderProgress = 0f;
         
         // Timeline selection
-        private List<PlayableDirector> availableDirectors = new List<PlayableDirector>(); // All timelines in scene
-        private List<PlayableDirector> selectedTimelineDirectors = new List<PlayableDirector>(); // Manually added timelines
+        private List<PlayableDirector> sceneTimelineDirectors = new List<PlayableDirector>(); // All timelines found in the scene
+        private List<PlayableDirector> recordingQueueDirectors = new List<PlayableDirector>(); // Timelines added to recording queue by user
         private int selectedDirectorIndex = 0;
         
         // Multiple timeline selection support
@@ -252,8 +252,8 @@ namespace Unity.MultiTimelineRecorder
         
         // Properties for easy access
         public PlayableDirector selectedDirector => 
-            selectedTimelineDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < selectedTimelineDirectors.Count 
-            ? selectedTimelineDirectors[selectedDirectorIndex] 
+            recordingQueueDirectors != null && selectedDirectorIndex >= 0 && selectedDirectorIndex < recordingQueueDirectors.Count 
+            ? recordingQueueDirectors[selectedDirectorIndex] 
             : null;
         
         [MenuItem("Window/Multi Timeline Recorder")]
@@ -283,16 +283,16 @@ namespace Unity.MultiTimelineRecorder
             }
             
             // For backward compatibility, scan timelines if we have none selected
-            if (selectedTimelineDirectors.Count == 0)
+            if (recordingQueueDirectors.Count == 0)
             {
                 ScanTimelines();
             }
             
             // Initialize selection if empty
-            if (selectedDirectorIndices.Count == 0 && selectedTimelineDirectors.Count > 0)
+            if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
             {
                 // Initialize from selectedDirectorIndex if valid
-                if (selectedDirectorIndex >= 0 && selectedDirectorIndex < selectedTimelineDirectors.Count)
+                if (selectedDirectorIndex >= 0 && selectedDirectorIndex < recordingQueueDirectors.Count)
                 {
                     selectedDirectorIndices.Add(selectedDirectorIndex);
                 }
@@ -355,7 +355,7 @@ namespace Unity.MultiTimelineRecorder
             leftColumnWidth = Mathf.Clamp(leftColumnWidth, minColumnWidth, maxColumnWidth);
             centerColumnWidth = Mathf.Clamp(centerColumnWidth, minColumnWidth, maxColumnWidth);
             
-            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] OnEnable completed - Directors: {availableDirectors.Count}, State: {currentState}, DebugMode: {debugMode}");
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] OnEnable completed - Directors: {sceneTimelineDirectors.Count}, State: {currentState}, DebugMode: {debugMode}");
         }
         
         private void OnDisable()
@@ -381,15 +381,15 @@ namespace Unity.MultiTimelineRecorder
             // Debug info at the top
             if (Event.current.type == EventType.Layout)
             {
-                if (selectedTimelineDirectors == null)
+                if (recordingQueueDirectors == null)
                 {
-                    MultiTimelineRecorderLogger.LogError("[MultiTimelineRecorder] selectedTimelineDirectors is null!");
-                    selectedTimelineDirectors = new List<PlayableDirector>();
+                    MultiTimelineRecorderLogger.LogError("[MultiTimelineRecorder] recordingQueueDirectors is null!");
+                    recordingQueueDirectors = new List<PlayableDirector>();
                 }
                 
-                if (availableDirectors == null)
+                if (sceneTimelineDirectors == null)
                 {
-                    availableDirectors = new List<PlayableDirector>();
+                    sceneTimelineDirectors = new List<PlayableDirector>();
                 }
             }
             
@@ -618,12 +618,12 @@ namespace Unity.MultiTimelineRecorder
                 
                 GenericMenu menu = new GenericMenu();
                 
-                if (availableDirectors.Count > 0)
+                if (sceneTimelineDirectors.Count > 0)
                 {
-                    foreach (var director in availableDirectors)
+                    foreach (var director in sceneTimelineDirectors)
                     {
                         // Skip if already added
-                        if (selectedTimelineDirectors.Contains(director))
+                        if (recordingQueueDirectors.Contains(director))
                             continue;
                             
                         var timelineName = director.playableAsset != null ? director.playableAsset.name : director.name;
@@ -661,13 +661,13 @@ namespace Unity.MultiTimelineRecorder
             // マトリクスビュー風のリスト表示
             EditorGUILayout.BeginVertical("RL Background", GUILayout.ExpandWidth(true));
             
-            if (selectedTimelineDirectors.Count > 0)
+            if (recordingQueueDirectors.Count > 0)
             {
                 // Ensure GUI is enabled for timeline selection
                 bool previousGUIState = GUI.enabled;
                 GUI.enabled = true;
                 
-                for (int i = 0; i < selectedTimelineDirectors.Count; i++)
+                for (int i = 0; i < recordingQueueDirectors.Count; i++)
                 {
                     bool isSelected = selectedDirectorIndices.Contains(i);
                     bool isCurrentForRecorder = (i == currentTimelineIndexForRecorder);
@@ -826,13 +826,13 @@ namespace Unity.MultiTimelineRecorder
                     GUILayout.Space(8); // Separator後のスペース
                     
                     // Timeline name with SignalEmitter status
-                    string timelineName = selectedTimelineDirectors[i] != null ? selectedTimelineDirectors[i].gameObject.name : "<Missing>";
+                    string timelineName = recordingQueueDirectors[i] != null ? recordingQueueDirectors[i].gameObject.name : "<Missing>";
                     string displayName = timelineName;
                     
                     // SignalEmitter状態の確認と表示 (TODO-282)
-                    if (useSignalEmitterTiming && selectedTimelineDirectors[i] != null)
+                    if (useSignalEmitterTiming && recordingQueueDirectors[i] != null)
                     {
-                        var timelineAsset = selectedTimelineDirectors[i].playableAsset as TimelineAsset;
+                        var timelineAsset = recordingQueueDirectors[i].playableAsset as TimelineAsset;
                         if (timelineAsset != null)
                         {
                             // Check if Signal Track exists with valid SignalEmitters
@@ -874,7 +874,7 @@ namespace Unity.MultiTimelineRecorder
                     }
                     
                     // Show duration
-                    var director = selectedTimelineDirectors[i];
+                    var director = recordingQueueDirectors[i];
                     if (director != null)
                     {
                         var timeline = director.playableAsset as TimelineAsset;
@@ -977,9 +977,9 @@ namespace Unity.MultiTimelineRecorder
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             
             // Show take number for current timeline
-            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < selectedTimelineDirectors.Count)
+            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < recordingQueueDirectors.Count)
             {
-                var currentDirector = selectedTimelineDirectors[currentTimelineIndexForRecorder];
+                var currentDirector = recordingQueueDirectors[currentTimelineIndexForRecorder];
                 if (currentDirector != null && settings != null)
                 {
                     EditorGUILayout.Space(Styles.StandardSpacing);
@@ -1313,9 +1313,9 @@ namespace Unity.MultiTimelineRecorder
             
             // Get current timeline name for wildcard context
             string timelineName = "Timeline";
-            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < selectedTimelineDirectors.Count)
+            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < recordingQueueDirectors.Count)
             {
-                var director = selectedTimelineDirectors[currentTimelineIndexForRecorder];
+                var director = recordingQueueDirectors[currentTimelineIndexForRecorder];
                 if (director != null && director.playableAsset != null)
                 {
                     timelineName = director.playableAsset.name;
@@ -1507,7 +1507,7 @@ namespace Unity.MultiTimelineRecorder
         private void ScanTimelines()
         {
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] ScanTimelines called");
-            selectedTimelineDirectors.Clear();
+            recordingQueueDirectors.Clear();
             PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
             MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Found {allDirectors.Length} total PlayableDirectors");
             
@@ -1515,7 +1515,7 @@ namespace Unity.MultiTimelineRecorder
             {
                 if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
                 {
-                    selectedTimelineDirectors.Add(director);
+                    recordingQueueDirectors.Add(director);
                     MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Added director: {director.name}");
                 }
                 else if (director != null)
@@ -1525,62 +1525,62 @@ namespace Unity.MultiTimelineRecorder
             }
             
             // Remove any null entries that might have been destroyed
-            selectedTimelineDirectors.RemoveAll(d => d == null || d.gameObject == null);
+            recordingQueueDirectors.RemoveAll(d => d == null || d.gameObject == null);
             
-            selectedTimelineDirectors.Sort((a, b) => {
+            recordingQueueDirectors.Sort((a, b) => {
                 if (a == null || a.gameObject == null) return 1;
                 if (b == null || b.gameObject == null) return -1;
                 return a.gameObject.name.CompareTo(b.gameObject.name);
             });
             
-            if (selectedDirectorIndex >= selectedTimelineDirectors.Count)
+            if (selectedDirectorIndex >= recordingQueueDirectors.Count)
             {
                 selectedDirectorIndex = 0;
             }
             
-            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] ScanTimelines completed - Found {selectedTimelineDirectors.Count} valid directors");
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] ScanTimelines completed - Found {recordingQueueDirectors.Count} valid directors");
         }
         
         private void ScanAvailableTimelines()
         {
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] ScanAvailableTimelines called");
-            availableDirectors.Clear();
+            sceneTimelineDirectors.Clear();
             PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
             
             foreach (var director in allDirectors)
             {
                 if (director != null && director.playableAsset != null && director.playableAsset is TimelineAsset)
                 {
-                    availableDirectors.Add(director);
+                    sceneTimelineDirectors.Add(director);
                 }
             }
             
             // Remove any null entries
-            availableDirectors.RemoveAll(d => d == null || d.gameObject == null);
+            sceneTimelineDirectors.RemoveAll(d => d == null || d.gameObject == null);
             
             // Sort by name
-            availableDirectors.Sort((a, b) => {
+            sceneTimelineDirectors.Sort((a, b) => {
                 if (a == null || a.gameObject == null) return 1;
                 if (b == null || b.gameObject == null) return -1;
                 return a.gameObject.name.CompareTo(b.gameObject.name);
             });
             
-            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Found {availableDirectors.Count} available timelines");
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Found {sceneTimelineDirectors.Count} available timelines");
         }
         
         private void AddTimelineDirector(PlayableDirector director)
         {
-            if (director == null || selectedTimelineDirectors.Contains(director))
+            if (director == null || recordingQueueDirectors.Contains(director))
                 return;
                 
-            selectedTimelineDirectors.Add(director);
+            recordingQueueDirectors.Add(director);
             
             // Add to selected indices
-            int newIndex = selectedTimelineDirectors.Count - 1;
+            int newIndex = recordingQueueDirectors.Count - 1;
             selectedDirectorIndices.Add(newIndex);
             
             // If this is the first timeline, set it as current
-            if (selectedTimelineDirectors.Count == 1)
+            if (recordingQueueDirectors.Count == 1)
             {
                 currentTimelineIndexForRecorder = 0;
                 selectedDirectorIndex = 0;
@@ -1591,10 +1591,10 @@ namespace Unity.MultiTimelineRecorder
         
         private void RemoveTimeline(int index)
         {
-            if (index < 0 || index >= selectedTimelineDirectors.Count)
+            if (index < 0 || index >= recordingQueueDirectors.Count)
                 return;
                 
-            selectedTimelineDirectors.RemoveAt(index);
+            recordingQueueDirectors.RemoveAt(index);
             
             // Update selected indices
             selectedDirectorIndices.Remove(index);
@@ -1859,7 +1859,7 @@ namespace Unity.MultiTimelineRecorder
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             
-            bool canRecord = currentState == RecordState.Idle && selectedTimelineDirectors.Count > 0 && !EditorApplication.isPlaying;
+            bool canRecord = currentState == RecordState.Idle && recordingQueueDirectors.Count > 0 && !EditorApplication.isPlaying;
             
             // Validate timeline selection
             canRecord = canRecord && selectedDirectorIndices.Count > 0;
@@ -1958,9 +1958,9 @@ namespace Unity.MultiTimelineRecorder
                 if (currentRecordingTimelineIndex < selectedDirectorIndices.Count)
                 {
                     int directorIdx = selectedDirectorIndices[currentRecordingTimelineIndex];
-                    if (directorIdx < selectedTimelineDirectors.Count)
+                    if (directorIdx < recordingQueueDirectors.Count)
                     {
-                        timelineName = selectedTimelineDirectors[directorIdx].gameObject.name;
+                        timelineName = recordingQueueDirectors[directorIdx].gameObject.name;
                     }
                 }
                 
@@ -2061,12 +2061,12 @@ namespace Unity.MultiTimelineRecorder
                 EditorGUILayout.LabelField("Recording will be limited to the time range between Start and End signal emitters.", EditorStyles.miniLabel);
                 
                 // 現在選択されているTimelineでの状態を表示
-                if (selectedTimelineDirectors != null && selectedTimelineDirectors.Count > 0)
+                if (recordingQueueDirectors != null && recordingQueueDirectors.Count > 0)
                 {
                     int validCount = 0;
-                    int totalCount = selectedTimelineDirectors.Count;
+                    int totalCount = recordingQueueDirectors.Count;
                     
-                    foreach (var director in selectedTimelineDirectors)
+                    foreach (var director in recordingQueueDirectors)
                     {
                         if (director?.playableAsset is TimelineAsset timelineAsset)
                         {
@@ -2216,12 +2216,12 @@ namespace Unity.MultiTimelineRecorder
             }
             
             // Debug button to scan SignalEmitters
-            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < selectedTimelineDirectors.Count)
+            if (currentTimelineIndexForRecorder >= 0 && currentTimelineIndexForRecorder < recordingQueueDirectors.Count)
             {
                 EditorGUILayout.Space(5);
                 if (GUILayout.Button("Debug: Scan SignalEmitters in Selected Timeline", GUILayout.Width(280)))
                 {
-                    var director = selectedTimelineDirectors[currentTimelineIndexForRecorder];
+                    var director = recordingQueueDirectors[currentTimelineIndexForRecorder];
                     if (director != null)
                     {
                         var timelineAsset = director.playableAsset as TimelineAsset;
@@ -2365,7 +2365,7 @@ namespace Unity.MultiTimelineRecorder
         {
             MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] === StartRecording called ===");
             MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Current state: {currentState}");
-            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Selected directors: {selectedTimelineDirectors.Count}");
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Selected directors: {recordingQueueDirectors.Count}");
             MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Selected index: {selectedDirectorIndex}");
             MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Is Playing: {EditorApplication.isPlaying}");
             
@@ -2377,7 +2377,7 @@ namespace Unity.MultiTimelineRecorder
                 // 選択されたTimelineでSignalEmitterの状態を表示
                 int validTimelines = 0;
                 int fallbackTimelines = 0;
-                foreach (var director in selectedTimelineDirectors)
+                foreach (var director in recordingQueueDirectors)
                 {
                     if (director?.playableAsset is TimelineAsset timelineAsset)
                     {
@@ -2616,7 +2616,7 @@ namespace Unity.MultiTimelineRecorder
         private IEnumerator RenderTimelineCoroutine()
         {
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] RenderTimelineCoroutine started");
-            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Selected directors count: {selectedTimelineDirectors.Count}");
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Selected directors count: {recordingQueueDirectors.Count}");
             MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Selected index: {selectedDirectorIndex}");
             
             currentState = RecordState.Preparing;
@@ -2628,7 +2628,7 @@ namespace Unity.MultiTimelineRecorder
             totalTimelinesToRecord = selectedDirectorIndices.Count;
             
             // Validate selection
-            if (selectedTimelineDirectors.Count == 0)
+            if (recordingQueueDirectors.Count == 0)
             {
                 currentState = RecordState.Error;
                 statusMessage = "No timelines available";
@@ -2651,9 +2651,9 @@ namespace Unity.MultiTimelineRecorder
             // Collect selected directors
             foreach (int idx in selectedDirectorIndices)
             {
-                if (idx >= 0 && idx < selectedTimelineDirectors.Count)
+                if (idx >= 0 && idx < recordingQueueDirectors.Count)
                 {
-                    var director = selectedTimelineDirectors[idx];
+                    var director = recordingQueueDirectors[idx];
                     if (director != null && director.gameObject != null && director.playableAsset is TimelineAsset)
                     {
                         directorsToRender.Add(director);
@@ -3462,12 +3462,12 @@ namespace Unity.MultiTimelineRecorder
             if (!useSignalEmitterTiming) return;
             
             // 選択されたTimelineがない場合は何もしない
-            if (selectedTimelineDirectors == null || selectedTimelineDirectors.Count == 0) return;
+            if (recordingQueueDirectors == null || recordingQueueDirectors.Count == 0) return;
             
             bool allValid = true;
             var invalidTimelines = new List<string>();
             
-            foreach (var director in selectedTimelineDirectors)
+            foreach (var director in recordingQueueDirectors)
             {
                 if (director?.playableAsset is TimelineAsset timelineAsset)
                 {

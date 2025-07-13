@@ -351,8 +351,8 @@ namespace Unity.MultiTimelineRecorder
                 int effectiveTakeNumber = recorderItem.takeNumber;
                 if (recorderItem.takeMode == RecorderTakeMode.RecordersTake && settings != null)
                 {
-                    // Find the index of this director in availableDirectors
-                    int directorIndex = availableDirectors.IndexOf(director);
+                    // Find the index of this director in recordingQueueDirectors
+                    int directorIndex = recordingQueueDirectors.IndexOf(director);
                     if (directorIndex >= 0)
                     {
                         effectiveTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
@@ -368,8 +368,8 @@ namespace Unity.MultiTimelineRecorder
                 // Always set TimelineTakeNumber for <TimelineTake> wildcard
                 if (settings != null)
                 {
-                    // Find the index of this director in availableDirectors
-                    int directorIndex = availableDirectors.IndexOf(director);
+                    // Find the index of this director in recordingQueueDirectors
+                    int directorIndex = recordingQueueDirectors.IndexOf(director);
                     if (directorIndex >= 0)
                     {
                         context.TimelineTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
