@@ -2070,7 +2070,8 @@ namespace Unity.MultiTimelineRecorder
             EditorGUILayout.BeginHorizontal();
             
             // SignalEmitter使用のトグル
-            EditorGUILayout.LabelField("Enable:", GUILayout.Width(50));
+            var enableContent = new GUIContent("Enable:", "Enable SignalEmitter markers for recording time range control. Recording will be limited to the time range between Start and End signal emitters.");
+            EditorGUILayout.LabelField(enableContent, GUILayout.Width(50));
             bool newUseSignalEmitter = EditorGUILayout.Toggle(useSignalEmitterTiming, GUILayout.Width(20));
             if (newUseSignalEmitter != useSignalEmitterTiming)
             {
@@ -2084,7 +2085,8 @@ namespace Unity.MultiTimelineRecorder
                 EditorGUILayout.Space(15);
                 
                 // 開始タイミング名
-                EditorGUILayout.LabelField("Start:", GUILayout.Width(40));
+                var startContent = new GUIContent("Start:", "Name of the SignalEmitter that marks the recording start time");
+                EditorGUILayout.LabelField(startContent, GUILayout.Width(40));
                 string newStartTiming = EditorGUILayout.TextField(startTimingName, GUILayout.Width(80));
                 if (newStartTiming != startTimingName)
                 {
@@ -2095,7 +2097,8 @@ namespace Unity.MultiTimelineRecorder
                 EditorGUILayout.Space(10);
                 
                 // 終了タイミング名
-                EditorGUILayout.LabelField("End:", GUILayout.Width(30));
+                var endContent = new GUIContent("End:", "Name of the SignalEmitter that marks the recording end time");
+                EditorGUILayout.LabelField(endContent, GUILayout.Width(30));
                 string newEndTiming = EditorGUILayout.TextField(endTimingName, GUILayout.Width(80));
                 if (newEndTiming != endTimingName)
                 {
@@ -2107,10 +2110,9 @@ namespace Unity.MultiTimelineRecorder
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             
-            // SignalEmitter使用時のヘルプテキストと状態表示
+            // SignalEmitter使用時の状態表示
             if (useSignalEmitterTiming)
             {
-                EditorGUILayout.LabelField("Recording will be limited to the time range between Start and End signal emitters.", EditorStyles.miniLabel);
                 
                 // 現在選択されているTimelineでの状態を表示
                 if (recordingQueueDirectors != null && recordingQueueDirectors.Count > 0)
@@ -2159,26 +2161,21 @@ namespace Unity.MultiTimelineRecorder
                     }
                 }
             }
-            else
-            {
-                EditorGUILayout.LabelField("Enable to use SignalEmitter markers for recording time range control.", EditorStyles.miniLabel);
-            }
             
             // 時間表示形式の切り替え
             if (useSignalEmitterTiming)
             {
                 EditorGUILayout.Space(5);
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Display:", GUILayout.Width(50));
+                var displayContent = new GUIContent("Display:", "Toggle between frame numbers (24f) and seconds (1.0s) for timing display");
+                EditorGUILayout.LabelField(displayContent, GUILayout.Width(50));
                 
                 string buttonText = showTimingInFrames ? "Switch to Seconds" : "Switch to Frames";
-                if (GUILayout.Button(buttonText, GUILayout.Width(120)))
+                var buttonContent = new GUIContent(buttonText, "Switch between frame and seconds display format");
+                if (GUILayout.Button(buttonContent, GUILayout.Width(120)))
                 {
                     showTimingInFrames = !showTimingInFrames;
                 }
-                
-                string currentFormat = showTimingInFrames ? "Frames (24f)" : "Seconds (1.0s)";
-                EditorGUILayout.LabelField($"Current: {currentFormat}", EditorStyles.miniLabel);
                 EditorGUILayout.EndHorizontal();
             }
         }
