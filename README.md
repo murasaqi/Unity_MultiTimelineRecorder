@@ -20,6 +20,7 @@ Unity Multi Timeline Recorder is a comprehensive tool for batch recording multip
   - Alembic
   - FBX
   - AOV (Arbitrary Output Variables)
+- **Signal Emitter Timing Control**: Use Timeline Signal Emitters to precisely control recording start and end times
 - **Flexible Recording Settings**: Configure each recorder independently with specific settings
 - **Path Management**: Advanced path management with wildcard support
 - **Play Mode Support**: Record timelines in Play Mode with real-time monitoring
@@ -76,7 +77,12 @@ Unity_MultiTimelineRecorder/
 1. Open the Multi Timeline Recorder window: **Window > Multi Timeline Recorder**
 2. Add Timeline assets to record by clicking the "+" button
 3. Configure recording settings for each timeline
-4. Click "Start Recording" to begin the batch process
+4. **Optional**: Enable Signal Emitter timing control for precise recording ranges:
+   - Check "Enable" in the Signal Emitter Timing section
+   - Set start and end timing names (e.g., "pre" and "post")
+   - Add Signal Emitters to your Timeline tracks with matching names
+   - Use the Frame/Seconds display toggle to view timing in your preferred format
+5. Click "Start Recording" to begin the batch process
 
 ### License
 
@@ -105,6 +111,7 @@ Unity Multi Timeline Recorderは、複数のUnity Timelineアセットを様々�
   - Alembic
   - FBX
   - AOV (Arbitrary Output Variables)
+- **Signal Emitterタイミング制御**: Timeline Signal Emitterを使用して録画開始・終了時刻を精密に制御
 - **柔軟な録画設定**: 各レコーダーを独立して特定の設定で構成
 - **パス管理**: ワイルドカードサポートによる高度なパス管理
 - **プレイモードサポート**: リアルタイム監視でのプレイモード録画
@@ -161,7 +168,12 @@ Unity_MultiTimelineRecorder/
 1. Multi Timeline Recorderウィンドウを開く: **Window > Multi Timeline Recorder**
 2. "+"ボタンをクリックして録画するTimelineアセットを追加
 3. 各タイムラインの録画設定を構成
-4. "Start Recording"をクリックしてバッチプロセスを開始
+4. **オプション**: 精密な録画範囲指定のためのSignal Emitterタイミング制御を有効化:
+   - Signal Emitter Timingセクションの"Enable"をチェック
+   - 開始・終了タイミング名を設定（例："pre"と"post"）
+   - Timelineトラックに対応する名前のSignal Emitterを追加
+   - Frame/秒数表示切り替えを使用してお好みの形式でタイミングを表示
+5. "Start Recording"をクリックしてバッチプロセスを開始
 
 ### ライセンス
 
