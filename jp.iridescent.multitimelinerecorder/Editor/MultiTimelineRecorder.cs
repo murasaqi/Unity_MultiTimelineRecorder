@@ -901,12 +901,12 @@ namespace Unity.MultiTimelineRecorder
                     {
                         // Use SignalAsset icon for detected SignalEmitters
                         var markerIcon = EditorGUIUtility.IconContent("SignalAsset Icon");
-                        GUILayout.Label(markerIcon, GUILayout.Width(16), GUILayout.Height(16));
+                        GUILayout.Label(markerIcon, GUILayout.Width(18), GUILayout.Height(18));
                     }
                     else
                     {
                         // Add minimal space to align text when no marker icon
-                        GUILayout.Space(16);
+                        GUILayout.Space(18);
                     }
                     
                     GUIStyle nameStyle = isCurrentForRecorder ? EditorStyles.boldLabel : Styles.StandardListItem;
