@@ -299,10 +299,10 @@ MonoBehaviour:
       useGlobalResolution: 1
   timelineTakeNumbers:
   - timelineIndex: 1
-    takeNumber: 9
+    takeNumber: 10
   - timelineIndex: 0
-    takeNumber: 9
-  leftColumnWidth: 308
+    takeNumber: 10
+  leftColumnWidth: 516.6667
   centerColumnWidth: 250
   debugMode: 1
   showStatusSection: 0

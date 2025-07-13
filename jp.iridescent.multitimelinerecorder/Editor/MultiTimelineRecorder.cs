@@ -825,43 +825,90 @@ namespace Unity.MultiTimelineRecorder
                     
                     GUILayout.Space(8); // Separator後のスペース
                     
-                    // Timeline name with SignalEmitter status
+                    // Timeline name
                     string timelineName = recordingQueueDirectors[i] != null ? recordingQueueDirectors[i].gameObject.name : "<Missing>";
-                    string displayName = timelineName;
                     
-                    // SignalEmitter状態の確認と表示 (TODO-282)
+                    // Always show Timeline Asset icon
+                    var timelineIcon = EditorGUIUtility.IconContent("TimelineAsset Icon");
+                    if (timelineIcon == null || timelineIcon.image == null)
+                    {
+                        timelineIcon = EditorGUIUtility.IconContent("UnityEngine.Timeline.TimelineAsset Icon");
+                    }
+                    
+                    // Draw Timeline icon on the left
+                    GUILayout.Label(timelineIcon, GUILayout.Width(20), GUILayout.Height(20));
+                    
+                    // Create content for timeline name with optional marker icon
+                    GUIContent timelineContent;
+                    bool showMarkerIcon = false;
+                    
                     if (useSignalEmitterTiming && recordingQueueDirectors[i] != null)
                     {
                         var timelineAsset = recordingQueueDirectors[i].playableAsset as TimelineAsset;
                         if (timelineAsset != null)
                         {
-                            // Check if Signal Track exists with valid SignalEmitters
-                            bool hasSignalTrackWithEmitters = SignalEmitterRecordControl.HasSignalTrackWithValidEmitters(
-                                timelineAsset, startTimingName, endTimingName);
-                            
                             var recordingRange = SignalEmitterRecordControl.GetRecordingRangeFromSignalsWithFallback(
                                 timelineAsset, startTimingName, endTimingName, true);
                             
-                            if (hasSignalTrackWithEmitters)
+                            if (recordingRange.isValid)
                             {
-                                // Signal Track detected with both SignalEmitters found
-                                displayName = $"✅ {timelineName} ({recordingRange.startTime:F1}-{recordingRange.endTime:F1}s)";
-                            }
-                            else if (recordingRange.isValid)
-                            {
-                                // SignalEmitters found but no Signal Track
-                                displayName = $"🎯 {timelineName} ({recordingRange.startTime:F1}-{recordingRange.endTime:F1}s)";
+                                showMarkerIcon = true;
+                                
+                                bool hasSignalTrack = SignalEmitterRecordControl.HasSignalTrackWithValidEmitters(
+                                    timelineAsset, startTimingName, endTimingName);
+                                
+                                string rangeText = $"({recordingRange.startTime:F1}-{recordingRange.endTime:F1}s)";
+                                string tooltip = hasSignalTrack 
+                                    ? $"Signal Track with emitters '{startTimingName}' and '{endTimingName}' found"
+                                    : $"Using SignalEmitters '{startTimingName}' and '{endTimingName}'";
+                                
+                                timelineContent = new GUIContent($" {timelineName} {rangeText}", tooltip);
                             }
                             else
                             {
-                                // No valid SignalEmitters found
-                                displayName = $"⚠️ {timelineName} (No Signals)";
+                                timelineContent = new GUIContent($" {timelineName} (No Signals)", 
+                                    $"SignalEmitters '{startTimingName}' or '{endTimingName}' not found");
                             }
                         }
+                        else
+                        {
+                            timelineContent = new GUIContent($" {timelineName}");
+                        }
+                    }
+                    else
+                    {
+                        timelineContent = new GUIContent($" {timelineName}");
+                    }
+                    
+                    // Draw marker icon if SignalEmitter is detected
+                    if (showMarkerIcon)
+                    {
+                        // Use pushpin-style icon for markers
+                        // Try blend key or pin icons
+                        var markerIcon = EditorGUIUtility.IconContent("blendKey");
+                        if (markerIcon == null || markerIcon.image == null)
+                        {
+                            markerIcon = EditorGUIUtility.IconContent("blendKeySelected");
+                            if (markerIcon == null || markerIcon.image == null)
+                            {
+                                // Fallback to colored dot pins
+                                markerIcon = EditorGUIUtility.IconContent("sv_icon_dot3_pix16_gizmo"); // Red pin
+                                if (markerIcon == null || markerIcon.image == null)
+                                {
+                                    markerIcon = EditorGUIUtility.IconContent("Animation.EventMarker");
+                                }
+                            }
+                        }
+                        GUILayout.Label(markerIcon, GUILayout.Width(16), GUILayout.Height(16));
+                    }
+                    else
+                    {
+                        // Add space to align text when no marker icon
+                        GUILayout.Space(16);
                     }
                     
                     GUIStyle nameStyle = isCurrentForRecorder ? EditorStyles.boldLabel : Styles.StandardListItem;
-                    EditorGUILayout.LabelField(displayName, nameStyle, GUILayout.ExpandWidth(true));
+                    EditorGUILayout.LabelField(timelineContent, nameStyle, GUILayout.ExpandWidth(true));
                     
                     // Draw vertical separator before duration
                     if (Event.current.type == EventType.Repaint)
@@ -2011,7 +2058,10 @@ namespace Unity.MultiTimelineRecorder
         {
             // SignalEmitter設定のヘッダー
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Signal Emitter Timing", EditorStyles.boldLabel, GUILayout.Width(150));
+            // Use SignalAsset icon
+            var signalIcon = EditorGUIUtility.IconContent("SignalAsset Icon");
+            var headerContent = new GUIContent(" Signal Emitter Timing", signalIcon.image);
+            EditorGUILayout.LabelField(headerContent, EditorStyles.boldLabel, GUILayout.Width(170));
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             
@@ -2095,7 +2145,7 @@ namespace Unity.MultiTimelineRecorder
                     
                     if (validCount == totalCount)
                     {
-                        EditorGUILayout.LabelField($"✅ All {totalCount} timeline(s) have valid SignalEmitters", EditorStyles.miniLabel);
+                        EditorGUILayout.LabelField($"📍 All {totalCount} timeline(s) have valid SignalEmitters", EditorStyles.miniLabel);
                     }
                     else if (validCount > 0)
                     {
