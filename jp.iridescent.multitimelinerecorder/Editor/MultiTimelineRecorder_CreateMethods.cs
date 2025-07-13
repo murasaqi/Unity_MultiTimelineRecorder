@@ -261,7 +261,7 @@ namespace Unity.MultiTimelineRecorder
             
             // Keep track of all recorder types needed across all timelines
             // Use a string key that includes recorder type and unique identifier for proper track management
-            Dictionary<string, RecorderTrack> recorderTracks = new Dictionary<string, RecorderTrack>();
+            Dictionary<string, UnityEditor.Recorder.Timeline.RecorderTrack> recorderTracks = new Dictionary<string, UnityEditor.Recorder.Timeline.RecorderTrack>();
             
             // Create recorder clips for each timeline
             for (int i = 0; i < directors.Count; i++)
@@ -299,9 +299,13 @@ namespace Unity.MultiTimelineRecorder
                     ? (float)signalEmitterRange.Value.duration 
                     : (float)originalTimeline.duration + oneFrameDuration;
                 
-                // Find the timeline index in the available directors list
-                int timelineIndex = availableDirectors.IndexOf(director);
-                if (timelineIndex < 0) continue;
+                // Find the timeline index in the selected directors list
+                int timelineIndex = selectedTimelineDirectors.IndexOf(director);
+                if (timelineIndex < 0) 
+                {
+                    MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Director {director.gameObject.name} not found in selectedTimelineDirectors");
+                    continue;
+                }
                 
                 // Get the recorder config for this timeline
                 var timelineRecorderConfig = GetTimelineRecorderConfig(timelineIndex);
@@ -359,7 +363,7 @@ namespace Unity.MultiTimelineRecorder
                         
                         // Create recorder clip
                         MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Creating recorder clip for {recorderItem.name}");
-                        var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+                        var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
                         if (recorderClip == null)
                         {
                             MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Failed to create RecorderClip for {recorderItem.recorderType}");
@@ -393,7 +397,7 @@ namespace Unity.MultiTimelineRecorder
                             recorderClip.duration = timelineDuration;
                         }
                         
-                        var recorderAsset = recorderClip.asset as RecorderClip;
+                        var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
                         recorderAsset.settings = recorderSettings;
                         
                         MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Recorder Clip created: {recorderClip.displayName}, Start: {recorderClip.start:F2}s, Duration: {recorderClip.duration:F2}s, Track: {recorderTrack.name}");
@@ -448,7 +452,7 @@ namespace Unity.MultiTimelineRecorder
             foreach (var track in tracks)
             {
                 totalTrackCount++;
-                if (track is RecorderTrack)
+                if (track is UnityEditor.Recorder.Timeline.RecorderTrack)
                 {
                     recorderTrackCount++;
                     MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Found RecorderTrack: {track.name}");
@@ -550,7 +554,7 @@ namespace Unity.MultiTimelineRecorder
                 return null;
             }
             
-            var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+            var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
             if (recorderClip == null)
             {
                 MultiTimelineRecorderLogger.LogError("[MultiTimelineRecorder] Failed to create RecorderClip");
@@ -563,7 +567,7 @@ namespace Unity.MultiTimelineRecorder
             
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] RecorderClip timing: start={recorderClip.start:F3}s, duration={recorderClip.duration:F3}s");
             
-            var recorderAsset = recorderClip.asset as RecorderClip;
+            var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             recorderAsset.settings = recorderSettings;
             
             // Apply type-specific patches
@@ -695,7 +699,7 @@ namespace Unity.MultiTimelineRecorder
             var trackName = $"{recorderItem.recorderType} Recorder Track";
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Attempting to create RecorderTrack: {trackName}");
             
-            var recorderTrack = timeline.CreateTrack<RecorderTrack>(null, trackName);
+            var recorderTrack = timeline.CreateTrack<UnityEditor.Recorder.Timeline.RecorderTrack>(null, trackName);
             if (recorderTrack == null)
             {
                 MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Failed to create {trackName}");
@@ -715,7 +719,7 @@ namespace Unity.MultiTimelineRecorder
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Total tracks in timeline: {trackCount}");
             
             // Create recorder clip
-            var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+            var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
             if (recorderClip == null)
             {
                 MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Failed to create RecorderClip for {recorderItem.recorderType}");
@@ -726,7 +730,7 @@ namespace Unity.MultiTimelineRecorder
             recorderClip.start = preRollTime;
             recorderClip.duration = totalDuration;
             
-            var recorderAsset = recorderClip.asset as RecorderClip;
+            var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             recorderAsset.settings = recorderSettings;
             
             // Apply type-specific settings
@@ -928,7 +932,23 @@ namespace Unity.MultiTimelineRecorder
                 
                 // Always use multi-recorder mode
                 // Get the recorder config for this timeline
-                int timelineIndex = availableDirectors.IndexOf(originalDirector);
+                // Find which selected timeline this director corresponds to
+                int timelineIndex = -1;
+                for (int i = 0; i < selectedTimelineDirectors.Count; i++)
+                {
+                    if (selectedTimelineDirectors[i] == originalDirector)
+                    {
+                        timelineIndex = i;
+                        break;
+                    }
+                }
+                
+                if (timelineIndex < 0)
+                {
+                    MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Director {originalDirector.gameObject.name} not found in selectedTimelineDirectors");
+                    return null;
+                }
+                
                 var timelineRecorderConfig = GetTimelineRecorderConfig(timelineIndex);
                 var enabledRecorders = timelineRecorderConfig.GetEnabledRecorders();
                 
@@ -961,7 +981,7 @@ namespace Unity.MultiTimelineRecorder
                     foreach (var track in savedTracks)
                     {
                         savedTrackCount++;
-                        if (track is RecorderTrack)
+                        if (track is UnityEditor.Recorder.Timeline.RecorderTrack)
                         {
                             recorderTrackCount++;
                             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Found RecorderTrack in saved timeline: {track.name}");
@@ -1003,8 +1023,8 @@ namespace Unity.MultiTimelineRecorder
             int effectiveTakeNumber = recorderItem.takeNumber;
             if (recorderItem.takeMode == RecorderTakeMode.RecordersTake && settings != null)
             {
-                // Find the index of this director in availableDirectors
-                int directorIndex = availableDirectors.IndexOf(originalDirector);
+                // Find the index of this director in selectedTimelineDirectors  
+                int directorIndex = selectedTimelineDirectors.IndexOf(originalDirector);
                 if (directorIndex >= 0)
                 {
                     effectiveTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
@@ -1020,8 +1040,8 @@ namespace Unity.MultiTimelineRecorder
             // Always set TimelineTakeNumber for <TimelineTake> wildcard
             if (settings != null)
             {
-                // Find the index of this director in availableDirectors
-                int directorIndex = availableDirectors.IndexOf(originalDirector);
+                // Find the index of this director in selectedTimelineDirectors
+                int directorIndex = selectedTimelineDirectors.IndexOf(originalDirector);
                 if (directorIndex >= 0)
                 {
                     context.TimelineTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
@@ -1109,7 +1129,7 @@ namespace Unity.MultiTimelineRecorder
             var trackName = $"{recorderItem.recorderType} Recorder Track";
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Attempting to create RecorderTrack: {trackName}");
             
-            var recorderTrack = timeline.CreateTrack<RecorderTrack>(null, trackName);
+            var recorderTrack = timeline.CreateTrack<UnityEditor.Recorder.Timeline.RecorderTrack>(null, trackName);
             if (recorderTrack == null)
             {
                 MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Failed to create {trackName}");
@@ -1129,7 +1149,7 @@ namespace Unity.MultiTimelineRecorder
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Total tracks in timeline: {trackCount}");
             
             // Create recorder clip
-            var recorderClip = recorderTrack.CreateClip<RecorderClip>();
+            var recorderClip = recorderTrack.CreateClip<UnityEditor.Recorder.Timeline.RecorderClip>();
             if (recorderClip == null)
             {
                 MultiTimelineRecorderLogger.LogError($"[MultiTimelineRecorder] Failed to create RecorderClip for {recorderItem.recorderType}");
@@ -1166,7 +1186,7 @@ namespace Unity.MultiTimelineRecorder
                 recorderClip.duration = originalTimeline.duration + oneFrameDuration;
             }
             
-            var recorderAsset = recorderClip.asset as RecorderClip;
+            var recorderAsset = recorderClip.asset as UnityEditor.Recorder.Timeline.RecorderClip;
             recorderAsset.settings = recorderSettings;
             
             // Apply type-specific settings
@@ -1193,7 +1213,7 @@ namespace Unity.MultiTimelineRecorder
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Created {recorderItem.recorderType} recorder track successfully");
         }
         
-        private void ApplyFBXRecorderPatch(RecorderClip recorderAsset, TimelineClip recorderClip, GameObject targetGameObject)
+        private void ApplyFBXRecorderPatch(UnityEditor.Recorder.Timeline.RecorderClip recorderAsset, TimelineClip recorderClip, GameObject targetGameObject)
         {
             MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] === Applying FBX recorder special configuration ===");
             
@@ -1261,7 +1281,7 @@ namespace Unity.MultiTimelineRecorder
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] FBX configuration complete");
         }
         
-        private void ApplyFBXRecorderPatchForMultiRecorder(RecorderClip recorderAsset, TimelineClip recorderClip, GameObject targetGameObject)
+        private void ApplyFBXRecorderPatchForMultiRecorder(UnityEditor.Recorder.Timeline.RecorderClip recorderAsset, TimelineClip recorderClip, GameObject targetGameObject)
         {
             MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] === Applying FBX recorder special configuration (Multi-Recorder) ===");
             
@@ -1306,7 +1326,7 @@ namespace Unity.MultiTimelineRecorder
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] FBX configuration complete");
         }
         
-        private void ApplyAlembicSettingsToRecorderClip(RecorderClip recorderAsset, RecorderSettings recorderSettings)
+        private void ApplyAlembicSettingsToRecorderClip(UnityEditor.Recorder.Timeline.RecorderClip recorderAsset, RecorderSettings recorderSettings)
         {
             // Ensure the timeline asset has the correct settings before saving
             if (recorderAsset.settings != null)
