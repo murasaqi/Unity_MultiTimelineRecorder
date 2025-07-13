@@ -302,7 +302,7 @@ MonoBehaviour:
     takeNumber: 10
   - timelineIndex: 0
     takeNumber: 10
-  leftColumnWidth: 563.33344
+  leftColumnWidth: 288.66675
   centerColumnWidth: 250
   debugMode: 1
   showStatusSection: 0

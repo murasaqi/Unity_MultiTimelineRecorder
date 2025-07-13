@@ -865,8 +865,8 @@ namespace Unity.MultiTimelineRecorder
                                 string rangeText;
                                 if (showTimingInFrames)
                                 {
-                                    int startFrame = Mathf.RoundToInt(recordingRange.startTime * frameRate);
-                                    int endFrame = Mathf.RoundToInt(recordingRange.endTime * frameRate);
+                                    int startFrame = Mathf.RoundToInt((float)(recordingRange.startTime * frameRate));
+                                    int endFrame = Mathf.RoundToInt((float)(recordingRange.endTime * frameRate));
                                     rangeText = $"({startFrame}f-{endFrame}f)";
                                 }
                                 else
