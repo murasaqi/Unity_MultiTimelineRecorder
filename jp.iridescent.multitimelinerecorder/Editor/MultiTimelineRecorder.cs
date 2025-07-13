@@ -510,19 +510,6 @@ namespace Unity.MultiTimelineRecorder
             
             DrawSignalEmitterSettings();
             
-            // Help info for timeline margin
-            if (timelineMarginFrames > 0)
-            {
-                float marginSeconds = timelineMarginFrames / (float)frameRate;
-                EditorGUILayout.LabelField($"Will add {marginSeconds:F2} seconds between each timeline for safe rendering.", EditorStyles.miniLabel);
-            }
-            
-            // Help info for pre-roll
-            if (preRollFrames > 0)
-            {
-                float preRollSeconds = preRollFrames / (float)frameRate;
-                EditorGUILayout.LabelField($"Timeline will run at frame 0 for {preRollSeconds:F2} seconds before recording starts.", EditorStyles.miniLabel);
-            }
             
             EditorGUILayout.EndVertical();
         }
