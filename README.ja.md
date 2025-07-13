@@ -28,19 +28,15 @@ Unity Multi Timeline Recorderは、複数のUnity Timelineアセットを様々�
 
 ```
 Unity_MultiTimelineRecorder/
-├── jp.iridescent.multitimelinerecorder/    # Unityパッケージ
-│   ├── Runtime/                             # ランタイムスクリプト
-│   ├── Editor/                              # エディタースクリプト
-│   ├── Documentation~/                      # ドキュメント
-│   ├── Samples~/                            # サンプルアセット
-│   ├── package.json                         # パッケージマニフェスト
-│   ├── README.md                            # パッケージドキュメント
-│   ├── LICENSE                              # MITライセンス
-│   └── CHANGELOG.md                         # バージョン履歴
-└── Unity_MultiTimelineRecorder_Demo~/       # デモプロジェクト
-    ├── Assets/                              # デモアセット
-    ├── ProjectSettings/                     # Unityプロジェクト設定
-    └── ...                                  # その他のUnityプロジェクトファイル
+└── jp.iridescent.multitimelinerecorder/    # Unityパッケージ
+    ├── Runtime/                             # ランタイムスクリプト
+    ├── Editor/                              # エディタースクリプト
+    ├── Documentation~/                      # ドキュメント
+    ├── Samples~/                            # サンプルアセット
+    ├── package.json                         # パッケージマニフェスト
+    ├── README.md                            # パッケージドキュメント
+    ├── LICENSE                              # MITライセンス
+    └── CHANGELOG.md                         # バージョン履歴
 ```
 
 ## インストール
@@ -53,15 +49,6 @@ Unity_MultiTimelineRecorder/
 4. 入力: `https://github.com/murasaqi/Unity_MultiTimelineRecorder.git?path=jp.iridescent.multitimelinerecorder`
 5. Addをクリック
 
-### デモプロジェクトのセットアップ
-
-1. このリポジトリをクローン: 
-   ```bash
-   git clone https://github.com/murasaqi/Unity_MultiTimelineRecorder.git
-   ```
-2. Unity Hubを開く
-3. "Add"をクリックして`Unity_MultiTimelineRecorder_Demo~`フォルダを選択
-4. Unity 2021.3以降でプロジェクトを開く
 
 ## 必要要件
 

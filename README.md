@@ -28,19 +28,15 @@ Unity Multi Timeline Recorder is a comprehensive tool for batch recording multip
 
 ```
 Unity_MultiTimelineRecorder/
-├── jp.iridescent.multitimelinerecorder/    # Unity Package
-│   ├── Runtime/                             # Runtime scripts
-│   ├── Editor/                              # Editor scripts
-│   ├── Documentation~/                      # Documentation
-│   ├── Samples~/                            # Sample assets
-│   ├── package.json                         # Package manifest
-│   ├── README.md                            # Package documentation
-│   ├── LICENSE                              # MIT License
-│   └── CHANGELOG.md                         # Version history
-└── Unity_MultiTimelineRecorder_Demo~/       # Demo project
-    ├── Assets/                              # Demo assets
-    ├── ProjectSettings/                     # Unity project settings
-    └── ...                                  # Other Unity project files
+└── jp.iridescent.multitimelinerecorder/    # Unity Package
+    ├── Runtime/                             # Runtime scripts
+    ├── Editor/                              # Editor scripts
+    ├── Documentation~/                      # Documentation
+    ├── Samples~/                            # Sample assets
+    ├── package.json                         # Package manifest
+    ├── README.md                            # Package documentation
+    ├── LICENSE                              # MIT License
+    └── CHANGELOG.md                         # Version history
 ```
 
 ## Installation
@@ -53,15 +49,6 @@ Unity_MultiTimelineRecorder/
 4. Enter: `https://github.com/murasaqi/Unity_MultiTimelineRecorder.git?path=jp.iridescent.multitimelinerecorder`
 5. Click Add
 
-### Demo Project Setup
-
-1. Clone this repository: 
-   ```bash
-   git clone https://github.com/murasaqi/Unity_MultiTimelineRecorder.git
-   ```
-2. Open Unity Hub
-3. Click "Add" and select the `Unity_MultiTimelineRecorder_Demo~` folder
-4. Open the project with Unity 2021.3 or later
 
 ## Requirements
 
