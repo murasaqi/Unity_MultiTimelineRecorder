@@ -1,0 +1,305 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8085ba97a44d4ca41b6cb2a6b54955ba, type: 3}
+  m_Name: MultiTimelineRecorderSettings
+  m_EditorClassIdentifier: 
+  frameRate: 24
+  width: 1920
+  height: 1080
+  fileName: <Scene>_<Recorder>_<Take>
+  globalOutputPath:
+    location: 0
+    path: Recordings/<Timeline>
+    pathMode: 0
+    customPath: 
+  takeNumber: 1
+  preRollFrames: 0
+  cameraTag: MainCamera
+  outputResolution: 1
+  selectedDirectorIndex: 0
+  selectedDirectorIndices: 0000000001000000
+  timelineMarginFrames: 30
+  multiRecorderConfig:
+    recorderItems: []
+    globalOutputPath: Recordings
+    useGlobalResolution: 1
+  timelineRecorderConfigEntries:
+  - timelineIndex: 0
+    config:
+      recorderItems:
+      - name: Image Sequence
+        enabled: 1
+        recorderType: 0
+        fileName: <Scene>_<Take>_image_<Frame>
+        takeNumber: 1
+        takeMode: 1
+        outputPath:
+          location: 0
+          path: Recordings/<Timeline>
+          pathMode: 0
+          customPath: 
+        imageFormat: 0
+        imageQuality: 75
+        captureAlpha: 0
+        jpegQuality: 75
+        exrCompression: 0
+        movieConfig:
+          outputFormat: 0
+          videoBitrateMode: 2
+          customBitrate: 15000
+          width: 1920
+          height: 1080
+          frameRate: 24
+          capFrameRate: 1
+          captureAudio: 0
+          audioBitrate: 192
+          captureAlpha: 0
+          flipVertical: 0
+        aovConfig:
+          selectedAOVs: 0
+          includeBeauty: 1
+          includeDepth: 0
+          includeNormal: 0
+          includeAlbedo: 0
+          includeSpecular: 0
+          includeSmoothness: 0
+          includeAmbientOcclusion: 0
+          includeMotionVectors: 0
+          outputFormat: 0
+          compressionEnabled: 1
+          useMultiPartEXR: 1
+          colorSpace: 1
+          compression: 0
+          width: 1920
+          height: 1080
+          frameRate: 24
+          capFrameRate: 1
+          flipVertical: 0
+          customPassName: 
+        alembicConfig:
+          exportTargets: 9
+          exportScope: 0
+          targetGameObjectRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          customSelectionRefs: []
+          timeSamplingMode: 0
+          frameRate: 24
+          frameRateNumerator: 24000
+          frameRateDenominator: 1001
+          motionBlurShutterAngle: 180
+          samplesPerFrame: 1
+          handedness: 0
+          scaleFactor: 1
+          worldScale: 1
+          swapYZ: 0
+          flipFaces: 0
+          includeChildren: 1
+          timeSamplingType: 0
+          exportUVs: 1
+          exportNormals: 1
+          exportTangents: 0
+          exportVertexColors: 1
+          exportVisibility: 1
+          assumeUnchangedTopology: 1
+          flattenHierarchy: 0
+          customAttributes: 
+          includeInactiveMeshes: 0
+        animationConfig:
+          recordingProperties: 7
+          recordingScope: 0
+          targetGameObjectRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          customSelectionRefs: []
+          frameRate: 30
+          interpolationMode: 0
+          recordInWorldSpace: 0
+          includeChildren: 1
+          clampedTangents: 1
+          recordBlendShapes: 0
+          compressionLevel: 2
+          positionError: 0.01
+          rotationError: 0.5
+          scaleError: 0.01
+          optimizeGameObjects: 1
+          treatAsHumanoid: 0
+          avatarMask: {fileID: 0}
+          recordRootMotion: 1
+          recordHierarchyChanges: 0
+          recordComponentEnableStates: 0
+          customPropertyPaths: 
+        fbxConfig:
+          targetGameObjectRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          recordedComponent: 2
+          recordHierarchy: 1
+          clampedTangents: 1
+          animationCompression: 0
+          exportGeometry: 1
+          transferAnimationSourceRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          transferAnimationDestRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          frameRate: 24
+        width: 1920
+        height: 1080
+        frameRate: 24
+        capFrameRate: 1
+      globalOutputPath: Recordings
+      useGlobalResolution: 1
+  - timelineIndex: 1
+    config:
+      recorderItems:
+      - name: Movie
+        enabled: 1
+        recorderType: 1
+        fileName: <Scene>_<Take>
+        takeNumber: 1
+        takeMode: 1
+        outputPath:
+          location: 0
+          path: Recordings/<Timeline>
+          pathMode: 0
+          customPath: 
+        imageFormat: 0
+        imageQuality: 75
+        captureAlpha: 0
+        jpegQuality: 75
+        exrCompression: 0
+        movieConfig:
+          outputFormat: 0
+          videoBitrateMode: 2
+          customBitrate: 15000
+          width: 1920
+          height: 1080
+          frameRate: 24
+          capFrameRate: 1
+          captureAudio: 0
+          audioBitrate: 192
+          captureAlpha: 0
+          flipVertical: 0
+        aovConfig:
+          selectedAOVs: 0
+          includeBeauty: 1
+          includeDepth: 0
+          includeNormal: 0
+          includeAlbedo: 0
+          includeSpecular: 0
+          includeSmoothness: 0
+          includeAmbientOcclusion: 0
+          includeMotionVectors: 0
+          outputFormat: 0
+          compressionEnabled: 1
+          useMultiPartEXR: 1
+          colorSpace: 1
+          compression: 0
+          width: 1920
+          height: 1080
+          frameRate: 24
+          capFrameRate: 1
+          flipVertical: 0
+          customPassName: 
+        alembicConfig:
+          exportTargets: 9
+          exportScope: 0
+          targetGameObjectRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          customSelectionRefs: []
+          timeSamplingMode: 0
+          frameRate: 24
+          frameRateNumerator: 24000
+          frameRateDenominator: 1001
+          motionBlurShutterAngle: 180
+          samplesPerFrame: 1
+          handedness: 0
+          scaleFactor: 1
+          worldScale: 1
+          swapYZ: 0
+          flipFaces: 0
+          includeChildren: 1
+          timeSamplingType: 0
+          exportUVs: 1
+          exportNormals: 1
+          exportTangents: 0
+          exportVertexColors: 1
+          exportVisibility: 1
+          assumeUnchangedTopology: 1
+          flattenHierarchy: 0
+          customAttributes: 
+          includeInactiveMeshes: 0
+        animationConfig:
+          recordingProperties: 7
+          recordingScope: 0
+          targetGameObjectRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          customSelectionRefs: []
+          frameRate: 30
+          interpolationMode: 0
+          recordInWorldSpace: 0
+          includeChildren: 1
+          clampedTangents: 1
+          recordBlendShapes: 0
+          compressionLevel: 2
+          positionError: 0.01
+          rotationError: 0.5
+          scaleError: 0.01
+          optimizeGameObjects: 1
+          treatAsHumanoid: 0
+          avatarMask: {fileID: 0}
+          recordRootMotion: 1
+          recordHierarchyChanges: 0
+          recordComponentEnableStates: 0
+          customPropertyPaths: 
+        fbxConfig:
+          targetGameObjectRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          recordedComponent: 2
+          recordHierarchy: 1
+          clampedTangents: 1
+          animationCompression: 0
+          exportGeometry: 1
+          transferAnimationSourceRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          transferAnimationDestRef:
+            scenePath: 
+            objectName: 
+            tag: 
+          frameRate: 24
+        width: 1920
+        height: 1080
+        frameRate: 24
+        capFrameRate: 1
+      globalOutputPath: Recordings
+      useGlobalResolution: 1
+  timelineTakeNumbers: []
+  leftColumnWidth: 250
+  centerColumnWidth: 250
+  debugMode: 0
+  showStatusSection: 1
+  showDebugSettings: 0
