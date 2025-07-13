@@ -73,6 +73,7 @@ namespace Unity.MultiTimelineRecorder
         public bool useSignalEmitterTiming = false;
         public string startTimingName = "pre";
         public string endTimingName = "post";
+        public bool showTimingInFrames = false; // false=秒数表示, true=フレーム数表示
         
         // 設定ファイルのパス
         private const string SETTINGS_PATH = "Assets/MultiTimelineRecorder/Settings/MultiTimelineRecorderSettings.asset";

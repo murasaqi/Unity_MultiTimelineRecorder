@@ -302,7 +302,7 @@ MonoBehaviour:
     takeNumber: 10
   - timelineIndex: 0
     takeNumber: 10
-  leftColumnWidth: 516.6667
+  leftColumnWidth: 365.33337
   centerColumnWidth: 250
   debugMode: 1
   showStatusSection: 0
@@ -310,3 +310,4 @@ MonoBehaviour:
   useSignalEmitterTiming: 1
   startTimingName: pre
   endTimingName: post
+  showTimingInFrames: 1

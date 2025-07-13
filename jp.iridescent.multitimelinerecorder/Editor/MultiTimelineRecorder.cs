@@ -229,6 +229,7 @@ namespace Unity.MultiTimelineRecorder
         public bool useSignalEmitterTiming = false;
         public string startTimingName = "pre";
         public string endTimingName = "post";
+        public bool showTimingInFrames = false; // false=秒数表示, true=フレーム数表示
         
         // UI折りたたみ用フラグ
         private bool showStatusSection = true;
@@ -857,12 +858,23 @@ namespace Unity.MultiTimelineRecorder
                                 bool hasSignalTrack = SignalEmitterRecordControl.HasSignalTrackWithValidEmitters(
                                     timelineAsset, startTimingName, endTimingName);
                                 
-                                string rangeText = $"({recordingRange.startTime:F1}-{recordingRange.endTime:F1}s)";
+                                string rangeText;
+                                if (showTimingInFrames)
+                                {
+                                    int startFrame = Mathf.RoundToInt(recordingRange.startTime * frameRate);
+                                    int endFrame = Mathf.RoundToInt(recordingRange.endTime * frameRate);
+                                    rangeText = $"({startFrame}f-{endFrame}f)";
+                                }
+                                else
+                                {
+                                    rangeText = $"({recordingRange.startTime:F1}s-{recordingRange.endTime:F1}s)";
+                                }
+                                
                                 string tooltip = hasSignalTrack 
                                     ? $"Signal Track with emitters '{startTimingName}' and '{endTimingName}' found"
                                     : $"Using SignalEmitters '{startTimingName}' and '{endTimingName}'";
                                 
-                                timelineContent = new GUIContent($" {timelineName} {rangeText}", tooltip);
+                                timelineContent = new GUIContent($" {rangeText} {timelineName}", tooltip);
                             }
                             else
                             {
@@ -2147,6 +2159,24 @@ namespace Unity.MultiTimelineRecorder
             {
                 EditorGUILayout.LabelField("Enable to use SignalEmitter markers for recording time range control.", EditorStyles.miniLabel);
             }
+            
+            // 時間表示形式の切り替え
+            if (useSignalEmitterTiming)
+            {
+                EditorGUILayout.Space(5);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("Display:", GUILayout.Width(50));
+                
+                string buttonText = showTimingInFrames ? "Switch to Seconds" : "Switch to Frames";
+                if (GUILayout.Button(buttonText, GUILayout.Width(120)))
+                {
+                    showTimingInFrames = !showTimingInFrames;
+                }
+                
+                string currentFormat = showTimingInFrames ? "Frames (24f)" : "Seconds (1.0s)";
+                EditorGUILayout.LabelField($"Current: {currentFormat}", EditorStyles.miniLabel);
+                EditorGUILayout.EndHorizontal();
+            }
         }
         
         private void DrawDebugSettings()
@@ -3423,6 +3453,7 @@ namespace Unity.MultiTimelineRecorder
             useSignalEmitterTiming = settings.useSignalEmitterTiming;
             startTimingName = settings.startTimingName;
             endTimingName = settings.endTimingName;
+            showTimingInFrames = settings.showTimingInFrames;
             
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Settings loaded");
         }
@@ -3483,6 +3514,7 @@ namespace Unity.MultiTimelineRecorder
             settings.useSignalEmitterTiming = useSignalEmitterTiming;
             settings.startTimingName = startTimingName;
             settings.endTimingName = endTimingName;
+            settings.showTimingInFrames = showTimingInFrames;
             
             // 保存
             settings.Save();
