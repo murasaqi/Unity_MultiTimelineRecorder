@@ -878,7 +878,7 @@ namespace Unity.MultiTimelineRecorder
                                     ? $"Signal Track with emitters '{startTimingName}' and '{endTimingName}' found"
                                     : $"Using SignalEmitters '{startTimingName}' and '{endTimingName}'";
                                 
-                                timelineContent = new GUIContent($" {rangeText} {timelineName}", tooltip);
+                                timelineContent = new GUIContent($"{rangeText} {timelineName}", tooltip);
                             }
                             else
                             {
