@@ -883,22 +883,8 @@ namespace Unity.MultiTimelineRecorder
                     // Draw marker icon if SignalEmitter is detected
                     if (showMarkerIcon)
                     {
-                        // Use pushpin-style icon for markers
-                        // Try blend key or pin icons
-                        var markerIcon = EditorGUIUtility.IconContent("blendKey");
-                        if (markerIcon == null || markerIcon.image == null)
-                        {
-                            markerIcon = EditorGUIUtility.IconContent("blendKeySelected");
-                            if (markerIcon == null || markerIcon.image == null)
-                            {
-                                // Fallback to colored dot pins
-                                markerIcon = EditorGUIUtility.IconContent("sv_icon_dot3_pix16_gizmo"); // Red pin
-                                if (markerIcon == null || markerIcon.image == null)
-                                {
-                                    markerIcon = EditorGUIUtility.IconContent("Animation.EventMarker");
-                                }
-                            }
-                        }
+                        // Use SignalAsset icon for detected SignalEmitters
+                        var markerIcon = EditorGUIUtility.IconContent("SignalAsset Icon");
                         GUILayout.Label(markerIcon, GUILayout.Width(16), GUILayout.Height(16));
                     }
                     else
