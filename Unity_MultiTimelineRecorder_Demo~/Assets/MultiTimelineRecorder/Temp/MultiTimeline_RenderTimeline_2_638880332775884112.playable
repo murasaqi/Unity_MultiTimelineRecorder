@@ -34,10 +34,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06397f605c749fe4dbe2df4bbd1ef4a1, type: 3}
-  m_Name: ImageRecorderSettings
+  m_Name: Cinematic Timeline (for High Quality Level) - Image
   m_EditorClassIdentifier: 
   enabled: 1
-  take: 1
+  take: 2
   captureEveryNthFrame: 1
   fileNameGenerator:
     m_Path:
@@ -175,8 +175,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -7708833064533952777}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -244,8 +244,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -7708833064533952777}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -313,8 +313,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -7708833064533952777}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -382,8 +382,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -7708833064533952777}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -474,8 +474,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -6280568587908107214}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -590,8 +590,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -1504051365329505368}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -735,7 +735,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6fde0a8ac3e6b482c95fa602e65ab045, type: 3}
-  m_Name: MovieRecorder
+  m_Name: Screenshots Timeline (for High Quality Level) - Movie
   m_EditorClassIdentifier: 
   enabled: 1
   take: 1
