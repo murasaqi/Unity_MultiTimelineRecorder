@@ -2110,57 +2110,6 @@ namespace Unity.MultiTimelineRecorder
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
             
-            // SignalEmitter使用時の状態表示
-            if (useSignalEmitterTiming)
-            {
-                
-                // 現在選択されているTimelineでの状態を表示
-                if (recordingQueueDirectors != null && recordingQueueDirectors.Count > 0)
-                {
-                    int validCount = 0;
-                    int totalCount = recordingQueueDirectors.Count;
-                    
-                    foreach (var director in recordingQueueDirectors)
-                    {
-                        if (director?.playableAsset is TimelineAsset timelineAsset)
-                        {
-                            // フォールバック込みで有効な録画範囲が得られるかチェック
-                            var recordingRange = SignalEmitterRecordControl.GetRecordingRangeFromSignalsWithFallback(
-                                timelineAsset, startTimingName, endTimingName, true);
-                            bool hasStrictSignalEmitters = SignalEmitterRecordControl.HasValidSignalEmitters(timelineAsset, startTimingName, endTimingName);
-                            
-                            if (hasStrictSignalEmitters)
-                            {
-                                validCount++;
-                            }
-                            else if (recordingRange.isValid)
-                            {
-                                // フォールバックで有効な場合はfallbackCountに加算
-                                // validCountには含めない（厳密な表示のため）
-                            }
-                        }
-                    }
-                    
-                    // デバッグ: validCount の実際の値を確認（デバッグモードの場合のみ）
-                    if (EditorPrefs.GetBool("MTR_SignalEmitterDebugMode", false))
-                    {
-                        Debug.Log($"[DEBUG] SignalEmitter validation: validCount={validCount}, totalCount={totalCount}");
-                    }
-                    
-                    if (validCount == totalCount)
-                    {
-                        EditorGUILayout.LabelField($"📍 All {totalCount} timeline(s) have valid SignalEmitters", EditorStyles.miniLabel);
-                    }
-                    else if (validCount > 0)
-                    {
-                        EditorGUILayout.LabelField($"⚠️ {validCount}/{totalCount} timeline(s) have valid SignalEmitters (others will use full timeline)", EditorStyles.miniLabel);
-                    }
-                    else
-                    {
-                        EditorGUILayout.LabelField($"⚠️ No SignalEmitters found - will use full timeline duration", EditorStyles.miniLabel);
-                    }
-                }
-            }
             
             // 時間表示形式の切り替え
             if (useSignalEmitterTiming)
