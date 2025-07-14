@@ -1,6 +1,6 @@
 {
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "unity-natural-mcp_56790"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

@@ -335,7 +335,7 @@
       "url": "https://packages.unity.com"
     },
     "jp.iridescent.multitimelinerecorder": {
-      "version": "file:F:/works/Unity_MultiTimelineRecorder/jp.iridescent.multitimelinerecorder",
+      "version": "file:../../jp.iridescent.multitimelinerecorder",
       "depth": 0,
       "source": "local",
       "dependencies": {

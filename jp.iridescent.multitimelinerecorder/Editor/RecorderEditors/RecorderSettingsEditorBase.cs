@@ -229,6 +229,12 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
                 GUI.changed = true;
             }
             
+            // Add wildcards button
+            if (GUILayout.Button(OutputPathSettings.WildcardButtonContent, EditorStyles.popup, GUILayout.MaxWidth(18)))
+            {
+                ShowWildcardsMenu();
+            }
+            
             EditorGUILayout.EndHorizontal();
             
             // Show example output with processed filename
@@ -315,18 +321,43 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
         /// </summary>
         protected void InsertWildcard(string wildcard)
         {
-            // Simple append for now - in a real implementation, would insert at cursor
-            host.fileName += wildcard;
+            // Get the current TextEditor for the FileNameField
+            TextEditor textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+            
+            // If the FileNameField has focus and we have a TextEditor
+            if (GUI.GetNameOfFocusedControl() == "FileNameField" && textEditor != null && textEditor.text == host.fileName)
+            {
+                if (textEditor.hasSelection)
+                {
+                    // Replace selection
+                    int start = Mathf.Min(textEditor.selectIndex, textEditor.cursorIndex);
+                    int end = Mathf.Max(textEditor.selectIndex, textEditor.cursorIndex);
+                    host.fileName = host.fileName.Substring(0, start) + wildcard + host.fileName.Substring(end);
+                    textEditor.text = host.fileName;
+                    textEditor.cursorIndex = start + wildcard.Length;
+                    textEditor.selectIndex = textEditor.cursorIndex;
+                }
+                else
+                {
+                    // Insert at cursor
+                    int pos = textEditor.cursorIndex;
+                    host.fileName = host.fileName.Insert(pos, wildcard);
+                    textEditor.text = host.fileName;
+                    textEditor.cursorIndex = pos + wildcard.Length;
+                    textEditor.selectIndex = textEditor.cursorIndex;
+                }
+            }
+            else
+            {
+                // Simple append if field doesn't have focus
+                host.fileName += wildcard;
+            }
             
             // Force GUI to update immediately
-            GUI.FocusControl(null);
             GUI.changed = true;
-            
-            // Request repaint of the window
-            if (EditorWindow.focusedWindow != null)
-            {
-                EditorWindow.focusedWindow.Repaint();
-            }
+            GUI.FocusControl(null);
+            GUIUtility.keyboardControl = 0;
+            GUIUtility.ExitGUI();
         }
         
         /// <summary>

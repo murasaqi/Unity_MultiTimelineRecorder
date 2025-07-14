@@ -180,6 +180,12 @@ namespace Unity.MultiTimelineRecorder.RecorderConfigEditors
         private void InsertWildcard(string wildcard)
         {
             configItem.fileName += wildcard;
+            
+            // Force GUI to update immediately
+            GUI.changed = true;
+            GUI.FocusControl(null);
+            GUIUtility.keyboardControl = 0;
+            GUIUtility.ExitGUI();
         }
         
         private void DrawImageSettings()
