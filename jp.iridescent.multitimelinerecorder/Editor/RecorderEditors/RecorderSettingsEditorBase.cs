@@ -421,13 +421,8 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
         /// </summary>
         protected virtual int? GetTimelineTakeNumber()
         {
-            // Try to get timeline take number from host
-            if (host is MultiTimelineRecorder.RecorderHostAdaper adapter)
-            {
-                return adapter.GetTimelineTakeNumber();
-            }
-            // Fallback to regular take number
-            return host.takeNumber;
+            // Use the interface method to get timeline take number
+            return host.GetTimelineTakeNumber();
         }
         
         /// <summary>

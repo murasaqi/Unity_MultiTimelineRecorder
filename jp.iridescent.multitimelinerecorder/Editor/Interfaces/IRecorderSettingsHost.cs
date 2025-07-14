@@ -88,5 +88,8 @@ namespace Unity.MultiTimelineRecorder
         
         // For MultiTimelineRecorder
         PlayableDirector selectedDirector { get; }
+        
+        // Get timeline-specific take number
+        int GetTimelineTakeNumber();
     }
 }

@@ -288,6 +288,13 @@ namespace Unity.MultiTimelineRecorder
             public Transform fbxTransferAnimationDest { get => config.fbxTransferAnimationDest; set => config.fbxTransferAnimationDest = value; }
             public FBXExportPreset fbxPreset { get => config.fbxPreset; set => config.fbxPreset = value; }
             public bool useFBXPreset { get => config.useFBXPreset; set => config.useFBXPreset = value; }
+            
+            // Get timeline-specific take number
+            public int GetTimelineTakeNumber()
+            {
+                // Pass through to parent host if it supports timeline take numbers
+                return parentHost.GetTimelineTakeNumber();
+            }
         }
     }
 }
