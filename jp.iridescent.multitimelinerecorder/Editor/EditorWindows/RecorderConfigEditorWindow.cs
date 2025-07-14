@@ -126,6 +126,7 @@ namespace Unity.MultiTimelineRecorder.RecorderConfigEditors
                 var menu = new GenericMenu();
                 menu.AddItem(new GUIContent("<Scene>"), false, () => InsertWildcard("<Scene>"));
                 menu.AddItem(new GUIContent("<Take>"), false, () => InsertWildcard("<Take>"));
+                menu.AddItem(new GUIContent("<RecorderTake>"), false, () => InsertWildcard("<RecorderTake>"));
                 menu.AddItem(new GUIContent("<Frame>"), false, () => InsertWildcard("<Frame>"));
                 menu.AddItem(new GUIContent("<Time>"), false, () => InsertWildcard("<Time>"));
                 menu.AddItem(new GUIContent("<Resolution>"), false, () => InsertWildcard("<Resolution>"));

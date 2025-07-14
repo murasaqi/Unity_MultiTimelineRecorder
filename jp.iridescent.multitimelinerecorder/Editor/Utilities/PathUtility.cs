@@ -22,9 +22,30 @@ namespace Unity.MultiTimelineRecorder
             if (string.IsNullOrEmpty(path))
                 return path;
             
+            // Check if path contains wildcards
+            bool hasWildcards = path.Contains('<') || path.Contains('>');
+            
+            // Skip Path.IsPathRooted check for paths with wildcards to avoid exception
+            if (hasWildcards)
+            {
+                // For paths with wildcards, check if it starts with a drive letter or UNC path
+                if (path.Length >= 2 && path[1] == ':' || path.StartsWith("\\\\") || path.StartsWith("//"))
+                {
+                    return path;
+                }
+                // Otherwise treat as relative path
+                if (path.StartsWith("Assets"))
+                {
+                    return CombineAndNormalize(ProjectRoot, path);
+                }
+                return CombineAndNormalize(ProjectRoot, path);
+            }
+            
             // Already absolute path
             if (Path.IsPathRooted(path))
+            {
                 return Path.GetFullPath(path);
+            }
             
             // Handle paths starting with "Assets"
             if (path.StartsWith("Assets"))
@@ -69,6 +90,10 @@ namespace Unity.MultiTimelineRecorder
         public static void EnsureDirectoryExists(string path)
         {
             if (string.IsNullOrEmpty(path))
+                return;
+            
+            // Skip directory creation for paths with wildcards
+            if (path.Contains('<') || path.Contains('>'))
                 return;
             
             string directory = Path.GetDirectoryName(path);

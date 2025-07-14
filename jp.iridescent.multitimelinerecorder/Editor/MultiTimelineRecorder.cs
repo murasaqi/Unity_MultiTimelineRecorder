@@ -1491,6 +1491,7 @@ namespace Unity.MultiTimelineRecorder
             menu.AddItem(new GUIContent("<Scene>"), false, () => item.fileName += "<Scene>");
             menu.AddItem(new GUIContent("<Recorder>"), false, () => item.fileName += "<Recorder>");
             menu.AddItem(new GUIContent("<Take>"), false, () => item.fileName += "<Take>");
+            menu.AddItem(new GUIContent("<RecorderTake>"), false, () => item.fileName += "<RecorderTake>");
             menu.AddItem(new GUIContent("<Frame>"), false, () => item.fileName += "<Frame>");
             menu.AddItem(new GUIContent("<Time>"), false, () => item.fileName += "<Time>");
             menu.AddItem(new GUIContent("<Resolution>"), false, () => item.fileName += "<Resolution>");

@@ -204,8 +204,13 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             // File Name field with wildcards button
             EditorGUILayout.BeginHorizontal();
             GUI.SetNextControlName("FileNameField");
+            
+            // Use DelayedTextField to handle updates more smoothly
+            EditorGUI.BeginChangeCheck();
             string newFileName = EditorGUILayout.TextField("File Name", host.fileName);
-            if (newFileName != host.fileName)
+            bool fileNameChanged = EditorGUI.EndChangeCheck();
+            
+            if (fileNameChanged || GUI.changed)
             {
                 host.fileName = newFileName;
                 
@@ -230,7 +235,7 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             }
             
             // Add wildcards button
-            if (GUILayout.Button(OutputPathSettings.WildcardButtonContent, EditorStyles.popup, GUILayout.MaxWidth(18)))
+            if (GUILayout.Button(new GUIContent("▼"), EditorStyles.popup, GUILayout.MaxWidth(18)))
             {
                 ShowWildcardsMenu();
             }
@@ -244,33 +249,8 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             // Path settings are now handled by OutputPathSettingsUI in MultiTimelineRecorder
             // This prevents duplicate path UI elements
             
-            // Take Mode
-            host.takeMode = (RecorderTakeMode)EditorGUILayout.EnumPopup("Take Mode", host.takeMode);
-            
             // Take number
-            EditorGUI.BeginDisabledGroup(host.takeMode == RecorderTakeMode.RecordersTake);
-            if (host.takeMode == RecorderTakeMode.RecordersTake)
-            {
-                // Show the timeline's take number as read-only
-                // Try to get timeline take number through reflection or interface
-                var hostType = host.GetType();
-                var methodInfo = hostType.GetMethod("GetTimelineTakeNumber");
-                if (methodInfo != null)
-                {
-                    int timelineTakeNumber = (int)methodInfo.Invoke(host, null);
-                    EditorGUILayout.IntField("Take Number", timelineTakeNumber);
-                }
-                else
-                {
-                    EditorGUILayout.IntField("Take Number", host.takeNumber);
-                }
-            }
-            else
-            {
-                // Clip Take mode - editable
-                host.takeNumber = EditorGUILayout.IntField("Take Number", host.takeNumber);
-            }
-            EditorGUI.EndDisabledGroup();
+            host.takeNumber = EditorGUILayout.IntField("Take Number", host.takeNumber);
         }
         
         /// <summary>
@@ -281,6 +261,7 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             var menu = new GenericMenu();
             menu.AddItem(new GUIContent("<Scene>"), false, () => InsertWildcard("<Scene>"));
             menu.AddItem(new GUIContent("<Take>"), false, () => InsertWildcard("<Take>"));
+            menu.AddItem(new GUIContent("<RecorderTake>"), false, () => InsertWildcard("<RecorderTake>"));
             menu.AddItem(new GUIContent("<Recorder>"), false, () => InsertWildcard("<Recorder>"));
             menu.AddItem(new GUIContent("<Time>"), false, () => InsertWildcard("<Time>"));
             menu.AddItem(new GUIContent("<Frame>"), false, () => InsertWildcard("<Frame>"));
@@ -324,6 +305,9 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             // Get the current TextEditor for the FileNameField
             TextEditor textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
             
+            // Store cursor position for later
+            int newCursorPos = 0;
+            
             // If the FileNameField has focus and we have a TextEditor
             if (GUI.GetNameOfFocusedControl() == "FileNameField" && textEditor != null && textEditor.text == host.fileName)
             {
@@ -333,31 +317,46 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
                     int start = Mathf.Min(textEditor.selectIndex, textEditor.cursorIndex);
                     int end = Mathf.Max(textEditor.selectIndex, textEditor.cursorIndex);
                     host.fileName = host.fileName.Substring(0, start) + wildcard + host.fileName.Substring(end);
-                    textEditor.text = host.fileName;
-                    textEditor.cursorIndex = start + wildcard.Length;
-                    textEditor.selectIndex = textEditor.cursorIndex;
+                    newCursorPos = start + wildcard.Length;
                 }
                 else
                 {
                     // Insert at cursor
                     int pos = textEditor.cursorIndex;
                     host.fileName = host.fileName.Insert(pos, wildcard);
-                    textEditor.text = host.fileName;
-                    textEditor.cursorIndex = pos + wildcard.Length;
-                    textEditor.selectIndex = textEditor.cursorIndex;
+                    newCursorPos = pos + wildcard.Length;
                 }
+                
+                // Update TextEditor's text immediately
+                textEditor.text = host.fileName;
+                textEditor.cursorIndex = newCursorPos;
+                textEditor.selectIndex = newCursorPos;
             }
             else
             {
                 // Simple append if field doesn't have focus
                 host.fileName += wildcard;
+                newCursorPos = host.fileName.Length;
             }
             
-            // Force GUI to update immediately
+            // Force immediate repaint
             GUI.changed = true;
-            GUI.FocusControl(null);
-            GUIUtility.keyboardControl = 0;
-            GUIUtility.ExitGUI();
+            
+            // Use Event to force immediate update
+            Event e = Event.current;
+            if (e != null)
+            {
+                e.Use();
+            }
+            
+            // Force all inspectors to repaint immediately
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            
+            // Also mark the host object dirty if it's a Unity Object
+            if (host is UnityEngine.Object obj)
+            {
+                EditorUtility.SetDirty(obj);
+            }
         }
         
         /// <summary>

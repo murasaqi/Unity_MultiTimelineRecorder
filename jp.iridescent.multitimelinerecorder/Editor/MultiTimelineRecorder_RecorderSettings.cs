@@ -347,23 +347,15 @@ namespace Unity.MultiTimelineRecorder
                 // Get the timeline-specific config to check for global resolution settings
                 var timelineConfig = GetTimelineRecorderConfig(timelineIndex);
                 
-                // Determine which take number to use based on take mode
+                // Always use the recorder's take number
                 int effectiveTakeNumber = recorderItem.takeNumber;
-                if (recorderItem.takeMode == RecorderTakeMode.RecordersTake && settings != null)
-                {
-                    // Find the index of this director in recordingQueueDirectors
-                    int directorIndex = recordingQueueDirectors.IndexOf(director);
-                    if (directorIndex >= 0)
-                    {
-                        effectiveTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
-                    }
-                }
                 
                 var context = new WildcardContext(effectiveTakeNumber,
                     timelineConfig.useGlobalResolution ? width : recorderItem.width,
                     timelineConfig.useGlobalResolution ? height : recorderItem.height);
                 context.TimelineName = director.gameObject.name;
                 context.RecorderName = recorderItem.recorderType.ToString();
+                context.RecorderType = recorderItem.recorderType;
                 
                 // Always set TimelineTakeNumber for <TimelineTake> wildcard
                 if (settings != null)

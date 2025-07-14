@@ -18,7 +18,7 @@ MonoBehaviour:
   fileName: <Scene>_<Recorder>_<Take>
   globalOutputPath:
     location: 0
-    path: Recordings/<Timeline>_
+    path: Recordings/<Timeline>_Take<TimelineTake>
     pathMode: 0
     customPath: 
   takeNumber: 1
@@ -36,12 +36,12 @@ MonoBehaviour:
   - timelineIndex: 0
     config:
       recorderItems:
-      - name: Image Sequence
+      - name: AOV
         enabled: 1
-        recorderType: 0
-        fileName: <Scene>_<Take>_image_<Frame>
+        recorderType: 4
+        fileName: <Scene>_Take<TimelineTake>_<AOVType>_<Frame>
         takeNumber: 1
-        takeMode: 0
+        takeMode: 1
         outputPath:
           location: 0
           path: Recordings/<Timeline>
@@ -65,7 +65,7 @@ MonoBehaviour:
           captureAlpha: 0
           flipVertical: 0
         aovConfig:
-          selectedAOVs: 0
+          selectedAOVs: 16
           includeBeauty: 1
           includeDepth: 0
           includeNormal: 0
@@ -170,9 +170,11 @@ MonoBehaviour:
       recorderItems: []
       globalOutputPath: Recordings
       useGlobalResolution: 1
-  timelineTakeNumbers: []
+  timelineTakeNumbers:
+  - timelineIndex: 0
+    takeNumber: 3
   leftColumnWidth: 250
-  centerColumnWidth: 168
+  centerColumnWidth: 147.33331
   debugMode: 1
   showStatusSection: 1
   showDebugSettings: 0

@@ -26,8 +26,29 @@ namespace Unity.MultiTimelineRecorder
         /// </summary>
         public static void ConfigureOutputPath(RecorderSettings settings, string filePath, string fileName, RecorderSettingsType type)
         {
-            // Combine path and filename
-            string outputFile = Path.Combine(filePath, fileName);
+            // Combine path and filename - avoid Path.Combine when wildcards are present
+            string outputFile;
+            if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(fileName))
+            {
+                // Use simple string concatenation to preserve wildcards
+                if (filePath.EndsWith("/") || filePath.EndsWith("\\"))
+                {
+                    outputFile = filePath + fileName;
+                }
+                else
+                {
+                    outputFile = filePath + "/" + fileName;
+                }
+            }
+            else if (!string.IsNullOrEmpty(fileName))
+            {
+                outputFile = fileName;
+            }
+            else
+            {
+                outputFile = filePath;
+            }
+            
             ConfigureOutputPath(settings, outputFile, type);
         }
         

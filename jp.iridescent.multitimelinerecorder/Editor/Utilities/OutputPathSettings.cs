@@ -349,15 +349,22 @@ namespace Unity.MultiTimelineRecorder
                     settings.path += "/" + wildcard;
                 }
                 GUI.changed = true;
-                GUI.FocusControl(null); // Clear focus to force immediate update
-                GUIUtility.keyboardControl = 0; // Reset keyboard control
-                GUIUtility.ExitGUI(); // Force immediate GUI update
+                
+                // Force GUI to update by clearing focus and re-focusing
+                GUI.FocusControl(null);
+                
+                // Schedule refocus for next frame to ensure the text field updates
+                EditorApplication.delayCall += () =>
+                {
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                };
             };
             
             // Basic wildcards
             menu.AddItem(new GUIContent("<Scene>"), false, () => insertWildcard("<Scene>"));
             menu.AddItem(new GUIContent("<Timeline>"), false, () => insertWildcard("<Timeline>"));
             menu.AddItem(new GUIContent("<Take>"), false, () => insertWildcard("<Take>"));
+            menu.AddItem(new GUIContent("<RecorderTake>"), false, () => insertWildcard("<RecorderTake>"));
             menu.AddItem(new GUIContent("<TimelineTake>"), false, () => insertWildcard("<TimelineTake>"));
             menu.AddItem(new GUIContent("<Date>"), false, () => insertWildcard("<Date>"));
             menu.AddItem(new GUIContent("<Time>"), false, () => insertWildcard("<Time>"));
@@ -372,24 +379,33 @@ namespace Unity.MultiTimelineRecorder
                 settings.path = "Recordings/<Timeline>";
                 GUI.changed = true;
                 GUI.FocusControl(null);
-                GUIUtility.keyboardControl = 0;
-                GUIUtility.ExitGUI();
+                EditorApplication.delayCall += () =>
+                {
+                    GUI.FocusControl("PathField");
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                };
             });
             menu.AddItem(new GUIContent("Examples/By Scene: Recordings/<Scene>/<Timeline>"), false, () => 
             {
                 settings.path = "Recordings/<Scene>/<Timeline>";
                 GUI.changed = true;
                 GUI.FocusControl(null);
-                GUIUtility.keyboardControl = 0;
-                GUIUtility.ExitGUI();
+                EditorApplication.delayCall += () =>
+                {
+                    GUI.FocusControl("PathField");
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                };
             });
             menu.AddItem(new GUIContent("Examples/By Date: Recordings/<Date>/<Timeline>"), false, () => 
             {
                 settings.path = "Recordings/<Date>/<Timeline>";
                 GUI.changed = true;
                 GUI.FocusControl(null);
-                GUIUtility.keyboardControl = 0;
-                GUIUtility.ExitGUI();
+                EditorApplication.delayCall += () =>
+                {
+                    GUI.FocusControl("PathField");
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                };
             });
             
             menu.ShowAsContext();
@@ -421,15 +437,22 @@ namespace Unity.MultiTimelineRecorder
                     settings.customPath += wildcard;
                 }
                 GUI.changed = true;
-                GUI.FocusControl(null); // Clear focus to force immediate update
-                GUIUtility.keyboardControl = 0; // Reset keyboard control
-                GUIUtility.ExitGUI(); // Force immediate GUI update
+                
+                // Force GUI to update by clearing focus and re-focusing
+                GUI.FocusControl(null);
+                
+                // Schedule refocus for next frame to ensure the text field updates
+                EditorApplication.delayCall += () =>
+                {
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                };
             };
             
             // Basic wildcards
             menu.AddItem(new GUIContent("<Timeline>"), false, () => insertWildcard("<Timeline>"));
             menu.AddItem(new GUIContent("<Recorder>"), false, () => insertWildcard("<Recorder>"));
             menu.AddItem(new GUIContent("<Take>"), false, () => insertWildcard("<Take>"));
+            menu.AddItem(new GUIContent("<RecorderTake>"), false, () => insertWildcard("<RecorderTake>"));
             menu.AddItem(new GUIContent("<TimelineTake>"), false, () => insertWildcard("<TimelineTake>"));
             menu.AddItem(new GUIContent("<Date>"), false, () => insertWildcard("<Date>"));
             

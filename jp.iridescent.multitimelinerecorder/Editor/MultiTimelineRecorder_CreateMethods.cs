@@ -479,13 +479,6 @@ namespace Unity.MultiTimelineRecorder
                 context.TimelineTakeNumber = settings.GetTimelineTakeNumber(firstTimelineIndex);
             }
             
-            // Set GameObject name for specific recorder types
-            // GameObject name is set in the per-timeline configuration
-            
-            var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
-            var processedFilePath = globalOutputPath.GetResolvedPath(context);
-            List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
-            
             // Get recorder type from first recorder in config
             if (multiRecorderConfig.RecorderItems.Count == 0)
             {
@@ -493,6 +486,14 @@ namespace Unity.MultiTimelineRecorder
                 return timeline;
             }
             var recorderType = multiRecorderConfig.RecorderItems[0].recorderType;
+            context.RecorderType = recorderType;
+            
+            // Set GameObject name for specific recorder types
+            // GameObject name is set in the per-timeline configuration
+            
+            var processedFileName = WildcardProcessor.ProcessWildcards(fileName, context);
+            var processedFilePath = globalOutputPath.GetResolvedPath(context);
+            List<RecorderSettings> recorderSettingsList = new List<RecorderSettings>();
             
             // Create recorder settings (same as single timeline mode)
             switch (recorderType)
@@ -599,19 +600,15 @@ namespace Unity.MultiTimelineRecorder
             var firstDirector = directors[0];
             // Get timeline-specific config (using first timeline)
             var timelineConfig = GetTimelineRecorderConfig(0);
-            // Determine which take number to use based on take mode
+            // Always use the recorder's take number
             int effectiveTakeNumber = recorderItem.takeNumber;
-            if (recorderItem.takeMode == RecorderTakeMode.RecordersTake && settings != null && selectedDirectorIndices.Count > 0)
-            {
-                int firstTimelineIndex = selectedDirectorIndices[0];
-                effectiveTakeNumber = settings.GetTimelineTakeNumber(firstTimelineIndex);
-            }
             
             var context = new WildcardContext(effectiveTakeNumber,
                 timelineConfig.useGlobalResolution ? width : recorderItem.width,
                 timelineConfig.useGlobalResolution ? height : recorderItem.height);
             context.TimelineName = directors.Count > 1 ? $"MultiTimeline_{directors.Count}" : firstDirector.gameObject.name;
             context.RecorderName = recorderItem.recorderType.ToString();
+            context.RecorderType = recorderItem.recorderType;
             
             // Always set TimelineTakeNumber for <TimelineTake> wildcard
             if (settings != null && selectedDirectorIndices.Count > 0)
@@ -1019,23 +1016,15 @@ namespace Unity.MultiTimelineRecorder
         {
             // Get timeline-specific config (using first timeline)
             var timelineConfig = GetTimelineRecorderConfig(0);
-            // Determine which take number to use based on take mode
+            // Always use the recorder's take number
             int effectiveTakeNumber = recorderItem.takeNumber;
-            if (recorderItem.takeMode == RecorderTakeMode.RecordersTake && settings != null)
-            {
-                // Find the index of this director in recordingQueueDirectors  
-                int directorIndex = recordingQueueDirectors.IndexOf(originalDirector);
-                if (directorIndex >= 0)
-                {
-                    effectiveTakeNumber = settings.GetTimelineTakeNumber(directorIndex);
-                }
-            }
             
             var context = new WildcardContext(effectiveTakeNumber, 
                 timelineConfig.useGlobalResolution ? width : recorderItem.width,
                 timelineConfig.useGlobalResolution ? height : recorderItem.height);
             context.TimelineName = originalDirector.gameObject.name;
             context.RecorderName = recorderItem.recorderType.ToString();
+            context.RecorderType = recorderItem.recorderType;
             
             // Always set TimelineTakeNumber for <TimelineTake> wildcard
             if (settings != null)

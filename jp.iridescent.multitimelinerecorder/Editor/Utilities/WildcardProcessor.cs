@@ -13,6 +13,7 @@ namespace Unity.MultiTimelineRecorder
         public static class Wildcards
         {
             public const string Take = "<Take>";
+            public const string RecorderTake = "<RecorderTake>";
             public const string Scene = "<Scene>";
             public const string Frame = "<Frame>";
             public const string Time = "<Time>";
@@ -37,9 +38,19 @@ namespace Unity.MultiTimelineRecorder
             string result = template;
             
             // Replace wildcards
-            result = result.Replace(Wildcards.Take, $"Take{context.TakeNumber:D2}");
+            // <Take> is now handled by Unity Recorder - do not process it
+            result = result.Replace(Wildcards.RecorderTake, context.TakeNumber.ToString());
             result = result.Replace(Wildcards.Scene, context.SceneName);
-            result = result.Replace(Wildcards.Frame, context.FrameNumber.HasValue ? context.FrameNumber.Value.ToString("D4") : "0001");
+            
+            // Skip <Frame> wildcard processing for Image recorders or when explicitly requested
+            bool shouldPreserveFrame = context.PreserveFrameWildcard || 
+                                     (context.RecorderType.HasValue && context.RecorderType.Value == RecorderSettingsType.Image);
+            
+            if (!shouldPreserveFrame)
+            {
+                result = result.Replace(Wildcards.Frame, context.FrameNumber.HasValue ? context.FrameNumber.Value.ToString("D4") : "0001");
+            }
+            
             result = result.Replace(Wildcards.Time, DateTime.Now.ToString("HHmmss"));
             result = result.Replace(Wildcards.Date, DateTime.Now.ToString("yyyyMMdd"));
             result = result.Replace(Wildcards.Resolution, $"{context.Width}x{context.Height}");
@@ -48,7 +59,7 @@ namespace Unity.MultiTimelineRecorder
             result = result.Replace(Wildcards.Recorder, context.RecorderName ?? "Recorder");
             result = result.Replace(Wildcards.GameObject, context.GameObjectName ?? "GameObject");
             result = result.Replace(Wildcards.Timeline, context.TimelineName ?? "Timeline");
-            result = result.Replace(Wildcards.TimelineTake, context.TimelineTakeNumber.HasValue ? $"Take{context.TimelineTakeNumber.Value:D2}" : $"Take{context.TakeNumber:D2}");
+            result = result.Replace(Wildcards.TimelineTake, context.TimelineTakeNumber.HasValue ? context.TimelineTakeNumber.Value.ToString() : context.TakeNumber.ToString());
             
             return result;
         }
@@ -194,6 +205,8 @@ namespace Unity.MultiTimelineRecorder
         public string GameObjectName { get; set; }
         public string TimelineName { get; set; }
         public int? TimelineTakeNumber { get; set; }
+        public RecorderSettingsType? RecorderType { get; set; }
+        public bool PreserveFrameWildcard { get; set; } = false;
         
         public WildcardContext() { }
         
