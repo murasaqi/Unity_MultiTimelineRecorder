@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEditor;
 
 namespace Unity.MultiTimelineRecorder
@@ -25,6 +26,10 @@ namespace Unity.MultiTimelineRecorder
         public int selectedDirectorIndex = 0;
         public List<int> selectedDirectorIndices = new List<int>();
         public int timelineMarginFrames = 30;
+        
+        // 保存されたPlayableDirectorのリスト
+        [SerializeField]
+        public List<PlayableDirector> savedTimelineDirectors = new List<PlayableDirector>();
         
         // Multi-recorder設定
         [SerializeField]

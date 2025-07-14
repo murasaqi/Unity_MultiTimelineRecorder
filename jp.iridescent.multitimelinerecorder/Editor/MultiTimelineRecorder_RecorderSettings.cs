@@ -37,9 +37,6 @@ namespace Unity.MultiTimelineRecorder
             settings.FrameRate = frameRate;
             settings.CapFrameRate = true;
             
-            // Configure output path
-            RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Image);
-            
             settings.imageInputSettings = new GameViewInputSettings
             {
                 OutputWidth = width,

@@ -283,11 +283,12 @@ namespace Unity.MultiTimelineRecorder
                 MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Reset to Idle state");
             }
             
-            // For backward compatibility, scan timelines if we have none selected
-            if (recordingQueueDirectors.Count == 0)
-            {
-                ScanTimelines();
-            }
+            // Don't automatically scan timelines - user should explicitly add them
+            // This prevents deleted timelines from reappearing
+            // if (recordingQueueDirectors.Count == 0)
+            // {
+            //     ScanTimelines();
+            // }
             
             // Initialize selection if empty
             if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
@@ -379,6 +380,18 @@ namespace Unity.MultiTimelineRecorder
         
         private void OnGUI()
         {
+            // Handle keyboard shortcuts
+            if (Event.current.type == EventType.KeyDown)
+            {
+                // Ctrl+S (or Cmd+S on Mac) to save settings
+                if (Event.current.keyCode == KeyCode.S && (Event.current.control || Event.current.command))
+                {
+                    SaveSettings();
+                    MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] Settings saved (Ctrl+S)");
+                    Event.current.Use();
+                }
+            }
+            
             // Debug info at the top
             if (Event.current.type == EventType.Layout)
             {
@@ -1624,6 +1637,9 @@ namespace Unity.MultiTimelineRecorder
             }
             
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Added timeline: {director.gameObject.name}");
+            
+            // Save settings after adding timeline
+            SaveSettings();
         }
         
         private void RemoveTimeline(int index)
@@ -1667,6 +1683,9 @@ namespace Unity.MultiTimelineRecorder
             timelineSelectedRecorderIndices = newIndices;
             
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Removed timeline at index {index}");
+            
+            // Save settings after removing timeline
+            SaveSettings();
         }
         
         private void OnEditorUpdate()
@@ -1799,8 +1818,28 @@ namespace Unity.MultiTimelineRecorder
             {
                 MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Exiting Play Mode");
                 
+                // Check if recording was completed successfully
+                bool isRenderingComplete = EditorPrefs.GetBool("STR_IsRenderingComplete", false);
+                if (isRenderingComplete)
+                {
+                    MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] Recording completed successfully");
+                    currentState = RecordState.Idle;
+                    statusMessage = "Recording completed";
+                    renderProgress = 0f;
+                    
+                    // Clear all rendering flags
+                    EditorPrefs.SetBool("STR_IsRendering", false);
+                    EditorPrefs.SetBool("STR_IsRenderingInProgress", false);
+                    EditorPrefs.SetBool("STR_IsRenderingComplete", false);
+                    EditorPrefs.DeleteKey("STR_Progress");
+                    EditorPrefs.DeleteKey("STR_Status");
+                    EditorPrefs.DeleteKey("STR_CurrentTime");
+                    
+                    // Force window repaint to update UI
+                    Repaint();
+                }
                 // Check if we were recording and reset state
-                if (currentState == RecordState.Recording || currentState == RecordState.WaitingForPlayMode)
+                else if (currentState == RecordState.Recording || currentState == RecordState.WaitingForPlayMode)
                 {
                     MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] Recording was interrupted by user stopping Play Mode");
                     currentState = RecordState.Idle;
@@ -1814,6 +1853,9 @@ namespace Unity.MultiTimelineRecorder
                     EditorPrefs.DeleteKey("STR_Progress");
                     EditorPrefs.DeleteKey("STR_Status");
                     EditorPrefs.DeleteKey("STR_CurrentTime");
+                    
+                    // Force window repaint to update UI
+                    Repaint();
                 }
                 
                 // Take Numberインクリメントフラグをチェック
@@ -2527,7 +2569,7 @@ namespace Unity.MultiTimelineRecorder
                 EditorPrefs.SetBool("STR_IncrementTakeNumber", true);
                 MultiTimelineRecorderLogger.Log("[MultiTimelineRecorder] Set flag to increment take numbers when exiting play mode");
                 
-                // UIを更新
+                // Force window repaint to update UI immediately
                 Repaint();
                 
                 // 監視を停止
@@ -3387,6 +3429,44 @@ namespace Unity.MultiTimelineRecorder
             showStatusSection = settings.showStatusSection;
             showDebugSettings = settings.showDebugSettings;
             
+            // Load saved timeline directors
+            if (settings.savedTimelineDirectors != null && settings.savedTimelineDirectors.Count > 0)
+            {
+                recordingQueueDirectors.Clear();
+                foreach (var director in settings.savedTimelineDirectors)
+                {
+                    if (director != null && director.gameObject != null)
+                    {
+                        recordingQueueDirectors.Add(director);
+                    }
+                }
+                MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from settings");
+            }
+            
+            // Clean up missing timelines from recordingQueueDirectors
+            if (recordingQueueDirectors != null)
+            {
+                int removedCount = recordingQueueDirectors.RemoveAll(d => d == null || d.gameObject == null);
+                if (removedCount > 0)
+                {
+                    MultiTimelineRecorderLogger.Log($"[LoadSettings] Removed {removedCount} missing timelines from the list");
+                    
+                    // Update indices after cleanup
+                    selectedDirectorIndices.RemoveAll(idx => idx >= recordingQueueDirectors.Count);
+                    if (selectedDirectorIndex >= recordingQueueDirectors.Count)
+                    {
+                        selectedDirectorIndex = recordingQueueDirectors.Count > 0 ? 0 : -1;
+                    }
+                    if (currentTimelineIndexForRecorder >= recordingQueueDirectors.Count)
+                    {
+                        currentTimelineIndexForRecorder = recordingQueueDirectors.Count > 0 ? 0 : -1;
+                    }
+                    
+                    // Don't save here to avoid infinite loop
+                    // SaveSettings();
+                }
+            }
+            
             // SignalEmitter設定の読み込み (TODO-282)
             useSignalEmitterTiming = settings.useSignalEmitterTiming;
             startTimingName = settings.startTimingName;
@@ -3402,6 +3482,27 @@ namespace Unity.MultiTimelineRecorder
         private void SaveSettings()
         {
             if (settings == null) return;
+            
+            // Clean up missing timelines before saving
+            if (recordingQueueDirectors != null)
+            {
+                int removedCount = recordingQueueDirectors.RemoveAll(d => d == null || d.gameObject == null);
+                if (removedCount > 0)
+                {
+                    MultiTimelineRecorderLogger.Log($"[SaveSettings] Cleaned up {removedCount} missing timelines before saving");
+                    
+                    // Update indices after cleanup
+                    selectedDirectorIndices.RemoveAll(idx => idx >= recordingQueueDirectors.Count);
+                    if (selectedDirectorIndex >= recordingQueueDirectors.Count)
+                    {
+                        selectedDirectorIndex = recordingQueueDirectors.Count > 0 ? 0 : -1;
+                    }
+                    if (currentTimelineIndexForRecorder >= recordingQueueDirectors.Count)
+                    {
+                        currentTimelineIndexForRecorder = recordingQueueDirectors.Count > 0 ? 0 : -1;
+                    }
+                }
+            }
             
             // 設定に値を保存
             settings.frameRate = frameRate;
@@ -3420,6 +3521,10 @@ namespace Unity.MultiTimelineRecorder
             
             settings.multiRecorderConfig = multiRecorderConfig;
             settings.SetTimelineRecorderConfigs(timelineRecorderConfigs);
+            
+            // Save timeline directors list
+            settings.savedTimelineDirectors = new List<PlayableDirector>(recordingQueueDirectors);
+            MultiTimelineRecorderLogger.Log($"[SaveSettings] Saved {recordingQueueDirectors.Count} timeline directors");
             
             // Debug log for GameObject references before saving
             if (multiRecorderConfig != null && multiRecorderConfig.RecorderItems != null)

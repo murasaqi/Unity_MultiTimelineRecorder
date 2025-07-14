@@ -1379,7 +1379,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
   m_Name: pre
   m_EditorClassIdentifier: 
-  m_Time: 0.7916666666666666
+  m_Time: 1.4166666666666667
   m_Retroactive: 0
   m_EmitOnce: 0
   m_Asset: {fileID: 0}
@@ -2043,7 +2043,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c38f6fa1940124db1ab7f6fe7268d1, type: 3}
   m_Name: post
   m_EditorClassIdentifier: 
-  m_Time: 10.916666666666666
+  m_Time: 3.0833333333333335
   m_Retroactive: 0
   m_EmitOnce: 0
   m_Asset: {fileID: 0}
