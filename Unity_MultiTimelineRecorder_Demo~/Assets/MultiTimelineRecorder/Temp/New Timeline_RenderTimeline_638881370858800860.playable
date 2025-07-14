@@ -30,8 +30,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -8486034233443164368}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -137,7 +137,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6a1c0170443877e4ebae7daaf96be29a, type: 3}
-  m_Name: AOVRecorder
+  m_Name: Record AOV
   m_EditorClassIdentifier: 
   enabled: 1
   take: 1
@@ -227,8 +227,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: 7164743660060828518}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:

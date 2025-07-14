@@ -369,7 +369,8 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             {
                 RecorderName = GetRecorderName(),
                 GameObjectName = GetTargetGameObjectName(),
-                TimelineName = GetTimelineName()
+                TimelineName = GetTimelineName(),
+                TimelineTakeNumber = GetTimelineTakeNumber()
             };
             string processedFileName = WildcardProcessor.ProcessWildcards(host.fileName, context);
             
@@ -413,6 +414,20 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
                 return host.selectedDirector.playableAsset.name;
             }
             return null;
+        }
+        
+        /// <summary>
+        /// Get Timeline Take Number for wildcard processing
+        /// </summary>
+        protected virtual int? GetTimelineTakeNumber()
+        {
+            // Try to get timeline take number from host
+            if (host is MultiTimelineRecorder.RecorderHostAdaper adapter)
+            {
+                return adapter.GetTimelineTakeNumber();
+            }
+            // Fallback to regular take number
+            return host.takeNumber;
         }
         
         /// <summary>

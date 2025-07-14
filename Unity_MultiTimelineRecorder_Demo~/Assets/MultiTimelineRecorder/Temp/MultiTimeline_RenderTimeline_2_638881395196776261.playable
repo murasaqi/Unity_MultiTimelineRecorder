@@ -30,8 +30,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -7852283578709523011}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -125,7 +125,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9f55b158f7c43688c1c21ce05ac46ba, type: 3}
-  m_Name: AnimationRecorder
+  m_Name: TimelineCut01 - Animation
   m_EditorClassIdentifier: 
   enabled: 1
   take: 1
@@ -259,8 +259,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: 1284403481646597033}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -328,8 +328,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: 1284403481646597033}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:

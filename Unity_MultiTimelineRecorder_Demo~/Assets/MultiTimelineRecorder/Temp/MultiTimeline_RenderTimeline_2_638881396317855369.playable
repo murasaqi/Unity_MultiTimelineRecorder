@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6fde0a8ac3e6b482c95fa602e65ab045, type: 3}
-  m_Name: MovieRecorder
+  m_Name: TimelineCut02 - Movie
   m_EditorClassIdentifier: 
   enabled: 1
-  take: 1
+  take: 2
   captureEveryNthFrame: 1
   fileNameGenerator:
     m_Path:
@@ -186,8 +186,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -4633729607408064230}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -255,8 +255,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -4633729607408064230}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -347,8 +347,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: -2930765209103992710}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -443,10 +443,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9f55b158f7c43688c1c21ce05ac46ba, type: 3}
-  m_Name: AnimationRecorder
+  m_Name: TimelineCut01 - Animation
   m_EditorClassIdentifier: 
   enabled: 1
-  take: 1
+  take: 2
   captureEveryNthFrame: 1
   fileNameGenerator:
     m_Path:
@@ -553,8 +553,8 @@ MonoBehaviour:
     m_ParentTrack: {fileID: 8342665987986508858}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: -1
-    m_BlendOutDuration: -1
+    m_BlendInDuration: 0
+    m_BlendOutDuration: 0
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
