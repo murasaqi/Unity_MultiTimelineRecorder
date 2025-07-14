@@ -929,7 +929,39 @@ namespace Unity.MultiTimelineRecorder
                         var timeline = director.playableAsset as TimelineAsset;
                         if (timeline != null)
                         {
-                            EditorGUILayout.LabelField($"{timeline.duration:F2}s", GUILayout.Width(50));
+                            string durationText = "";
+                            
+                            // SignalEmitterが有効な場合は、その期間を表示
+                            if (useSignalEmitterTiming)
+                            {
+                                var recordingRange = SignalEmitterRecordControl.GetRecordingRangeFromSignalsWithFallback(
+                                    timeline, startTimingName, endTimingName, true);
+                                
+                                if (recordingRange.isValid)
+                                {
+                                    if (showTimingInFrames)
+                                    {
+                                        int durationFrames = Mathf.RoundToInt((float)(recordingRange.duration * frameRate));
+                                        durationText = $"{durationFrames}f";
+                                    }
+                                    else
+                                    {
+                                        durationText = $"{recordingRange.duration:F2}s";
+                                    }
+                                }
+                                else
+                                {
+                                    // SignalEmitterが見つからない場合は通常のduration
+                                    durationText = $"{timeline.duration:F2}s";
+                                }
+                            }
+                            else
+                            {
+                                // SignalEmitterが無効な場合は通常のduration
+                                durationText = $"{timeline.duration:F2}s";
+                            }
+                            
+                            EditorGUILayout.LabelField(durationText, GUILayout.Width(50));
                         }
                     }
                     
@@ -1084,9 +1116,15 @@ namespace Unity.MultiTimelineRecorder
                 // 正確なRectを取得
                 Rect itemRect = controlRect;
                 
+                // チェックボックスの領域を定義
+                Rect checkboxRect = new Rect(itemRect.x + 4, itemRect.y + 2, 16, 16);
+                
                 // マウスホバーとクリックの処理
                 bool isHover = itemRect.Contains(Event.current.mousePosition);
-                if (Event.current.type == EventType.MouseDown && isHover)
+                bool isCheckboxHover = checkboxRect.Contains(Event.current.mousePosition);
+                
+                // チェックボックス以外の部分をクリックした場合のみ選択を変更
+                if (Event.current.type == EventType.MouseDown && isHover && !isCheckboxHover)
                 {
                     selectedRecorderIndex = i;
                     // Save selection for current timeline
@@ -1129,10 +1167,11 @@ namespace Unity.MultiTimelineRecorder
                 
                 // Enable checkbox
                 EditorGUI.BeginChangeCheck();
-                item.enabled = EditorGUI.Toggle(new Rect(itemRect.x + 4, itemRect.y + 2, 16, 16), item.enabled);
+                item.enabled = EditorGUI.Toggle(checkboxRect, item.enabled);
                 if (EditorGUI.EndChangeCheck())
                 {
                     // 変更を反映
+                    SaveSettings();
                 }
                 
                 GUILayout.Space(24); // Checkboxのスペース
@@ -3394,6 +3433,25 @@ namespace Unity.MultiTimelineRecorder
             
             selectedDirectorIndex = settings.selectedDirectorIndex;
             selectedDirectorIndices = new List<int>(settings.selectedDirectorIndices);
+            
+            // Validate selectedDirectorIndices to prevent serialization issues
+            if (selectedDirectorIndices != null && recordingQueueDirectors != null)
+            {
+                // Remove invalid indices (out of range or negative)
+                selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
+                
+                // If we have an abnormally large number of indices, it's likely a serialization error
+                if (selectedDirectorIndices.Count > recordingQueueDirectors.Count && recordingQueueDirectors.Count > 0)
+                {
+                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Detected invalid selectedDirectorIndices count ({selectedDirectorIndices.Count}) > directors count ({recordingQueueDirectors.Count}). Resetting to first director.");
+                    selectedDirectorIndices.Clear();
+                    if (recordingQueueDirectors.Count > 0)
+                    {
+                        selectedDirectorIndices.Add(0);
+                    }
+                }
+            }
+            
             timelineMarginFrames = settings.timelineMarginFrames;
             
             multiRecorderConfig = settings.multiRecorderConfig;
@@ -3441,6 +3499,17 @@ namespace Unity.MultiTimelineRecorder
                     }
                 }
                 MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from settings");
+                
+                // Re-validate selectedDirectorIndices after loading directors
+                if (selectedDirectorIndices != null && selectedDirectorIndices.Count > recordingQueueDirectors.Count)
+                {
+                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Re-validating selectedDirectorIndices after loading directors");
+                    selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
+                    if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
+                    {
+                        selectedDirectorIndices.Add(0);
+                    }
+                }
             }
             
             // Clean up missing timelines from recordingQueueDirectors

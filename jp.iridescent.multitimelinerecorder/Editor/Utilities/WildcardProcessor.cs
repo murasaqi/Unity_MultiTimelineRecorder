@@ -59,7 +59,9 @@ namespace Unity.MultiTimelineRecorder
             result = result.Replace(Wildcards.Recorder, context.RecorderName ?? "Recorder");
             result = result.Replace(Wildcards.GameObject, context.GameObjectName ?? "GameObject");
             result = result.Replace(Wildcards.Timeline, context.TimelineName ?? "Timeline");
-            result = result.Replace(Wildcards.TimelineTake, context.TimelineTakeNumber.HasValue ? context.TimelineTakeNumber.Value.ToString() : context.TakeNumber.ToString());
+            // TimelineTakeを3桁のゼロパディング形式で置換
+            int timelineTakeValue = context.TimelineTakeNumber.HasValue ? context.TimelineTakeNumber.Value : context.TakeNumber;
+            result = result.Replace(Wildcards.TimelineTake, timelineTakeValue.ToString("D3"));
             
             return result;
         }
