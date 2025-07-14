@@ -1067,7 +1067,7 @@ namespace Unity.MultiTimelineRecorder
                     
                     // Timeline-specific Take number
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField("Take Number:", EditorStyles.miniBoldLabel, GUILayout.Width(85));
+                    EditorGUILayout.LabelField("Timeline Take Num", EditorStyles.miniBoldLabel, GUILayout.Width(110));
                     
                     int currentTake = settings.GetTimelineTakeNumber(currentTimelineIndexForRecorder);
                     EditorGUI.BeginChangeCheck();
