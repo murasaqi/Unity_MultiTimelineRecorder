@@ -8,7 +8,7 @@ namespace Unity.MultiTimelineRecorder
     /// シーン内のGameObjectへの参照を保存可能な形式で管理するクラス
     /// </summary>
     [Serializable]
-    public class GameObjectReference
+    public class GameObjectReference : ISerializationCallbackReceiver
     {
         [SerializeField]
         private string scenePath = "";
@@ -19,6 +19,10 @@ namespace Unity.MultiTimelineRecorder
         [SerializeField]
         private string tag = "";
         
+        // Direct GameObject reference for Editor
+        [SerializeField]
+        private GameObject directReference;
+        
         [NonSerialized]
         private GameObject cachedGameObject;
         
@@ -26,7 +30,20 @@ namespace Unity.MultiTimelineRecorder
         {
             get
             {
-                if (cachedGameObject == null && !string.IsNullOrEmpty(scenePath))
+                // First try direct reference (most reliable in Editor)
+                if (directReference != null)
+                {
+                    return directReference;
+                }
+                
+                // Then try cached reference
+                if (cachedGameObject != null)
+                {
+                    return cachedGameObject;
+                }
+                
+                // Finally try to find by path
+                if (!string.IsNullOrEmpty(scenePath))
                 {
                     cachedGameObject = GameObject.Find(scenePath);
                     
@@ -47,10 +64,12 @@ namespace Unity.MultiTimelineRecorder
                         }
                     }
                 }
+                
                 return cachedGameObject;
             }
             set
             {
+                directReference = value;
                 cachedGameObject = value;
                 if (value != null)
                 {
@@ -103,6 +122,24 @@ namespace Unity.MultiTimelineRecorder
         {
             var go = GameObject;
             return go != null ? go.transform : null;
+        }
+        
+        // ISerializationCallbackReceiver implementation
+        public void OnBeforeSerialize()
+        {
+            // Ensure path information is up to date before serialization
+            if (directReference != null)
+            {
+                scenePath = GetGameObjectPath(directReference);
+                objectName = directReference.name;
+                tag = directReference.tag;
+            }
+        }
+        
+        public void OnAfterDeserialize()
+        {
+            // Cache will be rebuilt on first access
+            cachedGameObject = null;
         }
     }
 }

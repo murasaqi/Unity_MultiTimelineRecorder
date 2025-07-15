@@ -808,12 +808,10 @@ namespace Unity.MultiTimelineRecorder
         /// </summary>
         public AlembicRecorderSettingsConfig Clone()
         {
-            return new AlembicRecorderSettingsConfig
+            var clone = new AlembicRecorderSettingsConfig
             {
                 exportTargets = this.exportTargets,
                 exportScope = this.exportScope,
-                targetGameObject = this.targetGameObject,
-                customSelection = new List<GameObject>(this.customSelection),
                 timeSamplingMode = this.timeSamplingMode,
                 frameRate = this.frameRate,
                 frameRateNumerator = this.frameRateNumerator,
@@ -822,8 +820,11 @@ namespace Unity.MultiTimelineRecorder
                 samplesPerFrame = this.samplesPerFrame,
                 handedness = this.handedness,
                 scaleFactor = this.scaleFactor,
+                worldScale = this.worldScale,
                 swapYZ = this.swapYZ,
                 flipFaces = this.flipFaces,
+                includeChildren = this.includeChildren,
+                timeSamplingType = this.timeSamplingType,
                 exportUVs = this.exportUVs,
                 exportNormals = this.exportNormals,
                 exportTangents = this.exportTangents,
@@ -834,6 +835,12 @@ namespace Unity.MultiTimelineRecorder
                 customAttributes = this.customAttributes,
                 includeInactiveMeshes = this.includeInactiveMeshes
             };
+            
+            // Clone GameObject references properly
+            clone.targetGameObject = this.targetGameObject;
+            clone.customSelection = new List<GameObject>(this.customSelection);
+            
+            return clone;
         }
         
         /// <summary>
