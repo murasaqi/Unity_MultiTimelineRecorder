@@ -125,6 +125,76 @@ namespace Unity.MultiTimelineRecorder
             // Configure output path
             RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Movie);
             
+            // Configure input settings based on source type
+            switch (this.settings.imageSourceType)
+            {
+                case ImageRecorderSourceType.GameView:
+                    settings.ImageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = width,
+                        OutputHeight = height
+                    };
+                    break;
+                    
+                case ImageRecorderSourceType.TargetCamera:
+                    if (this.settings.imageTargetCamera != null)
+                    {
+                        var cameraInputSettings = new CameraInputSettings
+                        {
+                            OutputWidth = width,
+                            OutputHeight = height,
+                            FlipFinalOutput = false,
+                            CaptureUI = false
+                        };
+                        // Set the camera using the appropriate method or property
+                        var cameraProperty = cameraInputSettings.GetType().GetProperty("Camera") ?? cameraInputSettings.GetType().GetProperty("camera");
+                        if (cameraProperty != null)
+                        {
+                            cameraProperty.SetValue(cameraInputSettings, this.settings.imageTargetCamera);
+                        }
+                        settings.ImageInputSettings = cameraInputSettings;
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning("[MultiTimelineRecorder] Target camera not set. Falling back to Game View.");
+                        settings.ImageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = width,
+                            OutputHeight = height
+                        };
+                    }
+                    break;
+                    
+                case ImageRecorderSourceType.RenderTexture:
+                    if (this.settings.imageRenderTexture != null)
+                    {
+                        var renderTextureInputSettings = new RenderTextureInputSettings
+                        {
+                            RenderTexture = this.settings.imageRenderTexture,
+                            FlipFinalOutput = false
+                        };
+                        settings.ImageInputSettings = renderTextureInputSettings;
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning("[MultiTimelineRecorder] Render texture not set. Falling back to Game View.");
+                        settings.ImageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = width,
+                            OutputHeight = height
+                        };
+                    }
+                    break;
+                    
+                default:
+                    settings.ImageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = width,
+                        OutputHeight = height
+                    };
+                    break;
+            }
+            
             return settings;
         }
         
@@ -342,6 +412,76 @@ namespace Unity.MultiTimelineRecorder
                 settings.Enabled = true;
                 settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
                 RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Movie);
+                
+                // Configure input settings based on source type
+                switch (config.imageSourceType)
+                {
+                    case ImageRecorderSourceType.GameView:
+                        settings.ImageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = config.width,
+                            OutputHeight = config.height
+                        };
+                        break;
+                        
+                    case ImageRecorderSourceType.TargetCamera:
+                        if (config.imageTargetCamera != null)
+                        {
+                            var cameraInputSettings = new CameraInputSettings
+                            {
+                                OutputWidth = config.width,
+                                OutputHeight = config.height,
+                                FlipFinalOutput = false,
+                                CaptureUI = false
+                            };
+                            // Set the camera using the appropriate method or property
+                            var cameraProperty = cameraInputSettings.GetType().GetProperty("Camera") ?? cameraInputSettings.GetType().GetProperty("camera");
+                            if (cameraProperty != null)
+                            {
+                                cameraProperty.SetValue(cameraInputSettings, config.imageTargetCamera);
+                            }
+                            settings.ImageInputSettings = cameraInputSettings;
+                        }
+                        else
+                        {
+                            MultiTimelineRecorderLogger.LogWarning($"[MultiTimelineRecorder] Target camera not set for movie recorder '{config.name}'. Falling back to Game View.");
+                            settings.ImageInputSettings = new GameViewInputSettings
+                            {
+                                OutputWidth = config.width,
+                                OutputHeight = config.height
+                            };
+                        }
+                        break;
+                        
+                    case ImageRecorderSourceType.RenderTexture:
+                        if (config.imageRenderTexture != null)
+                        {
+                            var renderTextureInputSettings = new RenderTextureInputSettings
+                            {
+                                RenderTexture = config.imageRenderTexture,
+                                FlipFinalOutput = false
+                            };
+                            settings.ImageInputSettings = renderTextureInputSettings;
+                        }
+                        else
+                        {
+                            MultiTimelineRecorderLogger.LogWarning($"[MultiTimelineRecorder] Render texture not set for movie recorder '{config.name}'. Falling back to Game View.");
+                            settings.ImageInputSettings = new GameViewInputSettings
+                            {
+                                OutputWidth = config.width,
+                                OutputHeight = config.height
+                            };
+                        }
+                        break;
+                        
+                    default:
+                        settings.ImageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = config.width,
+                            OutputHeight = config.height
+                        };
+                        break;
+                }
             }
             
             return settings;
