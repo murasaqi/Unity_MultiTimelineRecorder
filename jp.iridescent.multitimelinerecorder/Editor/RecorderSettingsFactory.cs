@@ -366,7 +366,7 @@ namespace Unity.MultiTimelineRecorder
                 exportScope = AlembicExportScope.EntireScene,
                 frameRate = 24f,
                 scaleFactor = 1f,
-                handedness = AlembicHandedness.Left
+                handedness = AlembicHandedness.Right
             };
             
             return CreateAlembicRecorderSettings(name, config);

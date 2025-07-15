@@ -68,7 +68,7 @@ namespace Unity.MultiTimelineRecorder
         public int samplesPerFrame = 1;
         
         // Transform settings
-        public AlembicHandedness handedness = AlembicHandedness.Left;
+        public AlembicHandedness handedness = AlembicHandedness.Right;
         public float scaleFactor = 1f;
         public float worldScale = 1f;
         public bool swapYZ = false;
