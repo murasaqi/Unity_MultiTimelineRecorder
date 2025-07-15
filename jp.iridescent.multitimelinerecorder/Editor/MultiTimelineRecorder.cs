@@ -290,20 +290,7 @@ namespace Unity.MultiTimelineRecorder
             //     ScanTimelines();
             // }
             
-            // Initialize selection if empty
-            if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
-            {
-                // Initialize from selectedDirectorIndex if valid
-                if (selectedDirectorIndex >= 0 && selectedDirectorIndex < recordingQueueDirectors.Count)
-                {
-                    selectedDirectorIndices.Add(selectedDirectorIndex);
-                }
-                else
-                {
-                    selectedDirectorIndices.Add(0);
-                    selectedDirectorIndex = 0;
-                }
-            }
+            // Initialize selection if empty - removed automatic selection to respect saved state
             
             // Initialize current timeline for recorder if needed
             if (selectedDirectorIndices.Count > 0 && currentTimelineIndexForRecorder < 0)
@@ -658,6 +645,40 @@ namespace Unity.MultiTimelineRecorder
                 GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             
             EditorGUILayout.Space(Styles.StandardSpacing);
+            
+            // Toggle all checkboxes buttons for Timeline list
+            if (recordingQueueDirectors.Count > 0)
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Enable All", GUILayout.Width(80)))
+                {
+                    // Add all timeline indices to selected list
+                    selectedDirectorIndices.Clear();
+                    for (int i = 0; i < recordingQueueDirectors.Count; i++)
+                    {
+                        selectedDirectorIndices.Add(i);
+                    }
+                    selectedDirectorIndices.Sort();
+                    
+                    // Set current timeline if none selected
+                    if (currentTimelineIndexForRecorder < 0 && selectedDirectorIndices.Count > 0)
+                    {
+                        currentTimelineIndexForRecorder = selectedDirectorIndices[0];
+                    }
+                }
+                
+                if (GUILayout.Button("Disable All", GUILayout.Width(80)))
+                {
+                    // Clear all selections
+                    selectedDirectorIndices.Clear();
+                    currentTimelineIndexForRecorder = -1;
+                }
+                
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(2);
+            }
             
             // マトリクスビュー風のリスト表示
             EditorGUILayout.BeginVertical("RL Background", GUILayout.ExpandWidth(true));
@@ -1100,6 +1121,34 @@ namespace Unity.MultiTimelineRecorder
             var currentConfig = GetTimelineRecorderConfig(currentTimelineIndexForRecorder);
             
             EditorGUILayout.Space(Styles.StandardSpacing);
+            
+            // Toggle all checkboxes buttons for Recorder list
+            if (currentConfig.RecorderItems.Count > 0)
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Enable All", GUILayout.Width(80)))
+                {
+                    // Enable all recorders
+                    foreach (var recorderItem in currentConfig.RecorderItems)
+                    {
+                        recorderItem.enabled = true;
+                    }
+                }
+                
+                if (GUILayout.Button("Disable All", GUILayout.Width(80)))
+                {
+                    // Disable all recorders
+                    foreach (var recorderItem in currentConfig.RecorderItems)
+                    {
+                        recorderItem.enabled = false;
+                    }
+                }
+                
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(2);
+            }
             
             // マトリクスビュー風のリスト表示
             EditorGUILayout.BeginVertical("RL Background", GUILayout.ExpandWidth(true));
@@ -3516,23 +3565,7 @@ namespace Unity.MultiTimelineRecorder
             selectedDirectorIndex = settings.selectedDirectorIndex;
             selectedDirectorIndices = new List<int>(settings.selectedDirectorIndices);
             
-            // Validate selectedDirectorIndices to prevent serialization issues
-            if (selectedDirectorIndices != null && recordingQueueDirectors != null)
-            {
-                // Remove invalid indices (out of range or negative)
-                selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
-                
-                // If we have an abnormally large number of indices, it's likely a serialization error
-                if (selectedDirectorIndices.Count > recordingQueueDirectors.Count && recordingQueueDirectors.Count > 0)
-                {
-                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Detected invalid selectedDirectorIndices count ({selectedDirectorIndices.Count}) > directors count ({recordingQueueDirectors.Count}). Resetting to first director.");
-                    selectedDirectorIndices.Clear();
-                    if (recordingQueueDirectors.Count > 0)
-                    {
-                        selectedDirectorIndices.Add(0);
-                    }
-                }
-            }
+            // NOTE: Validation of selectedDirectorIndices is moved to after recordingQueueDirectors is loaded
             
             timelineMarginFrames = settings.timelineMarginFrames;
             
@@ -3648,10 +3681,7 @@ namespace Unity.MultiTimelineRecorder
                 {
                     MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Re-validating selectedDirectorIndices after loading directors");
                     selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
-                    if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
-                    {
-                        selectedDirectorIndices.Add(0);
-                    }
+                    // Do not automatically select index 0 - respect saved state
                 }
             }
             // 互換性のため、古い方法でも試す
@@ -3672,10 +3702,7 @@ namespace Unity.MultiTimelineRecorder
                 {
                     MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Re-validating selectedDirectorIndices after loading directors");
                     selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
-                    if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
-                    {
-                        selectedDirectorIndices.Add(0);
-                    }
+                    // Do not automatically select index 0 - respect saved state
                 }
             }
             
@@ -3708,6 +3735,24 @@ namespace Unity.MultiTimelineRecorder
             startTimingName = settings.startTimingName;
             endTimingName = settings.endTimingName;
             showTimingInFrames = settings.showTimingInFrames;
+            
+            // Validate selectedDirectorIndices after all directors are loaded
+            if (selectedDirectorIndices != null && recordingQueueDirectors != null)
+            {
+                // Remove invalid indices (out of range or negative)
+                int removedCount = selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
+                if (removedCount > 0)
+                {
+                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Removed {removedCount} invalid indices from selectedDirectorIndices");
+                }
+                
+                // If we have an abnormally large number of indices, it's likely a serialization error
+                if (selectedDirectorIndices.Count > recordingQueueDirectors.Count && recordingQueueDirectors.Count > 0)
+                {
+                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Detected invalid selectedDirectorIndices count ({selectedDirectorIndices.Count}) > directors count ({recordingQueueDirectors.Count}). Clearing selection.");
+                    selectedDirectorIndices.Clear();
+                }
+            }
             
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Settings loaded");
         }
