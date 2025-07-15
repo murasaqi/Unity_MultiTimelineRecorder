@@ -622,6 +622,7 @@ namespace Unity.MultiTimelineRecorder
                     timelineConfig.useGlobalResolution ? height : recorderItem.height);
                 context.TimelineName = director.gameObject.name;
                 context.RecorderName = recorderItem.recorderType.ToString();
+                context.RecorderDisplayName = recorderItem.name;
                 context.RecorderType = recorderItem.recorderType;
                 
                 // Always set TimelineTakeNumber for <TimelineTake> wildcard

@@ -25,6 +25,7 @@ namespace Unity.MultiTimelineRecorder
             public const string GameObject = "<GameObject>";
             public const string Timeline = "<Timeline>";
             public const string TimelineTake = "<TimelineTake>";
+            public const string RecorderName = "<RecorderName>";
         }
         
         /// <summary>
@@ -62,6 +63,8 @@ namespace Unity.MultiTimelineRecorder
             // TimelineTakeを3桁のゼロパディング形式で置換
             int timelineTakeValue = context.TimelineTakeNumber.HasValue ? context.TimelineTakeNumber.Value : context.TakeNumber;
             result = result.Replace(Wildcards.TimelineTake, timelineTakeValue.ToString("D3"));
+            // RecorderNameワイルドカードの処理
+            result = result.Replace(Wildcards.RecorderName, context.RecorderDisplayName ?? context.RecorderName ?? "Recorder");
             
             return result;
         }
@@ -209,6 +212,7 @@ namespace Unity.MultiTimelineRecorder
         public int? TimelineTakeNumber { get; set; }
         public RecorderSettingsType? RecorderType { get; set; }
         public bool PreserveFrameWildcard { get; set; } = false;
+        public string RecorderDisplayName { get; set; }
         
         public WildcardContext() { }
         

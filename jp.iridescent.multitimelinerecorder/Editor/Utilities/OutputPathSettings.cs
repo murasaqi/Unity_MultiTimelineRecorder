@@ -119,7 +119,7 @@ namespace Unity.MultiTimelineRecorder
     {
         // Consistent label width for all UI elements
         private const float LABEL_WIDTH = 100f;
-        public static void DrawOutputPathUI(OutputPathSettings settings, string label = "Output Path", string timelineName = null)
+        public static void DrawOutputPathUI(OutputPathSettings settings, string label = "Output Path", string timelineName = null, string recorderName = null)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
@@ -209,6 +209,7 @@ namespace Unity.MultiTimelineRecorder
                 SceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
                 TimelineName = timelineName ?? "Timeline",
                 RecorderName = "Recorder",
+                RecorderDisplayName = recorderName ?? "Recorder",
                 TakeNumber = 1,
                 Width = 1920,
                 Height = 1080
@@ -256,6 +257,7 @@ namespace Unity.MultiTimelineRecorder
                         {
                             TimelineName = timelineName,
                             RecorderName = recorderName,
+                            RecorderDisplayName = recorderName,
                             TakeNumber = 1,
                             Width = 1920,
                             Height = 1080
@@ -284,6 +286,7 @@ namespace Unity.MultiTimelineRecorder
                     {
                         TimelineName = timelineName,
                         RecorderName = recorderName,
+                        RecorderDisplayName = recorderName,
                         TakeNumber = 1,
                         Width = 1920,
                         Height = 1080
@@ -370,6 +373,7 @@ namespace Unity.MultiTimelineRecorder
             menu.AddItem(new GUIContent("<Time>"), false, () => insertWildcard("<Time>"));
             menu.AddItem(new GUIContent("<Resolution>"), false, () => insertWildcard("<Resolution>"));
             menu.AddItem(new GUIContent("<Recorder>"), false, () => insertWildcard("<Recorder>"));
+            menu.AddItem(new GUIContent("<RecorderName>"), false, () => insertWildcard("<RecorderName>"));
             
             menu.AddSeparator("");
             
@@ -451,6 +455,7 @@ namespace Unity.MultiTimelineRecorder
             // Basic wildcards
             menu.AddItem(new GUIContent("<Timeline>"), false, () => insertWildcard("<Timeline>"));
             menu.AddItem(new GUIContent("<Recorder>"), false, () => insertWildcard("<Recorder>"));
+            menu.AddItem(new GUIContent("<RecorderName>"), false, () => insertWildcard("<RecorderName>"));
             menu.AddItem(new GUIContent("<Take>"), false, () => insertWildcard("<Take>"));
             menu.AddItem(new GUIContent("<RecorderTake>"), false, () => insertWildcard("<RecorderTake>"));
             menu.AddItem(new GUIContent("<TimelineTake>"), false, () => insertWildcard("<TimelineTake>"));
@@ -550,6 +555,7 @@ namespace Unity.MultiTimelineRecorder
                     SceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
                     TimelineName = timelineName,
                     RecorderName = recorderName,
+                    RecorderDisplayName = recorderName,
                     TakeNumber = 1,
                     Width = 1920,
                     Height = 1080

@@ -263,6 +263,7 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             menu.AddItem(new GUIContent("<Take>"), false, () => InsertWildcard("<Take>"));
             menu.AddItem(new GUIContent("<RecorderTake>"), false, () => InsertWildcard("<RecorderTake>"));
             menu.AddItem(new GUIContent("<Recorder>"), false, () => InsertWildcard("<Recorder>"));
+            menu.AddItem(new GUIContent("<RecorderName>"), false, () => InsertWildcard("<RecorderName>"));
             menu.AddItem(new GUIContent("<Time>"), false, () => InsertWildcard("<Time>"));
             menu.AddItem(new GUIContent("<Frame>"), false, () => InsertWildcard("<Frame>"));
             menu.AddItem(new GUIContent("<Resolution>"), false, () => InsertWildcard("<Resolution>"));

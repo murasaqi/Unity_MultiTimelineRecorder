@@ -1205,8 +1205,14 @@ namespace Unity.MultiTimelineRecorder
                 
                 GUILayout.Space(8); // Separator後のスペース
                 
-                // Recorder name
-                EditorGUILayout.LabelField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
+                // Recorder name (editable)
+                EditorGUI.BeginChangeCheck();
+                string newName = EditorGUILayout.TextField(item.name, Styles.StandardListItem, GUILayout.ExpandWidth(true));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    item.name = newName;
+                    SaveSettings();
+                }
                 
                 // 右クリックメニュー対応（既存の機能を維持）
                 if (Event.current.type == EventType.ContextClick && isHover)
@@ -1234,8 +1240,28 @@ namespace Unity.MultiTimelineRecorder
                     });
                     menu.AddItem(new GUIContent("複製"), false, () => {
                         var duplicatedItem = item.DeepCopy();
-                        duplicatedItem.name = item.name + " Copy";
+                        
+                        // Generate unique name for the duplicate
+                        int count = 1;
+                        string baseName = item.name;
+                        string proposedName = $"{baseName} Copy";
+                        
+                        // Check if name already exists and append number
+                        while (currentConfig.RecorderItems.Any(r => r.name == proposedName))
+                        {
+                            proposedName = $"{baseName} Copy {count}";
+                            count++;
+                        }
+                        duplicatedItem.name = proposedName;
+                        
                         currentConfig.RecorderItems.Insert(index + 1, duplicatedItem);
+                        
+                        // Select the duplicated item
+                        selectedRecorderIndex = index + 1;
+                        if (currentTimelineIndexForRecorder >= 0)
+                        {
+                            timelineSelectedRecorderIndices[currentTimelineIndexForRecorder] = selectedRecorderIndex;
+                        }
                     });
                     menu.AddSeparator("");
                     menu.AddItem(new GUIContent("上に移動"), index > 0, () => {
@@ -1346,6 +1372,21 @@ namespace Unity.MultiTimelineRecorder
             typeHeaderRect.x += 8;
             string recorderTypeName = GetRecorderTypeName(item.recorderType);
             GUI.Label(typeHeaderRect, $"Recorder Type: {recorderTypeName}", EditorStyles.boldLabel);
+            
+            EditorGUILayout.Space(10);
+            
+            // Recorder Name field
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Recorder Name", GUILayout.Width(100));
+            EditorGUI.BeginChangeCheck();
+            string newName = EditorGUILayout.TextField(item.name);
+            if (EditorGUI.EndChangeCheck())
+            {
+                item.name = newName;
+                SaveSettings();
+                Repaint(); // リストの表示も更新
+            }
+            EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.Space(10);
             
@@ -1570,6 +1611,19 @@ namespace Unity.MultiTimelineRecorder
             
             var currentConfig = GetTimelineRecorderConfig(currentTimelineIndexForRecorder);
             var item = MultiRecorderConfig.CreateDefaultRecorder(type);
+            
+            // Generate unique name with number
+            int count = 1;
+            string baseName = item.name;
+            string proposedName = baseName;
+            
+            // Check if name already exists and append number
+            while (currentConfig.RecorderItems.Any(r => r.name == proposedName))
+            {
+                proposedName = $"{baseName} {count}";
+                count++;
+            }
+            item.name = proposedName;
             
             // Apply global settings
             if (currentConfig.useGlobalResolution)
