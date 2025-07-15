@@ -22,6 +22,15 @@ namespace Unity.MultiTimelineRecorder
         public string cameraTag = "MainCamera";
         public OutputResolution outputResolution = OutputResolution.HD1080p;
         
+        // Image Recorder設定（Single Recorder Mode用）
+        public UnityEditor.Recorder.ImageRecorderSettings.ImageRecorderOutputFormat imageOutputFormat = UnityEditor.Recorder.ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
+        public bool imageCaptureAlpha = false;
+        public int jpegQuality = 75;
+        public UnityEditor.Recorder.CompressionUtility.EXRCompressionType exrCompression = UnityEditor.Recorder.CompressionUtility.EXRCompressionType.None;
+        public ImageRecorderSourceType imageSourceType = ImageRecorderSourceType.GameView;
+        public Camera imageTargetCamera = null;
+        public RenderTexture imageRenderTexture = null;
+        
         // タイムライン選択状態
         public int selectedDirectorIndex = 0;
         public List<int> selectedDirectorIndices = new List<int>();

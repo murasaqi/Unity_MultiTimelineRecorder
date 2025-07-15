@@ -232,6 +232,9 @@ namespace Unity.MultiTimelineRecorder
             public bool imageCaptureAlpha { get => config.imageCaptureAlpha; set => config.imageCaptureAlpha = value; }
             public int jpegQuality { get => config.jpegQuality; set => config.jpegQuality = value; }
             public CompressionUtility.EXRCompressionType exrCompression { get => config.exrCompression; set => config.exrCompression = value; }
+            public ImageRecorderSourceType imageSourceType { get => ImageRecorderSourceType.GameView; set { /* RecorderConfig doesn't support custom source */ } }
+            public Camera imageTargetCamera { get => null; set { /* RecorderConfig doesn't support custom source */ } }
+            public RenderTexture imageRenderTexture { get => null; set { /* RecorderConfig doesn't support custom source */ } }
             
             // Movie settings
             public MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat { get => config.movieOutputFormat; set => config.movieOutputFormat = value; }

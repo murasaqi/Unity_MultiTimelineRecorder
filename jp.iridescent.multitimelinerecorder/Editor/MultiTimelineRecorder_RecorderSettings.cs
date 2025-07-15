@@ -21,27 +21,93 @@ namespace Unity.MultiTimelineRecorder
             settings.name = "ImageRecorderSettings";
             settings.Enabled = true;
             settings.RecordMode = UnityEditor.Recorder.RecordMode.Manual;
-            settings.OutputFormat = ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
-            settings.CaptureAlpha = false;
+            settings.OutputFormat = this.settings.imageOutputFormat;
+            settings.CaptureAlpha = this.settings.imageCaptureAlpha;
             
             // Image format specific settings
             if (settings.OutputFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
             {
-                settings.JpegQuality = 75;
+                settings.JpegQuality = this.settings.jpegQuality;
             }
             else if (settings.OutputFormat == ImageRecorderSettings.ImageRecorderOutputFormat.EXR)
             {
-                settings.EXRCompression = CompressionUtility.EXRCompressionType.None;
+                settings.EXRCompression = this.settings.exrCompression;
             }
             
             settings.FrameRate = frameRate;
             settings.CapFrameRate = true;
             
-            settings.imageInputSettings = new GameViewInputSettings
+            RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Image);
+            
+            // Configure input settings based on source type
+            switch (this.settings.imageSourceType)
             {
-                OutputWidth = width,
-                OutputHeight = height
-            };
+                case ImageRecorderSourceType.GameView:
+                    settings.imageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = width,
+                        OutputHeight = height
+                    };
+                    break;
+                    
+                case ImageRecorderSourceType.TargetCamera:
+                    if (this.settings.imageTargetCamera != null)
+                    {
+                        var cameraInputSettings = new CameraInputSettings
+                        {
+                            OutputWidth = width,
+                            OutputHeight = height,
+                            FlipFinalOutput = false,
+                            CaptureUI = false
+                        };
+                        // Set the camera using the appropriate method or property
+                        var cameraProperty = cameraInputSettings.GetType().GetProperty("Camera") ?? cameraInputSettings.GetType().GetProperty("camera");
+                        if (cameraProperty != null)
+                        {
+                            cameraProperty.SetValue(cameraInputSettings, this.settings.imageTargetCamera);
+                        }
+                        settings.imageInputSettings = cameraInputSettings;
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning("[MultiTimelineRecorder] Target camera not set. Falling back to Game View.");
+                        settings.imageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = width,
+                            OutputHeight = height
+                        };
+                    }
+                    break;
+                    
+                case ImageRecorderSourceType.RenderTexture:
+                    if (this.settings.imageRenderTexture != null)
+                    {
+                        var renderTextureInputSettings = new RenderTextureInputSettings
+                        {
+                            RenderTexture = this.settings.imageRenderTexture,
+                            FlipFinalOutput = false
+                        };
+                        settings.imageInputSettings = renderTextureInputSettings;
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning("[MultiTimelineRecorder] Render texture not set. Falling back to Game View.");
+                        settings.imageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = width,
+                            OutputHeight = height
+                        };
+                    }
+                    break;
+                    
+                default:
+                    settings.imageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = width,
+                        OutputHeight = height
+                    };
+                    break;
+            }
             
             return settings;
         }
@@ -181,11 +247,75 @@ namespace Unity.MultiTimelineRecorder
             
             RecorderSettingsHelper.ConfigureOutputPath(settings, outputPath, outputFileName, RecorderSettingsType.Image);
             
-            settings.imageInputSettings = new GameViewInputSettings
+            // Configure input settings based on source type
+            switch (config.imageSourceType)
             {
-                OutputWidth = config.width,
-                OutputHeight = config.height
-            };
+                case ImageRecorderSourceType.GameView:
+                    settings.imageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = config.width,
+                        OutputHeight = config.height
+                    };
+                    break;
+                    
+                case ImageRecorderSourceType.TargetCamera:
+                    if (config.imageTargetCamera != null)
+                    {
+                        var cameraInputSettings = new CameraInputSettings
+                        {
+                            OutputWidth = config.width,
+                            OutputHeight = config.height,
+                            FlipFinalOutput = false,
+                            CaptureUI = false
+                        };
+                        // Set the camera using the appropriate method or property
+                        var cameraProperty = cameraInputSettings.GetType().GetProperty("Camera") ?? cameraInputSettings.GetType().GetProperty("camera");
+                        if (cameraProperty != null)
+                        {
+                            cameraProperty.SetValue(cameraInputSettings, config.imageTargetCamera);
+                        }
+                        settings.imageInputSettings = cameraInputSettings;
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning($"[MultiTimelineRecorder] Target camera not set for recorder '{config.name}'. Falling back to Game View.");
+                        settings.imageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = config.width,
+                            OutputHeight = config.height
+                        };
+                    }
+                    break;
+                    
+                case ImageRecorderSourceType.RenderTexture:
+                    if (config.imageRenderTexture != null)
+                    {
+                        var renderTextureInputSettings = new RenderTextureInputSettings
+                        {
+                            RenderTexture = config.imageRenderTexture,
+                            FlipFinalOutput = false
+                        };
+                        settings.imageInputSettings = renderTextureInputSettings;
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning($"[MultiTimelineRecorder] Render texture not set for recorder '{config.name}'. Falling back to Game View.");
+                        settings.imageInputSettings = new GameViewInputSettings
+                        {
+                            OutputWidth = config.width,
+                            OutputHeight = config.height
+                        };
+                    }
+                    break;
+                    
+                default:
+                    settings.imageInputSettings = new GameViewInputSettings
+                    {
+                        OutputWidth = config.width,
+                        OutputHeight = config.height
+                    };
+                    break;
+            }
             
             return settings;
         }

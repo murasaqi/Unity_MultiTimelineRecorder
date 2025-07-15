@@ -16,6 +16,36 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
         
         protected override void DrawInputSettings()
         {
+            // Source Type selection
+            host.imageSourceType = (ImageRecorderSourceType)EditorGUILayout.EnumPopup("Source", host.imageSourceType);
+            
+            // Source-specific settings
+            switch (host.imageSourceType)
+            {
+                case ImageRecorderSourceType.GameView:
+                    EditorGUILayout.LabelField("Capture", "Game View");
+                    break;
+                    
+                case ImageRecorderSourceType.TargetCamera:
+                    EditorGUILayout.Space(3);
+                    host.imageTargetCamera = (Camera)EditorGUILayout.ObjectField("Target Camera", host.imageTargetCamera, typeof(Camera), true);
+                    if (host.imageTargetCamera == null)
+                    {
+                        EditorGUILayout.HelpBox("Please assign a target camera.", MessageType.Warning);
+                    }
+                    break;
+                    
+                case ImageRecorderSourceType.RenderTexture:
+                    EditorGUILayout.Space(3);
+                    host.imageRenderTexture = (RenderTexture)EditorGUILayout.ObjectField("Render Texture", host.imageRenderTexture, typeof(RenderTexture), false);
+                    if (host.imageRenderTexture == null)
+                    {
+                        EditorGUILayout.HelpBox("Please assign a render texture.", MessageType.Warning);
+                    }
+                    break;
+            }
+            
+            // Call base to draw resolution settings
             base.DrawInputSettings();
             
             // Frame Rate (image sequences still need frame rate for timing)

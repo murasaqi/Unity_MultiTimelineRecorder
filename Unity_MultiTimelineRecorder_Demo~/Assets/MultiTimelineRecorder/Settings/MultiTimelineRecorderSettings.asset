@@ -30,7 +30,6 @@ MonoBehaviour:
   timelineMarginFrames: 30
   savedTimelineDirectors:
   - {fileID: 0}
-  - {fileID: 0}
   multiRecorderConfig:
     recorderItems: []
     globalOutputPath: Recordings

@@ -52,6 +52,9 @@ namespace Unity.MultiTimelineRecorder
             public bool captureAlpha = false;
             public int jpegQuality = 75;
             public CompressionUtility.EXRCompressionType exrCompression = CompressionUtility.EXRCompressionType.None;
+            public ImageRecorderSourceType imageSourceType = ImageRecorderSourceType.GameView;
+            public Camera imageTargetCamera = null;
+            public RenderTexture imageRenderTexture = null;
             
             // Movie Recorder
             public MovieRecorderSettingsConfig movieConfig = new MovieRecorderSettingsConfig();
@@ -92,6 +95,9 @@ namespace Unity.MultiTimelineRecorder
                     captureAlpha = this.captureAlpha,
                     jpegQuality = this.jpegQuality,
                     exrCompression = this.exrCompression,
+                    imageSourceType = this.imageSourceType,
+                    imageTargetCamera = this.imageTargetCamera,
+                    imageRenderTexture = this.imageRenderTexture,
                     width = this.width,
                     height = this.height,
                     frameRate = this.frameRate,

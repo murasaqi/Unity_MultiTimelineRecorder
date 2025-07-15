@@ -28,6 +28,9 @@ namespace Unity.MultiTimelineRecorder
         bool imageCaptureAlpha { get; set; }
         int jpegQuality { get; set; }
         CompressionUtility.EXRCompressionType exrCompression { get; set; }
+        ImageRecorderSourceType imageSourceType { get; set; }
+        Camera imageTargetCamera { get; set; }
+        RenderTexture imageRenderTexture { get; set; }
         
         // Movie settings
         MovieRecorderSettings.VideoRecorderOutputFormat movieOutputFormat { get; set; }
