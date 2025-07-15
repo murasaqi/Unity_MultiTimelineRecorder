@@ -3085,6 +3085,14 @@ namespace Unity.MultiTimelineRecorder
             var sourceRecorder = sourceConfig.RecorderItems[recorderIndex];
             int appliedCount = 0;
             
+            // Log source recorder settings
+            MultiTimelineRecorderLogger.LogVerbose($"[Copy To All] Source recorder '{sourceRecorder.name}' settings:");
+            MultiTimelineRecorderLogger.LogVerbose($"  - Type: {sourceRecorder.recorderType}");
+            MultiTimelineRecorderLogger.LogVerbose($"  - RenderTexture: {sourceRecorder.imageRenderTexture}");
+            MultiTimelineRecorderLogger.LogVerbose($"  - TargetCamera: {sourceRecorder.imageTargetCamera}");
+            MultiTimelineRecorderLogger.LogVerbose($"  - OutputPath Mode: {sourceRecorder.outputPath?.pathMode}");
+            MultiTimelineRecorderLogger.LogVerbose($"  - OutputPath: {sourceRecorder.outputPath?.path ?? sourceRecorder.outputPath?.customPath}");
+            
             foreach (int timelineIndex in selectedDirectorIndices)
             {
                 if (timelineIndex != currentTimelineIndexForRecorder)
@@ -3097,13 +3105,26 @@ namespace Unity.MultiTimelineRecorder
                     if (existingIndex >= 0)
                     {
                         // Replace existing recorder
-                        targetConfig.RecorderItems[existingIndex] = MultiRecorderConfig.CloneRecorderItem(sourceRecorder);
+                        var clonedRecorder = MultiRecorderConfig.CloneRecorderItem(sourceRecorder);
+                        targetConfig.RecorderItems[existingIndex] = clonedRecorder;
+                        
+                        // Debug log to verify settings
+                        MultiTimelineRecorderLogger.LogVerbose($"[Copy To All] Replaced recorder '{clonedRecorder.name}' in timeline {timelineIndex}");
+                        MultiTimelineRecorderLogger.LogVerbose($"  - RenderTexture: {clonedRecorder.imageRenderTexture}");
+                        MultiTimelineRecorderLogger.LogVerbose($"  - OutputPath Mode: {clonedRecorder.outputPath?.pathMode}");
+                        MultiTimelineRecorderLogger.LogVerbose($"  - OutputPath: {clonedRecorder.outputPath?.path ?? clonedRecorder.outputPath?.customPath}");
                     }
                     else
                     {
                         // Add new recorder
                         var clonedItem = MultiRecorderConfig.CloneRecorderItem(sourceRecorder);
                         targetConfig.AddRecorder(clonedItem);
+                        
+                        // Debug log to verify settings
+                        MultiTimelineRecorderLogger.LogVerbose($"[Copy To All] Added recorder '{clonedItem.name}' to timeline {timelineIndex}");
+                        MultiTimelineRecorderLogger.LogVerbose($"  - RenderTexture: {clonedItem.imageRenderTexture}");
+                        MultiTimelineRecorderLogger.LogVerbose($"  - OutputPath Mode: {clonedItem.outputPath?.pathMode}");
+                        MultiTimelineRecorderLogger.LogVerbose($"  - OutputPath: {clonedItem.outputPath?.path ?? clonedItem.outputPath?.customPath}");
                     }
                     
                     appliedCount++;
@@ -3111,6 +3132,10 @@ namespace Unity.MultiTimelineRecorder
             }
             
             MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Copied recorder '{sourceRecorder.name}' to {appliedCount} other timelines");
+            
+            // Save settings to persist the changes
+            SaveSettings();
+            
             EditorUtility.DisplayDialog("Copy Complete", 
                 $"Recorder '{sourceRecorder.name}' has been copied to {appliedCount} other timeline{(appliedCount > 1 ? "s" : "")}.", 
                 "OK");

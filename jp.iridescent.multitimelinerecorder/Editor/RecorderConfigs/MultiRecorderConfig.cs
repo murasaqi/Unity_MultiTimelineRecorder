@@ -309,6 +309,7 @@ namespace Unity.MultiTimelineRecorder
                 recorderType = source.recorderType,
                 fileName = source.fileName,
                 takeNumber = source.takeNumber,
+                takeMode = source.takeMode,
                 
                 // Image settings
                 imageFormat = source.imageFormat,
@@ -316,87 +317,44 @@ namespace Unity.MultiTimelineRecorder
                 captureAlpha = source.captureAlpha,
                 jpegQuality = source.jpegQuality,
                 exrCompression = source.exrCompression,
+                imageSourceType = source.imageSourceType,
+                imageTargetCamera = source.imageTargetCamera,
+                imageRenderTexture = source.imageRenderTexture,
                 
                 // Resolution
                 width = source.width,
-                height = source.height
+                height = source.height,
+                frameRate = source.frameRate,
+                capFrameRate = source.capFrameRate
             };
+            
+            // Clone output path settings
+            clone.outputPath = source.outputPath?.Clone();
             
             // Clone config objects
             if (source.movieConfig != null)
             {
-                clone.movieConfig = new MovieRecorderSettingsConfig
-                {
-                    outputFormat = source.movieConfig.outputFormat,
-                    videoBitrateMode = source.movieConfig.videoBitrateMode,
-                    captureAudio = source.movieConfig.captureAudio,
-                    captureAlpha = source.movieConfig.captureAlpha,
-                    customBitrate = source.movieConfig.customBitrate,
-                    audioBitrate = source.movieConfig.audioBitrate
-                };
+                clone.movieConfig = source.movieConfig.Clone();
             }
             
             if (source.aovConfig != null)
             {
-                clone.aovConfig = new AOVRecorderSettingsConfig
-                {
-                    selectedAOVs = source.aovConfig.selectedAOVs,
-                    outputFormat = source.aovConfig.outputFormat,
-                    useMultiPartEXR = source.aovConfig.useMultiPartEXR,
-                    colorSpace = source.aovConfig.colorSpace,
-                    compression = source.aovConfig.compression
-                };
+                clone.aovConfig = source.aovConfig.Clone();
             }
             
             if (source.alembicConfig != null)
             {
-                clone.alembicConfig = new AlembicRecorderSettingsConfig
-                {
-                    exportTargets = source.alembicConfig.exportTargets,
-                    exportScope = source.alembicConfig.exportScope,
-                    handedness = source.alembicConfig.handedness,
-                    scaleFactor = source.alembicConfig.scaleFactor,
-                    frameRate = source.alembicConfig.frameRate,
-                    timeSamplingType = source.alembicConfig.timeSamplingType,
-                    includeChildren = source.alembicConfig.includeChildren,
-                    flattenHierarchy = source.alembicConfig.flattenHierarchy
-                };
-                // GameObject参照もコピー
-                clone.alembicConfig.targetGameObject = source.alembicConfig.targetGameObject;
-                clone.alembicConfig.customSelection = new List<GameObject>(source.alembicConfig.customSelection);
+                clone.alembicConfig = source.alembicConfig.Clone();
             }
             
             if (source.animationConfig != null)
             {
-                clone.animationConfig = new AnimationRecorderSettingsConfig
-                {
-                    recordingProperties = source.animationConfig.recordingProperties,
-                    recordingScope = source.animationConfig.recordingScope,
-                    interpolationMode = source.animationConfig.interpolationMode,
-                    compressionLevel = source.animationConfig.compressionLevel,
-                    includeChildren = source.animationConfig.includeChildren,
-                    clampedTangents = source.animationConfig.clampedTangents,
-                    recordBlendShapes = source.animationConfig.recordBlendShapes
-                };
-                // GameObject参照もコピー
-                clone.animationConfig.targetGameObject = source.animationConfig.targetGameObject;
-                clone.animationConfig.customSelection = new List<GameObject>(source.animationConfig.customSelection);
+                clone.animationConfig = source.animationConfig.Clone();
             }
             
             if (source.fbxConfig != null)
             {
-                clone.fbxConfig = new FBXRecorderSettingsConfig
-                {
-                    recordedComponent = source.fbxConfig.recordedComponent,
-                    recordHierarchy = source.fbxConfig.recordHierarchy,
-                    clampedTangents = source.fbxConfig.clampedTangents,
-                    animationCompression = source.fbxConfig.animationCompression,
-                    exportGeometry = source.fbxConfig.exportGeometry
-                };
-                // GameObject参照もコピー
-                clone.fbxConfig.targetGameObject = source.fbxConfig.targetGameObject;
-                clone.fbxConfig.transferAnimationSource = source.fbxConfig.transferAnimationSource;
-                clone.fbxConfig.transferAnimationDest = source.fbxConfig.transferAnimationDest;
+                clone.fbxConfig = source.fbxConfig.Clone();
             }
             
             return clone;
