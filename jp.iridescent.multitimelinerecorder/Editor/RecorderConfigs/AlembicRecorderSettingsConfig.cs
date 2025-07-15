@@ -836,9 +836,29 @@ namespace Unity.MultiTimelineRecorder
                 includeInactiveMeshes = this.includeInactiveMeshes
             };
             
-            // Clone GameObject references properly
+            // Clone GameObject references properly by copying the GameObjectReference
+            // This ensures that the reference is properly maintained when serialized
             clone.targetGameObject = this.targetGameObject;
             clone.customSelection = new List<GameObject>(this.customSelection);
+            
+            // Deep copy the GameObjectReference objects to ensure proper serialization
+            if (this.targetGameObjectRef != null)
+            {
+                clone.targetGameObjectRef = new GameObjectReference();
+                clone.targetGameObjectRef.GameObject = this.targetGameObjectRef.GameObject;
+            }
+            
+            // Deep copy custom selection references
+            clone.customSelectionRefs = new List<GameObjectReference>();
+            foreach (var refObj in this.customSelectionRefs)
+            {
+                if (refObj != null)
+                {
+                    var newRef = new GameObjectReference();
+                    newRef.GameObject = refObj.GameObject;
+                    clone.customSelectionRefs.Add(newRef);
+                }
+            }
             
             return clone;
         }

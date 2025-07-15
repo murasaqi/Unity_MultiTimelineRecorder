@@ -3554,10 +3554,32 @@ namespace Unity.MultiTimelineRecorder
                     else if (item.recorderType == RecorderSettingsType.Alembic && item.alembicConfig != null)
                     {
                         MultiTimelineRecorderLogger.LogVerbose($"[LoadSettings] Alembic Recorder '{item.name}' - targetGameObject: {(item.alembicConfig.targetGameObject != null ? item.alembicConfig.targetGameObject.name : "null")}");
+                        MultiTimelineRecorderLogger.LogVerbose($"[LoadSettings] Alembic Recorder '{item.name}' - exportScope: {item.alembicConfig.exportScope}");
                     }
                     else if (item.recorderType == RecorderSettingsType.Animation && item.animationConfig != null)
                     {
                         MultiTimelineRecorderLogger.LogVerbose($"[LoadSettings] Animation Recorder '{item.name}' - targetGameObject: {(item.animationConfig.targetGameObject != null ? item.animationConfig.targetGameObject.name : "null")}");
+                    }
+                }
+            }
+            
+            // Debug log for timeline recorder configs after loading
+            if (timelineRecorderConfigs != null)
+            {
+                foreach (var kvp in timelineRecorderConfigs)
+                {
+                    int timelineIndex = kvp.Key;
+                    var config = kvp.Value;
+                    if (config != null && config.RecorderItems != null)
+                    {
+                        MultiTimelineRecorderLogger.LogVerbose($"[LoadSettings] Timeline {timelineIndex} has {config.RecorderItems.Count} recorders");
+                        foreach (var item in config.RecorderItems)
+                        {
+                            if (item.recorderType == RecorderSettingsType.Alembic && item.alembicConfig != null)
+                            {
+                                MultiTimelineRecorderLogger.LogVerbose($"[LoadSettings] Timeline {timelineIndex} - Alembic '{item.name}' - targetGameObject: {(item.alembicConfig.targetGameObject != null ? item.alembicConfig.targetGameObject.name : "null")}, exportScope: {item.alembicConfig.exportScope}");
+                            }
+                        }
                     }
                 }
             }
@@ -3689,10 +3711,32 @@ namespace Unity.MultiTimelineRecorder
                     else if (item.recorderType == RecorderSettingsType.Alembic && item.alembicConfig != null)
                     {
                         MultiTimelineRecorderLogger.LogVerbose($"[SaveSettings] Alembic Recorder '{item.name}' - targetGameObject: {(item.alembicConfig.targetGameObject != null ? item.alembicConfig.targetGameObject.name : "null")}");
+                        MultiTimelineRecorderLogger.LogVerbose($"[SaveSettings] Alembic Recorder '{item.name}' - exportScope: {item.alembicConfig.exportScope}");
                     }
                     else if (item.recorderType == RecorderSettingsType.Animation && item.animationConfig != null)
                     {
                         MultiTimelineRecorderLogger.LogVerbose($"[SaveSettings] Animation Recorder '{item.name}' - targetGameObject: {(item.animationConfig.targetGameObject != null ? item.animationConfig.targetGameObject.name : "null")}");
+                    }
+                }
+            }
+            
+            // Debug log for timeline recorder configs
+            if (timelineRecorderConfigs != null)
+            {
+                foreach (var kvp in timelineRecorderConfigs)
+                {
+                    int timelineIndex = kvp.Key;
+                    var config = kvp.Value;
+                    if (config != null && config.RecorderItems != null)
+                    {
+                        MultiTimelineRecorderLogger.LogVerbose($"[SaveSettings] Timeline {timelineIndex} has {config.RecorderItems.Count} recorders");
+                        foreach (var item in config.RecorderItems)
+                        {
+                            if (item.recorderType == RecorderSettingsType.Alembic && item.alembicConfig != null)
+                            {
+                                MultiTimelineRecorderLogger.LogVerbose($"[SaveSettings] Timeline {timelineIndex} - Alembic '{item.name}' - targetGameObject: {(item.alembicConfig.targetGameObject != null ? item.alembicConfig.targetGameObject.name : "null")}, exportScope: {item.alembicConfig.exportScope}");
+                            }
+                        }
                     }
                 }
             }
