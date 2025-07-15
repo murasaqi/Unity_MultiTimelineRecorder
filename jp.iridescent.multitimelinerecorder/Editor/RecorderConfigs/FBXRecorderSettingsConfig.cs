@@ -554,10 +554,29 @@ namespace Unity.MultiTimelineRecorder
                 frameRate = this.frameRate
             };
             
-            // GameObject参照もコピー
+            // GameObject参照を適切に深くコピー
             clone.targetGameObject = this.targetGameObject;
             clone.transferAnimationSource = this.transferAnimationSource;
             clone.transferAnimationDest = this.transferAnimationDest;
+            
+            // GameObjectReferenceオブジェクトを深くコピーして、シリアライズ時に正しく保存されるようにする
+            if (this.targetGameObjectRef != null)
+            {
+                clone.targetGameObjectRef = new GameObjectReference();
+                clone.targetGameObjectRef.GameObject = this.targetGameObjectRef.GameObject;
+            }
+            
+            if (this.transferAnimationSourceRef != null)
+            {
+                clone.transferAnimationSourceRef = new GameObjectReference();
+                clone.transferAnimationSourceRef.GameObject = this.transferAnimationSourceRef.GameObject;
+            }
+            
+            if (this.transferAnimationDestRef != null)
+            {
+                clone.transferAnimationDestRef = new GameObjectReference();
+                clone.transferAnimationDestRef.GameObject = this.transferAnimationDestRef.GameObject;
+            }
             
             return clone;
         }

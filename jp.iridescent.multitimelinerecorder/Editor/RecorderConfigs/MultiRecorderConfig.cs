@@ -53,7 +53,27 @@ namespace Unity.MultiTimelineRecorder
             public int jpegQuality = 75;
             public CompressionUtility.EXRCompressionType exrCompression = CompressionUtility.EXRCompressionType.None;
             public ImageRecorderSourceType imageSourceType = ImageRecorderSourceType.GameView;
-            public Camera imageTargetCamera = null;
+            
+            // Camera参照を保持するためのGameObjectReference
+            [SerializeField]
+            private GameObjectReference imageTargetCameraRef = new GameObjectReference();
+            
+            public Camera imageTargetCamera 
+            { 
+                get 
+                { 
+                    var go = imageTargetCameraRef?.GameObject;
+                    return go != null ? go.GetComponent<Camera>() : null;
+                }
+                set 
+                { 
+                    if (imageTargetCameraRef == null) 
+                        imageTargetCameraRef = new GameObjectReference(); 
+                    imageTargetCameraRef.GameObject = value != null ? value.gameObject : null; 
+                }
+            }
+            
+            // RenderTextureは通常アセット参照なので、そのまま保持
             public RenderTexture imageRenderTexture = null;
             
             // Movie Recorder
@@ -96,7 +116,6 @@ namespace Unity.MultiTimelineRecorder
                     jpegQuality = this.jpegQuality,
                     exrCompression = this.exrCompression,
                     imageSourceType = this.imageSourceType,
-                    imageTargetCamera = this.imageTargetCamera,
                     imageRenderTexture = this.imageRenderTexture,
                     width = this.width,
                     height = this.height,
@@ -111,6 +130,14 @@ namespace Unity.MultiTimelineRecorder
                 clone.alembicConfig = this.alembicConfig?.Clone();
                 clone.animationConfig = this.animationConfig?.Clone();
                 clone.fbxConfig = this.fbxConfig?.Clone();
+                
+                // Camera参照の深いコピー
+                clone.imageTargetCamera = this.imageTargetCamera;
+                if (this.imageTargetCameraRef != null)
+                {
+                    clone.imageTargetCameraRef = new GameObjectReference();
+                    clone.imageTargetCameraRef.GameObject = this.imageTargetCameraRef.GameObject;
+                }
                 
                 return clone;
             }
@@ -302,62 +329,8 @@ namespace Unity.MultiTimelineRecorder
         /// </summary>
         public static RecorderConfigItem CloneRecorderItem(RecorderConfigItem source)
         {
-            var clone = new RecorderConfigItem
-            {
-                name = source.name,
-                enabled = source.enabled,
-                recorderType = source.recorderType,
-                fileName = source.fileName,
-                takeNumber = source.takeNumber,
-                takeMode = source.takeMode,
-                
-                // Image settings
-                imageFormat = source.imageFormat,
-                imageQuality = source.imageQuality,
-                captureAlpha = source.captureAlpha,
-                jpegQuality = source.jpegQuality,
-                exrCompression = source.exrCompression,
-                imageSourceType = source.imageSourceType,
-                imageTargetCamera = source.imageTargetCamera,
-                imageRenderTexture = source.imageRenderTexture,
-                
-                // Resolution
-                width = source.width,
-                height = source.height,
-                frameRate = source.frameRate,
-                capFrameRate = source.capFrameRate
-            };
-            
-            // Clone output path settings
-            clone.outputPath = source.outputPath?.Clone();
-            
-            // Clone config objects
-            if (source.movieConfig != null)
-            {
-                clone.movieConfig = source.movieConfig.Clone();
-            }
-            
-            if (source.aovConfig != null)
-            {
-                clone.aovConfig = source.aovConfig.Clone();
-            }
-            
-            if (source.alembicConfig != null)
-            {
-                clone.alembicConfig = source.alembicConfig.Clone();
-            }
-            
-            if (source.animationConfig != null)
-            {
-                clone.animationConfig = source.animationConfig.Clone();
-            }
-            
-            if (source.fbxConfig != null)
-            {
-                clone.fbxConfig = source.fbxConfig.Clone();
-            }
-            
-            return clone;
+            // インスタンスメソッドを使用してクローンを作成
+            return source.Clone();
         }
         
         /// <summary>

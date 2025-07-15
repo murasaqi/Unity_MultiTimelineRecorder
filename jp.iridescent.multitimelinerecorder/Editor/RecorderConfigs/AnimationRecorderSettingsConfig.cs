@@ -279,12 +279,10 @@ namespace Unity.MultiTimelineRecorder
         /// </summary>
         public AnimationRecorderSettingsConfig Clone()
         {
-            return new AnimationRecorderSettingsConfig
+            var clone = new AnimationRecorderSettingsConfig
             {
                 recordingProperties = this.recordingProperties,
                 recordingScope = this.recordingScope,
-                targetGameObject = this.targetGameObject,
-                customSelection = new List<GameObject>(this.customSelection),
                 frameRate = this.frameRate,
                 interpolationMode = this.interpolationMode,
                 recordInWorldSpace = this.recordInWorldSpace,
@@ -300,6 +298,31 @@ namespace Unity.MultiTimelineRecorder
                 recordComponentEnableStates = this.recordComponentEnableStates,
                 customPropertyPaths = this.customPropertyPaths
             };
+            
+            // GameObject参照を適切に深くコピー
+            clone.targetGameObject = this.targetGameObject;
+            clone.customSelection = new List<GameObject>(this.customSelection);
+            
+            // GameObjectReferenceオブジェクトを深くコピーして、シリアライズ時に正しく保存されるようにする
+            if (this.targetGameObjectRef != null)
+            {
+                clone.targetGameObjectRef = new GameObjectReference();
+                clone.targetGameObjectRef.GameObject = this.targetGameObjectRef.GameObject;
+            }
+            
+            // カスタム選択のGameObjectReferenceも深くコピー
+            clone.customSelectionRefs = new List<GameObjectReference>();
+            foreach (var refObj in this.customSelectionRefs)
+            {
+                if (refObj != null)
+                {
+                    var newRef = new GameObjectReference();
+                    newRef.GameObject = refObj.GameObject;
+                    clone.customSelectionRefs.Add(newRef);
+                }
+            }
+            
+            return clone;
         }
         
         /// <summary>

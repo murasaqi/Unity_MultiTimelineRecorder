@@ -45,6 +45,31 @@ namespace Unity.MultiTimelineRecorder
         // Advanced settings
         public bool flipVertical = false;
         
+        // Source settings (for consistency with other recorder configs)
+        public ImageRecorderSourceType sourceType = ImageRecorderSourceType.GameView;
+        
+        // Camera参照を保持するためのGameObjectReference
+        [SerializeField]
+        private GameObjectReference targetCameraRef = new GameObjectReference();
+        
+        public Camera targetCamera 
+        { 
+            get 
+            { 
+                var go = targetCameraRef?.GameObject;
+                return go != null ? go.GetComponent<Camera>() : null;
+            }
+            set 
+            { 
+                if (targetCameraRef == null) 
+                    targetCameraRef = new GameObjectReference(); 
+                targetCameraRef.GameObject = value != null ? value.gameObject : null; 
+            }
+        }
+        
+        // RenderTextureは通常アセット参照なので、そのまま保持
+        public RenderTexture renderTexture = null;
+        
         /// <summary>
         /// Apply configuration to MovieRecorderSettings
         /// </summary>
@@ -214,7 +239,7 @@ namespace Unity.MultiTimelineRecorder
         /// </summary>
         public MovieRecorderSettingsConfig Clone()
         {
-            return new MovieRecorderSettingsConfig
+            var clone = new MovieRecorderSettingsConfig
             {
                 outputFormat = this.outputFormat,
                 videoBitrateMode = this.videoBitrateMode,
@@ -226,8 +251,20 @@ namespace Unity.MultiTimelineRecorder
                 captureAudio = this.captureAudio,
                 audioBitrate = this.audioBitrate,
                 captureAlpha = this.captureAlpha,
-                flipVertical = this.flipVertical
+                flipVertical = this.flipVertical,
+                sourceType = this.sourceType,
+                renderTexture = this.renderTexture
             };
+            
+            // Camera参照の深いコピー
+            clone.targetCamera = this.targetCamera;
+            if (this.targetCameraRef != null)
+            {
+                clone.targetCameraRef = new GameObjectReference();
+                clone.targetCameraRef.GameObject = this.targetCameraRef.GameObject;
+            }
+            
+            return clone;
         }
     }
     
