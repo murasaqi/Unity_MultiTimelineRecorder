@@ -36,8 +36,44 @@ namespace Unity.MultiTimelineRecorder
         public List<int> selectedDirectorIndices = new List<int>();
         public int timelineMarginFrames = 30;
         
-        // 保存されたPlayableDirectorのリスト
+        // PlayableDirectorの識別情報を保存するクラス
+        [Serializable]
+        public class TimelineDirectorInfo
+        {
+            public string gameObjectName;
+            public string gameObjectPath; // HierarchyPath
+            public string assetName; // TimelineAssetの名前
+            
+            public TimelineDirectorInfo(PlayableDirector director)
+            {
+                if (director != null && director.gameObject != null)
+                {
+                    gameObjectName = director.gameObject.name;
+                    gameObjectPath = GetGameObjectPath(director.gameObject);
+                    assetName = director.playableAsset != null ? director.playableAsset.name : "";
+                }
+            }
+            
+            private static string GetGameObjectPath(GameObject obj)
+            {
+                string path = obj.name;
+                Transform parent = obj.transform.parent;
+                while (parent != null)
+                {
+                    path = parent.name + "/" + path;
+                    parent = parent.parent;
+                }
+                return path;
+            }
+        }
+        
+        // 保存されたPlayableDirectorの識別情報リスト
         [SerializeField]
+        public List<TimelineDirectorInfo> savedTimelineDirectorInfos = new List<TimelineDirectorInfo>();
+        
+        // 互換性のために古いフィールドも残す（後で削除可能）
+        [SerializeField]
+        [Obsolete("Use savedTimelineDirectorInfos instead")]
         public List<PlayableDirector> savedTimelineDirectors = new List<PlayableDirector>();
         
         // Multi-recorder設定

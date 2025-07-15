@@ -3591,8 +3591,71 @@ namespace Unity.MultiTimelineRecorder
             showStatusSection = settings.showStatusSection;
             showDebugSettings = settings.showDebugSettings;
             
-            // Load saved timeline directors
-            if (settings.savedTimelineDirectors != null && settings.savedTimelineDirectors.Count > 0)
+            // Load saved timeline directors from director infos
+            if (settings.savedTimelineDirectorInfos != null && settings.savedTimelineDirectorInfos.Count > 0)
+            {
+                recordingQueueDirectors.Clear();
+                
+                // すべてのPlayableDirectorを取得
+                PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                
+                foreach (var info in settings.savedTimelineDirectorInfos)
+                {
+                    // 保存された情報に基づいてPlayableDirectorを探す
+                    PlayableDirector foundDirector = null;
+                    
+                    // まずパスで検索
+                    if (!string.IsNullOrEmpty(info.gameObjectPath))
+                    {
+                        GameObject targetObj = GameObject.Find(info.gameObjectPath);
+                        if (targetObj != null)
+                        {
+                            foundDirector = targetObj.GetComponent<PlayableDirector>();
+                        }
+                    }
+                    
+                    // パスで見つからない場合は、名前とTimelineAsset名で検索
+                    if (foundDirector == null)
+                    {
+                        foreach (var director in allDirectors)
+                        {
+                            if (director != null && director.gameObject != null &&
+                                director.gameObject.name == info.gameObjectName &&
+                                director.playableAsset != null &&
+                                director.playableAsset.name == info.assetName)
+                            {
+                                foundDirector = director;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 見つかったら追加
+                    if (foundDirector != null)
+                    {
+                        recordingQueueDirectors.Add(foundDirector);
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Could not find PlayableDirector: {info.gameObjectName} (path: {info.gameObjectPath})");
+                    }
+                }
+                
+                MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from {settings.savedTimelineDirectorInfos.Count} saved infos");
+                
+                // Re-validate selectedDirectorIndices after loading directors
+                if (selectedDirectorIndices != null && selectedDirectorIndices.Count > recordingQueueDirectors.Count)
+                {
+                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Re-validating selectedDirectorIndices after loading directors");
+                    selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
+                    if (selectedDirectorIndices.Count == 0 && recordingQueueDirectors.Count > 0)
+                    {
+                        selectedDirectorIndices.Add(0);
+                    }
+                }
+            }
+            // 互換性のため、古い方法でも試す
+            else if (settings.savedTimelineDirectors != null && settings.savedTimelineDirectors.Count > 0)
             {
                 recordingQueueDirectors.Clear();
                 foreach (var director in settings.savedTimelineDirectors)
@@ -3602,7 +3665,7 @@ namespace Unity.MultiTimelineRecorder
                         recordingQueueDirectors.Add(director);
                     }
                 }
-                MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from settings");
+                MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from settings (legacy)");
                 
                 // Re-validate selectedDirectorIndices after loading directors
                 if (selectedDirectorIndices != null && selectedDirectorIndices.Count > recordingQueueDirectors.Count)
@@ -3695,9 +3758,19 @@ namespace Unity.MultiTimelineRecorder
             settings.multiRecorderConfig = multiRecorderConfig;
             settings.SetTimelineRecorderConfigs(timelineRecorderConfigs);
             
-            // Save timeline directors list
+            // Save timeline directors info
+            settings.savedTimelineDirectorInfos.Clear();
+            foreach (var director in recordingQueueDirectors)
+            {
+                if (director != null)
+                {
+                    settings.savedTimelineDirectorInfos.Add(new MultiTimelineRecorderSettings.TimelineDirectorInfo(director));
+                }
+            }
+            MultiTimelineRecorderLogger.Log($"[SaveSettings] Saved {settings.savedTimelineDirectorInfos.Count} timeline director infos");
+            
+            // 互換性のために古いリストも更新（後で削除可能）
             settings.savedTimelineDirectors = new List<PlayableDirector>(recordingQueueDirectors);
-            MultiTimelineRecorderLogger.Log($"[SaveSettings] Saved {recordingQueueDirectors.Count} timeline directors");
             
             // Debug log for GameObject references before saving
             if (multiRecorderConfig != null && multiRecorderConfig.RecorderItems != null)
