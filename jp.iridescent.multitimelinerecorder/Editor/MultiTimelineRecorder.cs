@@ -1597,8 +1597,8 @@ namespace Unity.MultiTimelineRecorder
         {
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] ScanTimelines called");
             recordingQueueDirectors.Clear();
-            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
-            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Found {allDirectors.Length} total PlayableDirectors");
+            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Found {allDirectors.Length} total PlayableDirectors (including inactive)");
             
             foreach (var director in allDirectors)
             {
@@ -1634,7 +1634,7 @@ namespace Unity.MultiTimelineRecorder
         {
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] ScanAvailableTimelines called");
             sceneTimelineDirectors.Clear();
-            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsSortMode.None);
+            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             
             foreach (var director in allDirectors)
             {
