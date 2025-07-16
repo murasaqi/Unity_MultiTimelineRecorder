@@ -44,6 +44,12 @@ namespace Unity.MultiTimelineRecorder
         public MovieRecorderPreset moviePreset = MovieRecorderPreset.HighQuality1080p;
         public bool useMoviePreset = false;
         
+        // Movie encoder settings
+        public bool useProResEncoder = false;
+        public ProResEncoderSettings.OutputFormat proResFormat = ProResEncoderSettings.OutputFormat.ProRes422HQ;
+        public CoreEncoderSettings.OutputCodec coreCodec = CoreEncoderSettings.OutputCodec.MP4;
+        public CoreEncoderSettings.VideoEncodingQuality coreEncodingQuality = CoreEncoderSettings.VideoEncodingQuality.High;
+        
         // AOV recorder settings
         public AOVType selectedAOVTypes = AOVType.Depth | AOVType.Normal | AOVType.Albedo;
         public AOVOutputFormat aovOutputFormat = AOVOutputFormat.EXR16;

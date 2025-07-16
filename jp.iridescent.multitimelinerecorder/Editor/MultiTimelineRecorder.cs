@@ -3372,6 +3372,44 @@ namespace Unity.MultiTimelineRecorder
             public MovieRecorderPreset moviePreset { get => MovieRecorderPreset.Custom; set { } }
             public bool useMoviePreset { get => false; set { } }
             
+            // Encoder Settings
+            public bool useProResEncoder 
+            { 
+                get => item.movieConfig?.useProResEncoder ?? false; 
+                set 
+                { 
+                    if (item.movieConfig == null) item.movieConfig = new MovieRecorderSettingsConfig();
+                    item.movieConfig.useProResEncoder = value; 
+                }
+            }
+            public ProResEncoderSettings.OutputFormat proResFormat 
+            { 
+                get => item.movieConfig?.proResFormat ?? ProResEncoderSettings.OutputFormat.ProRes422HQ; 
+                set 
+                { 
+                    if (item.movieConfig == null) item.movieConfig = new MovieRecorderSettingsConfig();
+                    item.movieConfig.proResFormat = value; 
+                }
+            }
+            public CoreEncoderSettings.OutputCodec coreCodec 
+            { 
+                get => item.movieConfig?.coreCodec ?? CoreEncoderSettings.OutputCodec.MP4; 
+                set 
+                { 
+                    if (item.movieConfig == null) item.movieConfig = new MovieRecorderSettingsConfig();
+                    item.movieConfig.coreCodec = value; 
+                }
+            }
+            public CoreEncoderSettings.VideoEncodingQuality coreEncodingQuality 
+            { 
+                get => item.movieConfig?.coreEncodingQuality ?? CoreEncoderSettings.VideoEncodingQuality.High; 
+                set 
+                { 
+                    if (item.movieConfig == null) item.movieConfig = new MovieRecorderSettingsConfig();
+                    item.movieConfig.coreEncodingQuality = value; 
+                }
+            }
+            
             // AOV settings
             public AOVType selectedAOVTypes 
             { 

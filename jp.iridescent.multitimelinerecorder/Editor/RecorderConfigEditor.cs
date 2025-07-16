@@ -246,6 +246,12 @@ namespace Unity.MultiTimelineRecorder
             public MovieRecorderPreset moviePreset { get => config.moviePreset; set => config.moviePreset = value; }
             public bool useMoviePreset { get => config.useMoviePreset; set => config.useMoviePreset = value; }
             
+            // Encoder Settings
+            public bool useProResEncoder { get => config.useProResEncoder; set => config.useProResEncoder = value; }
+            public ProResEncoderSettings.OutputFormat proResFormat { get => config.proResFormat; set => config.proResFormat = value; }
+            public CoreEncoderSettings.OutputCodec coreCodec { get => config.coreCodec; set => config.coreCodec = value; }
+            public CoreEncoderSettings.VideoEncodingQuality coreEncodingQuality { get => config.coreEncodingQuality; set => config.coreEncodingQuality = value; }
+            
             // AOV settings
             public AOVType selectedAOVTypes { get => config.selectedAOVTypes; set => config.selectedAOVTypes = value; }
             public AOVOutputFormat aovOutputFormat { get => config.aovOutputFormat; set => config.aovOutputFormat = value; }

@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Input;
+using UnityEditor.Recorder.Encoder;
 
 namespace Unity.MultiTimelineRecorder
 {
@@ -19,12 +20,18 @@ namespace Unity.MultiTimelineRecorder
     [Serializable]
     public class MovieRecorderSettingsConfig
     {
-        // Video settings
+        // Video settings (legacy, kept for backward compatibility)
         public MovieRecorderSettings.VideoRecorderOutputFormat outputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
         public VideoBitrateMode videoBitrateMode = VideoBitrateMode.High;
         
         // Custom bitrate settings (when using Low mode)
         public int customBitrate = 15000; // in kbps
+        
+        // New Encoder settings
+        public bool useProResEncoder = false;
+        public ProResEncoderSettings.OutputFormat proResFormat = ProResEncoderSettings.OutputFormat.ProRes422HQ;
+        public CoreEncoderSettings.OutputCodec coreCodec = CoreEncoderSettings.OutputCodec.MP4;
+        public CoreEncoderSettings.VideoEncodingQuality coreEncodingQuality = CoreEncoderSettings.VideoEncodingQuality.High;
         
         // Resolution settings
         public int width = 1920;
@@ -78,15 +85,30 @@ namespace Unity.MultiTimelineRecorder
             if (settings == null)
                 throw new ArgumentNullException(nameof(settings));
             
-            // Video settings
-            settings.OutputFormat = outputFormat;
-            
-            // Note: Unity Recorder API doesn't expose direct quality/bitrate control in Editor
-            // The videoBitrateMode is used for our internal logic only
-            // Actual encoding quality is controlled by the system's media encoder
-            if (videoBitrateMode == VideoBitrateMode.Low)
+            // Apply encoder settings
+            if (useProResEncoder)
             {
-                UnityEngine.Debug.Log($"Low quality mode selected (target bitrate: {customBitrate} kbps)");
+                var proResSettings = new ProResEncoderSettings
+                {
+                    Format = proResFormat
+                };
+                settings.EncoderSettings = proResSettings;
+            }
+            else
+            {
+                var coreSettings = new CoreEncoderSettings
+                {
+                    Codec = coreCodec,
+                    EncodingQuality = coreEncodingQuality
+                };
+                
+                // Apply custom bitrate if using custom quality
+                if (coreEncodingQuality == CoreEncoderSettings.VideoEncodingQuality.Custom && videoBitrateMode == VideoBitrateMode.Low)
+                {
+                    coreSettings.TargetBitRate = customBitrate / 1000f; // Convert from kbps to Mbps
+                }
+                
+                settings.EncoderSettings = coreSettings;
             }
             
             // Resolution
@@ -244,6 +266,10 @@ namespace Unity.MultiTimelineRecorder
                 outputFormat = this.outputFormat,
                 videoBitrateMode = this.videoBitrateMode,
                 customBitrate = this.customBitrate,
+                useProResEncoder = this.useProResEncoder,
+                proResFormat = this.proResFormat,
+                coreCodec = this.coreCodec,
+                coreEncodingQuality = this.coreEncodingQuality,
                 width = this.width,
                 height = this.height,
                 frameRate = this.frameRate,

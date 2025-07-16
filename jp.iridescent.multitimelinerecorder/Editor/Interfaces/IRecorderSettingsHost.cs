@@ -42,6 +42,12 @@ namespace Unity.MultiTimelineRecorder
         MovieRecorderPreset moviePreset { get; set; }
         bool useMoviePreset { get; set; }
         
+        // Encoder Settings
+        bool useProResEncoder { get; set; }
+        ProResEncoderSettings.OutputFormat proResFormat { get; set; }
+        CoreEncoderSettings.OutputCodec coreCodec { get; set; }
+        CoreEncoderSettings.VideoEncodingQuality coreEncodingQuality { get; set; }
+        
         // AOV settings
         AOVType selectedAOVTypes { get; set; }
         AOVOutputFormat aovOutputFormat { get; set; }
