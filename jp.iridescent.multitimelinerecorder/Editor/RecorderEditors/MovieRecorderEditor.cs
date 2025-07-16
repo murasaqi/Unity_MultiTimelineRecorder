@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.Recorder;
@@ -84,6 +85,35 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
                     host.movieCaptureAudio = presetConfig.captureAudio;
                     host.movieCaptureAlpha = presetConfig.captureAlpha;
                     
+                    // Apply encoder settings based on preset
+                    switch (host.moviePreset)
+                    {
+                        case MovieRecorderPreset.ProResWithAlpha:
+                            #if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
+                            host.useProResEncoder = true;
+                            host.proResFormat = ProResEncoderSettings.OutputFormat.ProRes4444;
+                            #else
+                            // Fallback to WebM with alpha on unsupported platforms
+                            host.useProResEncoder = false;
+                            host.coreCodec = CoreEncoderSettings.OutputCodec.WEBM;
+                            host.coreEncodingQuality = CoreEncoderSettings.VideoEncodingQuality.High;
+                            #endif
+                            break;
+                        default:
+                            host.useProResEncoder = false;
+                            host.coreCodec = presetConfig.outputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.WebM
+                                ? CoreEncoderSettings.OutputCodec.WEBM
+                                : CoreEncoderSettings.OutputCodec.MP4;
+                            host.coreEncodingQuality = presetConfig.videoBitrateMode switch
+                            {
+                                VideoBitrateMode.Low => CoreEncoderSettings.VideoEncodingQuality.Low,
+                                VideoBitrateMode.Medium => CoreEncoderSettings.VideoEncodingQuality.Medium,
+                                VideoBitrateMode.High => CoreEncoderSettings.VideoEncodingQuality.High,
+                                _ => CoreEncoderSettings.VideoEncodingQuality.High
+                            };
+                            break;
+                    }
+                    
                     // Override useGlobalResolution when using preset
                     host.useGlobalResolution = false;
                 }
@@ -97,32 +127,36 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
         
         private void DrawEncoderSettings()
         {
-            // Encoder type selection
-            EditorGUILayout.LabelField("Encoder", EditorStyles.boldLabel);
+            // Define encoder types
+            var encoderOptions = new List<string> { "Unity Media Encoder" };
+            var encoderValues = new List<int> { 0 };
             
-            #if UNITY_EDITOR_OSX
-            // On macOS, both encoders are available
-            host.useProResEncoder = EditorGUILayout.Toggle("Use ProRes Encoder", host.useProResEncoder);
-            #elif UNITY_EDITOR_WIN
-            // On Windows, show ProRes option with warning
-            var previousValue = host.useProResEncoder;
-            host.useProResEncoder = EditorGUILayout.Toggle("Use ProRes Encoder", host.useProResEncoder);
-            if (host.useProResEncoder)
-            {
-                EditorGUILayout.HelpBox("ProRes encoding is supported on Windows through Unity Recorder.", MessageType.Info);
-            }
-            #else
-            // On other platforms, force Core Encoder
-            host.useProResEncoder = false;
-            EditorGUILayout.HelpBox("ProRes encoder is not supported on this platform.", MessageType.Warning);
+            #if UNITY_EDITOR_OSX || UNITY_EDITOR_WIN
+            encoderOptions.Add("ProRes Encoder");
+            encoderValues.Add(1);
             #endif
+            
+            // Current selection
+            int currentIndex = host.useProResEncoder ? 1 : 0;
+            
+            // Encoder dropdown
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Encoder", GUILayout.Width(EditorGUIUtility.labelWidth));
+            
+            int newIndex = EditorGUILayout.Popup(currentIndex, encoderOptions.ToArray());
+            if (newIndex != currentIndex)
+            {
+                host.useProResEncoder = (newIndex == 1);
+            }
+            
+            EditorGUILayout.EndHorizontal();
             
             EditorGUI.indentLevel++;
             
             if (host.useProResEncoder)
             {
                 // ProRes encoder settings
-                host.proResFormat = (ProResEncoderSettings.OutputFormat)EditorGUILayout.EnumPopup("ProRes Format", host.proResFormat);
+                host.proResFormat = (ProResEncoderSettings.OutputFormat)EditorGUILayout.EnumPopup("Format", host.proResFormat);
                 
                 // Show alpha support info
                 bool supportsAlpha = host.proResFormat == ProResEncoderSettings.OutputFormat.ProRes4444 || 
@@ -131,6 +165,10 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
                 {
                     EditorGUILayout.HelpBox("This ProRes format supports alpha channel.", MessageType.Info);
                 }
+                
+                #if UNITY_EDITOR_WIN
+                EditorGUILayout.HelpBox("ProRes encoding is supported on Windows through Unity Recorder.", MessageType.Info);
+                #endif
             }
             else
             {
@@ -146,12 +184,12 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
                 #endif
                 
                 // Encoding quality
-                host.coreEncodingQuality = (CoreEncoderSettings.VideoEncodingQuality)EditorGUILayout.EnumPopup("Quality", host.coreEncodingQuality);
+                host.coreEncodingQuality = (CoreEncoderSettings.VideoEncodingQuality)EditorGUILayout.EnumPopup("Encoding Quality", host.coreEncodingQuality);
                 
                 // Show bitrate for custom quality
                 if (host.coreEncodingQuality == CoreEncoderSettings.VideoEncodingQuality.Custom)
                 {
-                    host.movieBitrate = EditorGUILayout.IntSlider("Bitrate (Mbps)", host.movieBitrate, 1, 150);
+                    host.movieBitrate = EditorGUILayout.IntSlider("Target Bitrate (Mbps)", host.movieBitrate, 1, 150);
                 }
                 
                 // Show alpha support info
@@ -166,15 +204,15 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
         
         protected override void DrawOutputFormatSettings()
         {
-            // Encoder selection
+            // Encoder and format settings
+            DrawSubsectionHeader("Output Format");
             DrawEncoderSettings();
             
             EditorGUILayout.Space(5);
             
             // Audio settings
-            EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField("Audio", EditorStyles.boldLabel);
-            host.movieCaptureAudio = EditorGUILayout.Toggle("Capture Audio", host.movieCaptureAudio);
+            DrawSubsectionHeader("Audio");
+            host.movieCaptureAudio = EditorGUILayout.Toggle("Include Audio", host.movieCaptureAudio);
             
             if (host.movieCaptureAudio)
             {
@@ -185,17 +223,37 @@ namespace Unity.MultiTimelineRecorder.RecorderEditors
             
             // Alpha channel
             EditorGUILayout.Space(5);
-            host.movieCaptureAlpha = EditorGUILayout.Toggle("Capture Alpha", host.movieCaptureAlpha);
+            host.movieCaptureAlpha = EditorGUILayout.Toggle("Include Alpha", host.movieCaptureAlpha);
             
             if (host.movieCaptureAlpha)
             {
-                bool alphaSupported = host.movieOutputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.MOV ||
-                                    host.movieOutputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.WebM;
+                bool alphaSupported = false;
                 
-                if (!alphaSupported)
+                if (host.useProResEncoder)
                 {
-                    EditorGUILayout.HelpBox("Alpha channel is only supported with MOV (ProRes) or WebM formats", MessageType.Error);
+                    alphaSupported = host.proResFormat == ProResEncoderSettings.OutputFormat.ProRes4444 || 
+                                   host.proResFormat == ProResEncoderSettings.OutputFormat.ProRes4444XQ;
+                    if (!alphaSupported)
+                    {
+                        EditorGUILayout.HelpBox("Alpha channel is only supported with ProRes 4444 or 4444 XQ formats", MessageType.Warning);
+                    }
                 }
+                else
+                {
+                    alphaSupported = host.coreCodec == CoreEncoderSettings.OutputCodec.WEBM;
+                    if (!alphaSupported)
+                    {
+                        EditorGUILayout.HelpBox("Alpha channel is only supported with WebM format", MessageType.Warning);
+                    }
+                }
+                
+                #if HDRP_AVAILABLE
+                // Additional warning for HDRP projects
+                if (alphaSupported)
+                {
+                    EditorGUILayout.HelpBox("To record alpha in HDRP, ensure your HDRP asset has alpha output enabled", MessageType.Info);
+                }
+                #endif
             }
         }
         
