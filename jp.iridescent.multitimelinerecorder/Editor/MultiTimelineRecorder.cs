@@ -15,6 +15,8 @@ using System.IO;
 using System.Linq;
 using Unity.MultiTimelineRecorder.RecorderEditors;
 using Unity.MultiTimelineRecorder.Utilities;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 
 namespace Unity.MultiTimelineRecorder
 {
@@ -28,6 +30,9 @@ namespace Unity.MultiTimelineRecorder
         
         // Settings management
         private MultiTimelineRecorderSettings settings;
+        
+        // Scene tracking
+        private string currentScenePath;
         
         // UI Styles - Unity標準のエディタスタイルに準拠
         private static class Styles
@@ -272,6 +277,13 @@ namespace Unity.MultiTimelineRecorder
             MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] OnEnable called");
             instance = this;
             
+            // Track current scene
+            currentScenePath = SceneManager.GetActiveScene().path;
+            
+            // Register scene change callback
+            EditorSceneManager.sceneOpened += OnSceneOpened;
+            EditorSceneManager.sceneClosing += OnSceneClosing;
+            
             // Load settings
             LoadSettings();
             
@@ -352,7 +364,14 @@ namespace Unity.MultiTimelineRecorder
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             
-            // Save settings
+            // Save current scene settings before closing
+            SaveSceneSpecificSettings();
+            
+            // Unregister scene change callback
+            EditorSceneManager.sceneOpened -= OnSceneOpened;
+            EditorSceneManager.sceneClosing -= OnSceneClosing;
+            
+            // Save global settings
             SaveSettings();
             
             // Save column widths for multi-recorder mode (keep for backward compatibility)
@@ -1834,6 +1853,38 @@ namespace Unity.MultiTimelineRecorder
         {
             // OnPlayModeStateChanged handles Play Mode transitions now
             // This method can be used for other update tasks if needed
+        }
+        
+        private void OnSceneOpened(Scene scene, OpenSceneMode mode)
+        {
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Scene opened: {scene.path}");
+            
+            // Don't save/load if we're just adding a scene
+            if (mode == OpenSceneMode.Additive)
+                return;
+                
+            // Save current scene settings before switching
+            if (!string.IsNullOrEmpty(currentScenePath))
+            {
+                SaveSceneSpecificSettings();
+            }
+            
+            // Update current scene path
+            currentScenePath = scene.path;
+            
+            // Load new scene settings
+            LoadSceneSpecificSettings();
+        }
+        
+        private void OnSceneClosing(Scene scene, bool removingScene)
+        {
+            MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Scene closing: {scene.path}");
+            
+            // Save current settings if this is the active scene
+            if (scene.path == currentScenePath)
+            {
+                SaveSceneSpecificSettings();
+            }
         }
         
         private void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -3551,7 +3602,7 @@ namespace Unity.MultiTimelineRecorder
         {
             settings = MultiTimelineRecorderSettings.LoadOrCreateSettings();
             
-            // 設定から値を復元
+            // グローバル設定から値を復元
             frameRate = settings.frameRate;
             width = settings.width;
             height = settings.height;
@@ -3624,87 +3675,8 @@ namespace Unity.MultiTimelineRecorder
             showStatusSection = settings.showStatusSection;
             showDebugSettings = settings.showDebugSettings;
             
-            // Load saved timeline directors from director infos
-            if (settings.savedTimelineDirectorInfos != null && settings.savedTimelineDirectorInfos.Count > 0)
-            {
-                recordingQueueDirectors.Clear();
-                
-                // すべてのPlayableDirectorを取得
-                PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-                
-                foreach (var info in settings.savedTimelineDirectorInfos)
-                {
-                    // 保存された情報に基づいてPlayableDirectorを探す
-                    PlayableDirector foundDirector = null;
-                    
-                    // まずパスで検索
-                    if (!string.IsNullOrEmpty(info.gameObjectPath))
-                    {
-                        GameObject targetObj = GameObject.Find(info.gameObjectPath);
-                        if (targetObj != null)
-                        {
-                            foundDirector = targetObj.GetComponent<PlayableDirector>();
-                        }
-                    }
-                    
-                    // パスで見つからない場合は、名前とTimelineAsset名で検索
-                    if (foundDirector == null)
-                    {
-                        foreach (var director in allDirectors)
-                        {
-                            if (director != null && director.gameObject != null &&
-                                director.gameObject.name == info.gameObjectName &&
-                                director.playableAsset != null &&
-                                director.playableAsset.name == info.assetName)
-                            {
-                                foundDirector = director;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // 見つかったら追加
-                    if (foundDirector != null)
-                    {
-                        recordingQueueDirectors.Add(foundDirector);
-                    }
-                    else
-                    {
-                        MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Could not find PlayableDirector: {info.gameObjectName} (path: {info.gameObjectPath})");
-                    }
-                }
-                
-                MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from {settings.savedTimelineDirectorInfos.Count} saved infos");
-                
-                // Re-validate selectedDirectorIndices after loading directors
-                if (selectedDirectorIndices != null && selectedDirectorIndices.Count > recordingQueueDirectors.Count)
-                {
-                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Re-validating selectedDirectorIndices after loading directors");
-                    selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
-                    // Do not automatically select index 0 - respect saved state
-                }
-            }
-            // 互換性のため、古い方法でも試す
-            else if (settings.savedTimelineDirectors != null && settings.savedTimelineDirectors.Count > 0)
-            {
-                recordingQueueDirectors.Clear();
-                foreach (var director in settings.savedTimelineDirectors)
-                {
-                    if (director != null && director.gameObject != null)
-                    {
-                        recordingQueueDirectors.Add(director);
-                    }
-                }
-                MultiTimelineRecorderLogger.Log($"[LoadSettings] Loaded {recordingQueueDirectors.Count} timeline directors from settings (legacy)");
-                
-                // Re-validate selectedDirectorIndices after loading directors
-                if (selectedDirectorIndices != null && selectedDirectorIndices.Count > recordingQueueDirectors.Count)
-                {
-                    MultiTimelineRecorderLogger.LogWarning($"[LoadSettings] Re-validating selectedDirectorIndices after loading directors");
-                    selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
-                    // Do not automatically select index 0 - respect saved state
-                }
-            }
+            // グローバルのTimelineリストは読み込まない（シーン固有の設定を優先するため）
+            // LoadSceneSpecificSettingsメソッドで、シーン固有の設定がない場合のみグローバル設定を読み込む
             
             // Clean up missing timelines from recordingQueueDirectors
             if (recordingQueueDirectors != null)
@@ -3754,7 +3726,10 @@ namespace Unity.MultiTimelineRecorder
                 }
             }
             
-            MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Settings loaded");
+            MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Global settings loaded");
+            
+            // シーン固有の設定を読み込み（グローバル設定を上書き）
+            LoadSceneSpecificSettings();
         }
         
         /// <summary>
@@ -3803,19 +3778,28 @@ namespace Unity.MultiTimelineRecorder
             settings.multiRecorderConfig = multiRecorderConfig;
             settings.SetTimelineRecorderConfigs(timelineRecorderConfigs);
             
-            // Save timeline directors info
-            settings.savedTimelineDirectorInfos.Clear();
-            foreach (var director in recordingQueueDirectors)
+            // シーン固有の設定がある場合は、グローバルのタイムラインリストは更新しない
+            var scene = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(scene.path) || settings.GetSceneSettings(scene.path) == null)
             {
-                if (director != null)
+                // シーン固有の設定がない場合のみグローバル設定を更新
+                settings.savedTimelineDirectorInfos.Clear();
+                foreach (var director in recordingQueueDirectors)
                 {
-                    settings.savedTimelineDirectorInfos.Add(new MultiTimelineRecorderSettings.TimelineDirectorInfo(director));
+                    if (director != null)
+                    {
+                        settings.savedTimelineDirectorInfos.Add(new MultiTimelineRecorderSettings.TimelineDirectorInfo(director));
+                    }
                 }
+                MultiTimelineRecorderLogger.Log($"[SaveSettings] Saved {settings.savedTimelineDirectorInfos.Count} timeline director infos to global settings");
+                
+                // 互換性のために古いリストも更新（後で削除可能）
+                settings.savedTimelineDirectors = new List<PlayableDirector>(recordingQueueDirectors);
             }
-            MultiTimelineRecorderLogger.Log($"[SaveSettings] Saved {settings.savedTimelineDirectorInfos.Count} timeline director infos");
-            
-            // 互換性のために古いリストも更新（後で削除可能）
-            settings.savedTimelineDirectors = new List<PlayableDirector>(recordingQueueDirectors);
+            else
+            {
+                MultiTimelineRecorderLogger.Log($"[SaveSettings] Scene-specific settings exist, skipping global timeline list update");
+            }
             
             // Debug log for GameObject references before saving
             if (multiRecorderConfig != null && multiRecorderConfig.RecorderItems != null)
@@ -3984,6 +3968,246 @@ namespace Unity.MultiTimelineRecorder
             {
                 GetTimelineRecorderConfig(index);
             }
+        }
+        
+        /// <summary>
+        /// シーン固有の設定を保存
+        /// </summary>
+        private void SaveSceneSpecificSettings()
+        {
+            if (settings == null) return;
+            
+            var scene = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(scene.path))
+            {
+                MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Scene path is empty, skipping scene-specific save");
+                return;
+            }
+            
+            var sceneSettings = settings.GetOrCreateSceneSettings(scene.path);
+            
+            // 現在の状態を保存
+            sceneSettings.timelineDirectorInfos.Clear();
+            foreach (var director in recordingQueueDirectors)
+            {
+                if (director != null)
+                {
+                    sceneSettings.timelineDirectorInfos.Add(new MultiTimelineRecorderSettings.TimelineDirectorInfo(director));
+                }
+            }
+            
+            sceneSettings.selectedDirectorIndices = new List<int>(selectedDirectorIndices);
+            sceneSettings.selectedDirectorIndex = selectedDirectorIndex;
+            sceneSettings.currentTimelineIndexForRecorder = currentTimelineIndexForRecorder;
+            
+            // TimelineRecorderConfigsを保存
+            sceneSettings.timelineRecorderConfigEntries.Clear();
+            foreach (var kvp in timelineRecorderConfigs)
+            {
+                sceneSettings.timelineRecorderConfigEntries.Add(
+                    new MultiTimelineRecorderSettings.TimelineRecorderConfigEntry(kvp.Key, kvp.Value)
+                );
+            }
+            
+            // TimelineTakeNumbersを保存
+            sceneSettings.timelineTakeNumbers.Clear();
+            var allTakeNumbers = settings.GetAllTimelineTakeNumbers();
+            foreach (var kvp in allTakeNumbers)
+            {
+                sceneSettings.timelineTakeNumbers.Add(
+                    new MultiTimelineRecorderSettings.TimelineTakeNumberEntry(kvp.Key, kvp.Value)
+                );
+            }
+            
+            // グローバル設定も保存
+            SaveSettings();
+            
+            MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Saved scene-specific settings for: {scene.name}");
+        }
+        
+        /// <summary>
+        /// シーン固有の設定を読み込み
+        /// </summary>
+        private void LoadSceneSpecificSettings()
+        {
+            if (settings == null) return;
+            
+            var scene = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(scene.path))
+            {
+                MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] Scene path is empty, skipping scene-specific load");
+                return;
+            }
+            
+            var sceneSettings = settings.GetSceneSettings(scene.path);
+            
+            if (sceneSettings != null)
+            {
+                MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Loading scene-specific settings for: {scene.name}");
+                
+                // TimelineDirectorsを復元
+                recordingQueueDirectors.Clear();
+                foreach (var info in sceneSettings.timelineDirectorInfos)
+                {
+                    var foundDirector = FindPlayableDirector(info);
+                    if (foundDirector != null)
+                    {
+                        recordingQueueDirectors.Add(foundDirector);
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning($"[LoadSceneSpecificSettings] Could not find PlayableDirector: {info.gameObjectName}");
+                    }
+                }
+                
+                // 選択状態を復元
+                selectedDirectorIndices = new List<int>(sceneSettings.selectedDirectorIndices);
+                selectedDirectorIndex = sceneSettings.selectedDirectorIndex;
+                currentTimelineIndexForRecorder = sceneSettings.currentTimelineIndexForRecorder;
+                
+                // TimelineRecorderConfigsを復元
+                timelineRecorderConfigs.Clear();
+                foreach (var entry in sceneSettings.timelineRecorderConfigEntries)
+                {
+                    timelineRecorderConfigs[entry.timelineIndex] = entry.config;
+                }
+                
+                // TimelineTakeNumbersを復元
+                settings.timelineTakeNumbers.Clear();
+                foreach (var entry in sceneSettings.timelineTakeNumbers)
+                {
+                    settings.timelineTakeNumbers.Add(entry);
+                }
+                
+                // インデックスの有効性を検証
+                ValidateIndices();
+                
+                MultiTimelineRecorderLogger.Log($"[LoadSceneSpecificSettings] Loaded {recordingQueueDirectors.Count} timelines");
+            }
+            else
+            {
+                MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] No saved settings for scene: {scene.name}, loading global settings");
+                
+                // シーン固有の設定がない場合はグローバル設定を読み込む
+                LoadGlobalTimelineSettings();
+            }
+            
+            // UIを更新
+            Repaint();
+        }
+        
+        /// <summary>
+        /// インデックスの有効性を検証
+        /// </summary>
+        private void ValidateIndices()
+        {
+            // selectedDirectorIndicesの検証
+            selectedDirectorIndices.RemoveAll(idx => idx < 0 || idx >= recordingQueueDirectors.Count);
+            
+            // selectedDirectorIndexの検証
+            if (selectedDirectorIndex >= recordingQueueDirectors.Count)
+            {
+                selectedDirectorIndex = recordingQueueDirectors.Count > 0 ? 0 : -1;
+            }
+            
+            // currentTimelineIndexForRecorderの検証
+            if (currentTimelineIndexForRecorder >= recordingQueueDirectors.Count)
+            {
+                currentTimelineIndexForRecorder = recordingQueueDirectors.Count > 0 ? 0 : -1;
+            }
+        }
+        
+        /// <summary>
+        /// TimelineDirectorInfoからPlayableDirectorを検索
+        /// </summary>
+        private PlayableDirector FindPlayableDirector(MultiTimelineRecorderSettings.TimelineDirectorInfo info)
+        {
+            if (info == null) return null;
+            
+            // すべてのPlayableDirectorを取得
+            PlayableDirector[] allDirectors = GameObject.FindObjectsByType<PlayableDirector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            
+            // まずパスで検索
+            if (!string.IsNullOrEmpty(info.gameObjectPath))
+            {
+                GameObject targetObj = GameObject.Find(info.gameObjectPath);
+                if (targetObj != null)
+                {
+                    var director = targetObj.GetComponent<PlayableDirector>();
+                    if (director != null && director.playableAsset != null && director.playableAsset.name == info.assetName)
+                    {
+                        return director;
+                    }
+                }
+            }
+            
+            // パスで見つからない場合は、名前とTimelineAsset名で検索
+            foreach (var director in allDirectors)
+            {
+                if (director != null && director.gameObject != null &&
+                    director.gameObject.name == info.gameObjectName &&
+                    director.playableAsset != null &&
+                    director.playableAsset.name == info.assetName)
+                {
+                    return director;
+                }
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// グローバルのタイムライン設定を読み込む
+        /// </summary>
+        private void LoadGlobalTimelineSettings()
+        {
+            if (settings == null) return;
+            
+            // Load saved timeline directors from director infos
+            if (settings.savedTimelineDirectorInfos != null && settings.savedTimelineDirectorInfos.Count > 0)
+            {
+                recordingQueueDirectors.Clear();
+                
+                foreach (var info in settings.savedTimelineDirectorInfos)
+                {
+                    var foundDirector = FindPlayableDirector(info);
+                    if (foundDirector != null)
+                    {
+                        recordingQueueDirectors.Add(foundDirector);
+                    }
+                    else
+                    {
+                        MultiTimelineRecorderLogger.LogWarning($"[LoadGlobalTimelineSettings] Could not find PlayableDirector: {info.gameObjectName}");
+                    }
+                }
+                
+                MultiTimelineRecorderLogger.Log($"[LoadGlobalTimelineSettings] Loaded {recordingQueueDirectors.Count} timeline directors from global settings");
+            }
+            // 互換性のため、古い方法でも試す
+            else if (settings.savedTimelineDirectors != null && settings.savedTimelineDirectors.Count > 0)
+            {
+                recordingQueueDirectors.Clear();
+                foreach (var director in settings.savedTimelineDirectors)
+                {
+                    if (director != null && director.gameObject != null)
+                    {
+                        recordingQueueDirectors.Add(director);
+                    }
+                }
+                MultiTimelineRecorderLogger.Log($"[LoadGlobalTimelineSettings] Loaded {recordingQueueDirectors.Count} timeline directors from settings (legacy)");
+            }
+            else
+            {
+                // 完全に新規の場合は初期化
+                recordingQueueDirectors.Clear();
+                selectedDirectorIndices.Clear();
+                selectedDirectorIndex = -1;
+                currentTimelineIndexForRecorder = -1;
+                timelineRecorderConfigs.Clear();
+            }
+            
+            // インデックスの有効性を検証
+            ValidateIndices();
         }
         
         #endregion

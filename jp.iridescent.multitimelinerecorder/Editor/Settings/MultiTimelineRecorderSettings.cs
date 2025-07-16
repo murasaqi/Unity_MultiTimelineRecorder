@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEditor;
+using UnityEngine.SceneManagement;
 
 namespace Unity.MultiTimelineRecorder
 {
@@ -109,6 +110,29 @@ namespace Unity.MultiTimelineRecorder
             }
         }
         public List<TimelineTakeNumberEntry> timelineTakeNumbers = new List<TimelineTakeNumberEntry>();
+        
+        // シーンごとの設定管理
+        [Serializable]
+        public class SceneSpecificSettings
+        {
+            public string scenePath;  // シーンのフルパス（Assets/Scenes/SampleScene.unity）
+            public string sceneName;  // シーン名（SampleScene）
+            public List<TimelineDirectorInfo> timelineDirectorInfos = new List<TimelineDirectorInfo>();
+            public List<int> selectedDirectorIndices = new List<int>();
+            public int selectedDirectorIndex = 0;
+            public int currentTimelineIndexForRecorder = 0;
+            public List<TimelineRecorderConfigEntry> timelineRecorderConfigEntries = new List<TimelineRecorderConfigEntry>();
+            public List<TimelineTakeNumberEntry> timelineTakeNumbers = new List<TimelineTakeNumberEntry>();
+            
+            public SceneSpecificSettings(string path, string name)
+            {
+                scenePath = path;
+                sceneName = name;
+            }
+        }
+        
+        [SerializeField]
+        private List<SceneSpecificSettings> sceneSettings = new List<SceneSpecificSettings>();
         
         // UIレイアウト設定
         public float leftColumnWidth = 250f;
@@ -238,6 +262,48 @@ namespace Unity.MultiTimelineRecorder
                 dict[entry.timelineIndex] = entry.takeNumber;
             }
             return dict;
+        }
+        
+        /// <summary>
+        /// 指定されたシーンの設定を取得
+        /// </summary>
+        public SceneSpecificSettings GetSceneSettings(string scenePath)
+        {
+            return sceneSettings.Find(s => s.scenePath == scenePath);
+        }
+        
+        /// <summary>
+        /// 指定されたシーンの設定を取得または作成
+        /// </summary>
+        public SceneSpecificSettings GetOrCreateSceneSettings(string scenePath)
+        {
+            var settings = GetSceneSettings(scenePath);
+            if (settings == null)
+            {
+                string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
+                settings = new SceneSpecificSettings(scenePath, sceneName);
+                sceneSettings.Add(settings);
+                Save();
+            }
+            return settings;
+        }
+        
+        /// <summary>
+        /// 現在のシーンの設定を取得
+        /// </summary>
+        public SceneSpecificSettings GetCurrentSceneSettings()
+        {
+            var scene = SceneManager.GetActiveScene();
+            return GetSceneSettings(scene.path);
+        }
+        
+        /// <summary>
+        /// 現在のシーンの設定を取得または作成
+        /// </summary>
+        public SceneSpecificSettings GetOrCreateCurrentSceneSettings()
+        {
+            var scene = SceneManager.GetActiveScene();
+            return GetOrCreateSceneSettings(scene.path);
         }
     }
 }
