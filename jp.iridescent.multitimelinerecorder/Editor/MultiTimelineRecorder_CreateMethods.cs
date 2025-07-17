@@ -92,12 +92,28 @@ namespace Unity.MultiTimelineRecorder
                 float marginTime = timelineMarginFrames / (float)frameRate;
                 float oneFrameDuration = 1.0f / frameRate;
                 
-                // Calculate pre-roll time (only for the first timeline)
-                float preRollTime = preRollFrames > 0 ? preRollFrames / (float)frameRate : 0f;
-                if (preRollFrames > 0)
+                // Get individual pre-roll values for each timeline
+                string preRollsString = EditorPrefs.GetString("STR_TimelinePreRolls", "");
+                List<int> timelinePreRolls = new List<int>();
+                if (!string.IsNullOrEmpty(preRollsString))
                 {
-                    MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] === Pre-roll enabled: {preRollFrames} frames ({preRollTime:F2} seconds) ===");
+                    string[] preRollStrings = preRollsString.Split(',');
+                    foreach (string s in preRollStrings)
+                    {
+                        if (int.TryParse(s, out int preRoll))
+                        {
+                            timelinePreRolls.Add(preRoll);
+                        }
+                    }
                 }
+                
+                // Fallback to global pre-roll if no timeline-specific values
+                while (timelinePreRolls.Count < directors.Count)
+                {
+                    timelinePreRolls.Add(preRollFrames);
+                }
+                
+                MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] === Using timeline-specific pre-rolls: {string.Join(", ", timelinePreRolls)} ===");
                 
                 // Pre-rollは各Timeline毎に適用される
                 
@@ -132,9 +148,12 @@ namespace Unity.MultiTimelineRecorder
                     }
                     
                     // Add pre-roll for each timeline if enabled
-                    if (preRollFrames > 0)
+                    int timelinePreRollFrames = timelinePreRolls[i];
+                    float timelinePreRollTime = timelinePreRollFrames > 0 ? timelinePreRollFrames / (float)frameRate : 0f;
+                    
+                    if (timelinePreRollFrames > 0)
                     {
-                        MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Creating pre-roll clip for {director.gameObject.name}: {preRollFrames} frames ({preRollTime:F2} seconds)");
+                        MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Creating pre-roll clip for {director.gameObject.name}: {timelinePreRollFrames} frames ({timelinePreRollTime:F2} seconds)");
                         
                         // Create pre-roll clip
                         var preRollClip = controlTrack.CreateClip<ControlPlayableAsset>();
@@ -146,7 +165,7 @@ namespace Unity.MultiTimelineRecorder
                         
                         preRollClip.displayName = $"{director.gameObject.name} (Pre-roll)";
                         preRollClip.start = currentStartTime;
-                        preRollClip.duration = preRollTime;
+                        preRollClip.duration = timelinePreRollTime;
                         
                         var preRollAsset = preRollClip.asset as ControlPlayableAsset;
                         preRollAsset.sourceGameObject.defaultValue = director.gameObject;
@@ -162,7 +181,7 @@ namespace Unity.MultiTimelineRecorder
                         {
                             // SignalEmitterの開始位置に合わせてPre-Rollクリップを調整
                             // Pre-RollはSignalEmitterの開始タイミングから逆算した位置から開始
-                            double preRollStartTime = Math.Max(0, signalEmitterRange.Value.startTime - preRollTime);
+                            double preRollStartTime = Math.Max(0, signalEmitterRange.Value.startTime - timelinePreRollTime);
                             preRollClip.clipIn = preRollStartTime;
                             preRollClip.timeScale = 1.0; // 通常再生
                             MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Pre-roll adjusted for SignalEmitter: clipIn={preRollStartTime:F2}s");
@@ -174,7 +193,7 @@ namespace Unity.MultiTimelineRecorder
                             preRollClip.timeScale = 0.0001; // Virtually freeze time
                         }
                         
-                        currentStartTime += preRollTime;
+                        currentStartTime += timelinePreRollTime;
                         MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Pre-roll ControlClip created for {director.gameObject.name}");
                     }
                     
@@ -243,7 +262,7 @@ namespace Unity.MultiTimelineRecorder
                 
                 // Always use multi-recorder mode with per-timeline configurations
                 MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] === Multi-Recorder Mode for Multiple Timelines ===");
-                return CreateRecorderTracksForMultipleTimelines(timeline, directors, preRollTime, oneFrameDuration);
+                return CreateRecorderTracksForMultipleTimelines(timeline, directors, 0f, oneFrameDuration); // Pre-roll is handled per-timeline now
             }
             catch (System.Exception e)
             {
@@ -258,6 +277,29 @@ namespace Unity.MultiTimelineRecorder
             // Create recorder tracks for each timeline segment
             float currentStartTime = 0;  // Control Clipの開始位置を追跡
             float marginTime = timelineMarginFrames / (float)frameRate;
+            
+            // Get individual pre-roll values for each timeline
+            string preRollsString = EditorPrefs.GetString("STR_TimelinePreRolls", "");
+            List<int> timelinePreRolls = new List<int>();
+            if (!string.IsNullOrEmpty(preRollsString))
+            {
+                string[] preRollStrings = preRollsString.Split(',');
+                foreach (string s in preRollStrings)
+                {
+                    if (int.TryParse(s, out int preRoll))
+                    {
+                        timelinePreRolls.Add(preRoll);
+                    }
+                }
+            }
+            
+            // Fallback to global pre-roll if no timeline-specific values
+            while (timelinePreRolls.Count < directors.Count)
+            {
+                timelinePreRolls.Add(preRollFrames);
+            }
+            
+            MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] === Recorder tracks using timeline-specific pre-rolls: {string.Join(", ", timelinePreRolls)} ===");
             
             // Keep track of all recorder types needed across all timelines
             // Use a string key that includes recorder type and unique identifier for proper track management
@@ -283,17 +325,21 @@ namespace Unity.MultiTimelineRecorder
                     }
                 }
                 
+                // Get timeline-specific pre-roll value
+                int timelinePreRollFrames = timelinePreRolls[i];
+                float timelinePreRollTime = timelinePreRollFrames > 0 ? timelinePreRollFrames / (float)frameRate : 0f;
+                
                 // Pre-rollを考慮した開始時間を計算
                 // Control Trackでは、Pre-rollクリップの後にメインクリップが配置される
                 float actualRecordingStartTime = currentStartTime;
-                if (preRollFrames > 0)
+                if (timelinePreRollFrames > 0)
                 {
                     // Pre-rollクリップがcurrentStartTimeに配置され、
                     // メインクリップ（とRecorderClip）はその後に配置される
-                    actualRecordingStartTime = currentStartTime + preRollTime;
+                    actualRecordingStartTime = currentStartTime + timelinePreRollTime;
                 }
                 
-                MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Timeline {i+1}/{directors.Count}: currentStartTime={currentStartTime:F2}s, actualRecordingStartTime={actualRecordingStartTime:F2}s, preRollTime={preRollTime:F2}s");
+                MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] Timeline {i+1}/{directors.Count}: currentStartTime={currentStartTime:F2}s, actualRecordingStartTime={actualRecordingStartTime:F2}s, preRollTime={timelinePreRollTime:F2}s (frames={timelinePreRollFrames})");
                 
                 float timelineDuration = signalEmitterRange.HasValue 
                     ? (float)signalEmitterRange.Value.duration 
@@ -428,9 +474,9 @@ namespace Unity.MultiTimelineRecorder
                 
                 // Update start time for next timeline
                 // Control Trackでの配置と同じロジックを使用
-                if (preRollFrames > 0)
+                if (timelinePreRollFrames > 0)
                 {
-                    currentStartTime += preRollTime;  // Pre-rollクリップの分
+                    currentStartTime += timelinePreRollTime;  // Pre-rollクリップの分
                 }
                 currentStartTime += timelineDuration;  // メインクリップの分
                 if (i < directors.Count - 1 && timelineMarginFrames > 0)
@@ -814,12 +860,13 @@ namespace Unity.MultiTimelineRecorder
                 }
                 MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] ControlTrack created successfully");
                 
-                // Calculate pre-roll time
-                float preRollTime = preRollFrames > 0 ? preRollFrames / (float)frameRate : 0f;
+                // Calculate pre-roll time - get from EditorPrefs which has the correct value
+                int actualPreRollFrames = EditorPrefs.GetInt("STR_PreRollFrames", preRollFrames);
+                float preRollTime = actualPreRollFrames > 0 ? actualPreRollFrames / (float)frameRate : 0f;
                 
-                if (preRollFrames > 0)
+                if (actualPreRollFrames > 0)
                 {
-                    MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] === Pre-roll enabled: {preRollFrames} frames ({preRollTime:F2} seconds) ===");
+                    MultiTimelineRecorderLogger.Log($"[MultiTimelineRecorder] === Pre-roll enabled: {actualPreRollFrames} frames ({preRollTime:F2} seconds) ===");
                 }
                 
                 // SignalEmitterの場合のRecording範囲を事前に取得
@@ -834,9 +881,9 @@ namespace Unity.MultiTimelineRecorder
                     }
                 }
                 
-                if (preRollFrames > 0)
+                if (actualPreRollFrames > 0)
                 {
-                    MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Creating pre-roll clip for {preRollFrames} frames ({preRollTime:F2} seconds)");
+                    MultiTimelineRecorderLogger.LogVerbose($"[MultiTimelineRecorder] Creating pre-roll clip for {actualPreRollFrames} frames ({preRollTime:F2} seconds)");
                     
                     // Create pre-roll clip (holds at frame 0)
                     var preRollClip = controlTrack.CreateClip<ControlPlayableAsset>();

@@ -500,11 +500,11 @@ namespace Unity.MultiTimelineRecorder
             // Output path using OutputPathSettingsUI
             OutputPathSettingsUI.DrawOutputPathUI(globalOutputPath);
             
-            // Timeline settings on same line, left-aligned
+            // Global Pre-Roll settings
             EditorGUILayout.BeginHorizontal();
             
-            // Pre-roll
-            EditorGUILayout.LabelField("Pre-roll:", GUILayout.Width(60));
+            // Global Pre-roll (always shown as it's the default)
+            EditorGUILayout.LabelField("Global Pre-roll:", GUILayout.Width(90));
             preRollFrames = EditorGUILayout.IntField(preRollFrames, GUILayout.Width(60));
             EditorGUILayout.LabelField("frames", GUILayout.Width(50));
             
@@ -1121,6 +1121,57 @@ namespace Unity.MultiTimelineRecorder
                         // UI更新を強制
                         Repaint();
                         SaveSettings();
+                    }
+                    
+                    EditorGUILayout.LabelField("", GUILayout.ExpandWidth(true)); // スペーサー
+                    EditorGUILayout.EndHorizontal();
+                    
+                    // Timeline-specific Pre-Roll settings
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField("Timeline Pre-Roll", EditorStyles.miniBoldLabel, GUILayout.Width(110));
+                    
+                    // Toggle between Global and Custom
+                    bool useCustomPreRoll = settings.IsUsingCustomPreRoll(currentTimelineIndexForRecorder);
+                    string[] preRollOptions = new string[] { "Global", "Custom" };
+                    int selectedOption = useCustomPreRoll ? 1 : 0;
+                    
+                    EditorGUI.BeginChangeCheck();
+                    int newOption = EditorGUILayout.Popup(selectedOption, preRollOptions, GUILayout.Width(70));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        settings.SetTimelineUseCustomPreRoll(currentTimelineIndexForRecorder, newOption == 1);
+                        Repaint();
+                        SaveSettings();
+                    }
+                    
+                    // Show pre-roll value input or global value display
+                    if (useCustomPreRoll)
+                    {
+                        // Custom pre-roll input
+                        var entry = settings.timelinePreRolls.Find(e => e.timelineIndex == currentTimelineIndexForRecorder);
+                        int currentPreRoll = entry != null ? entry.preRollFrames : settings.preRollFrames;
+                        
+                        EditorGUI.BeginChangeCheck();
+                        int newPreRoll = EditorGUILayout.IntField(currentPreRoll, GUILayout.Width(50));
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            // 値の範囲をチェック（0以上）
+                            newPreRoll = Mathf.Max(0, newPreRoll);
+                            settings.SetTimelinePreRoll(currentTimelineIndexForRecorder, newPreRoll);
+                            
+                            // UI更新を強制
+                            Repaint();
+                            SaveSettings();
+                        }
+                        EditorGUILayout.LabelField("frames", GUILayout.Width(50));
+                    }
+                    else
+                    {
+                        // Show global value (read-only)
+                        GUI.enabled = false;
+                        EditorGUILayout.IntField(settings.preRollFrames, GUILayout.Width(50));
+                        GUI.enabled = true;
+                        EditorGUILayout.LabelField("frames (global)", EditorStyles.miniLabel, GUILayout.Width(80));
                     }
                     
                     EditorGUILayout.LabelField("", GUILayout.ExpandWidth(true)); // スペーサー
@@ -3059,7 +3110,33 @@ namespace Unity.MultiTimelineRecorder
                     multiRecorderConfig.RecorderItems[0].recorderType : RecorderSettingsType.Image;
                 EditorPrefs.SetInt("STR_RecorderType", (int)firstRecorderType);
                 EditorPrefs.SetInt("STR_FrameRate", frameRate);
-                EditorPrefs.SetInt("STR_PreRollFrames", preRollFrames);
+                
+                // Store individual pre-roll values for each timeline
+                List<int> timelinePreRolls = new List<int>();
+                if (settings != null)
+                {
+                    foreach (int idx in selectedDirectorIndices)
+                    {
+                        // GetTimelinePreRoll already returns either global or custom based on the timeline's setting
+                        int timelinePreRoll = settings.GetTimelinePreRoll(idx);
+                        bool isCustom = settings.IsUsingCustomPreRoll(idx);
+                        MultiTimelineRecorderLogger.Log($"[PreRoll] Timeline {idx}: PreRoll={timelinePreRoll}f, IsCustom={isCustom}");
+                        timelinePreRolls.Add(timelinePreRoll);
+                    }
+                }
+                else
+                {
+                    // Fallback to global pre-roll if settings are not available
+                    foreach (int idx in selectedDirectorIndices)
+                    {
+                        timelinePreRolls.Add(preRollFrames);
+                    }
+                }
+                
+                // Store the pre-roll values as a comma-separated string
+                string preRollsString = string.Join(",", timelinePreRolls);
+                EditorPrefs.SetString("STR_TimelinePreRolls", preRollsString);
+                MultiTimelineRecorderLogger.Log($"[PreRoll] Stored pre-rolls: {preRollsString}");
                 // exposedNameも保存（CreateRenderTimelineで生成されたもの）
                 if (renderTimeline != null)
                 {
@@ -3745,6 +3822,8 @@ namespace Unity.MultiTimelineRecorder
             startTimingName = settings.startTimingName;
             endTimingName = settings.endTimingName;
             showTimingInFrames = settings.showTimingInFrames;
+            
+            // Pre-Roll mode setting is loaded via settings.usePerTimelinePreRoll directly
             
             // Validate selectedDirectorIndices after all directors are loaded
             if (selectedDirectorIndices != null && recordingQueueDirectors != null)

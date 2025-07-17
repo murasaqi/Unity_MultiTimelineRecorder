@@ -111,6 +111,23 @@ namespace Unity.MultiTimelineRecorder
         }
         public List<TimelineTakeNumberEntry> timelineTakeNumbers = new List<TimelineTakeNumberEntry>();
         
+        // タイムライン固有のPre-Roll管理
+        [Serializable]
+        public class TimelinePreRollEntry
+        {
+            public int timelineIndex;
+            public bool useCustomPreRoll;  // true = use custom, false = use global
+            public int preRollFrames;
+            
+            public TimelinePreRollEntry(int index, bool useCustom, int preRoll)
+            {
+                timelineIndex = index;
+                useCustomPreRoll = useCustom;
+                preRollFrames = preRoll;
+            }
+        }
+        public List<TimelinePreRollEntry> timelinePreRolls = new List<TimelinePreRollEntry>();
+        
         // シーンごとの設定管理
         [Serializable]
         public class SceneSpecificSettings
@@ -148,6 +165,9 @@ namespace Unity.MultiTimelineRecorder
         public string startTimingName = "pre";
         public string endTimingName = "post";
         public bool showTimingInFrames = false; // false=秒数表示, true=フレーム数表示
+        
+        // Pre-Roll mode
+        public bool usePerTimelinePreRoll = false; // false=Global Pre-Roll, true=Per-Timeline Pre-Roll
         
         // 設定ファイルのパス
         private const string SETTINGS_PATH = "Assets/MultiTimelineRecorder/Settings/MultiTimelineRecorderSettings.asset";
@@ -262,6 +282,74 @@ namespace Unity.MultiTimelineRecorder
                 dict[entry.timelineIndex] = entry.takeNumber;
             }
             return dict;
+        }
+        
+        /// <summary>
+        /// 特定のTimelineのPre-Roll値を取得（カスタム設定を考慮）
+        /// </summary>
+        public int GetTimelinePreRoll(int timelineIndex)
+        {
+            var entry = timelinePreRolls.Find(e => e.timelineIndex == timelineIndex);
+            if (entry != null)
+            {
+                UnityEngine.Debug.Log($"[GetTimelinePreRoll] Timeline {timelineIndex}: Found entry, useCustom={entry.useCustomPreRoll}, value={entry.preRollFrames}, global={preRollFrames}");
+                if (entry.useCustomPreRoll)
+                {
+                    return entry.preRollFrames;
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.Log($"[GetTimelinePreRoll] Timeline {timelineIndex}: No entry found, returning global={preRollFrames}");
+            }
+            // エントリーが存在しないか、カスタムを使用しない場合は、グローバルのpreRollFramesを返す
+            return preRollFrames;
+        }
+        
+        /// <summary>
+        /// 特定のTimelineがカスタムPre-Rollを使用しているかチェック
+        /// </summary>
+        public bool IsUsingCustomPreRoll(int timelineIndex)
+        {
+            var entry = timelinePreRolls.Find(e => e.timelineIndex == timelineIndex);
+            return entry != null && entry.useCustomPreRoll;
+        }
+        
+        /// <summary>
+        /// 特定のTimelineのカスタムPre-Roll使用設定を変更
+        /// </summary>
+        public void SetTimelineUseCustomPreRoll(int timelineIndex, bool useCustom)
+        {
+            var entry = timelinePreRolls.Find(e => e.timelineIndex == timelineIndex);
+            if (entry != null)
+            {
+                entry.useCustomPreRoll = useCustom;
+            }
+            else
+            {
+                // デフォルトでグローバル値を使用
+                timelinePreRolls.Add(new TimelinePreRollEntry(timelineIndex, useCustom, preRollFrames));
+            }
+            Save();
+        }
+        
+        /// <summary>
+        /// 特定のTimelineのPre-Roll値を設定
+        /// </summary>
+        public void SetTimelinePreRoll(int timelineIndex, int preRoll)
+        {
+            var entry = timelinePreRolls.Find(e => e.timelineIndex == timelineIndex);
+            if (entry != null)
+            {
+                entry.preRollFrames = preRoll;
+                UnityEngine.Debug.Log($"[SetTimelinePreRoll] Timeline {timelineIndex}: Updated pre-roll to {preRoll}f");
+            }
+            else
+            {
+                timelinePreRolls.Add(new TimelinePreRollEntry(timelineIndex, true, preRoll));
+                UnityEngine.Debug.Log($"[SetTimelinePreRoll] Timeline {timelineIndex}: Created new entry with pre-roll {preRoll}f");
+            }
+            Save();
         }
         
         /// <summary>
