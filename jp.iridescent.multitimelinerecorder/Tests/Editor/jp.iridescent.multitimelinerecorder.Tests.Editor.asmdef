@@ -1,0 +1,27 @@
+{
+    "name": "jp.iridescent.multitimelinerecorder.Tests.Editor",
+    "rootNamespace": "MultiTimelineRecorder.Tests",
+    "references": [
+        "jp.iridescent.multitimelinerecorder.Editor",
+        "jp.iridescent.multitimelinerecorder.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.Recorder",
+        "Unity.Recorder.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
