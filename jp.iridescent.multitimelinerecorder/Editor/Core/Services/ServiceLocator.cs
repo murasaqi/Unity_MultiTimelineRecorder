@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Events;
+using MultiTimelineRecorder.Core.Models;
 using MultiTimelineRecorder.UI.Controllers;
 
 namespace MultiTimelineRecorder.Core.Services
@@ -64,10 +65,16 @@ namespace MultiTimelineRecorder.Core.Services
             var configurationService = new ConfigurationService(logger);
             var recordingService = new RecordingService(logger, errorHandler);
             
+            // Create wildcard services
+            var wildcardRegistry = new WildcardRegistry();
+            var wildcardProcessor = new EnhancedWildcardProcessor(logger, wildcardRegistry);
+            
             // Register business services
             Register<ITimelineService>(timelineService);
             Register<IConfigurationService>(configurationService);
             Register<IRecordingService>(recordingService);
+            Register<WildcardRegistry>(wildcardRegistry);
+            Register<IWildcardProcessor>(wildcardProcessor);
             
             // Create UI controllers
             var mainController = new MainWindowController(
@@ -167,6 +174,8 @@ namespace MultiTimelineRecorder.Core.Services
             DisposeService<MainWindowController>();
             
             // Then dispose services
+            DisposeService<IWildcardProcessor>();
+            DisposeService<WildcardRegistry>();
             DisposeService<IRecordingService>();
             DisposeService<IConfigurationService>();
             DisposeService<ITimelineService>();

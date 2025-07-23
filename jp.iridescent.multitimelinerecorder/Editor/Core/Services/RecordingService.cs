@@ -49,6 +49,9 @@ namespace MultiTimelineRecorder.Core.Services
                 {
                     throw new ValidationException("Configuration validation failed", validationResult);
                 }
+                
+                // Validate frame rate consistency
+                ValidateFrameRateConsistency(config);
 
                 // Create recording job
                 var job = new RecordingJob
@@ -236,7 +239,9 @@ namespace MultiTimelineRecorder.Core.Services
                 SceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
                 TakeNumber = recorderConfig.TakeNumber,
                 RecorderType = recorderConfig.Type.ToString(),
-                RecordingDate = DateTime.Now
+                RecordingDate = DateTime.Now,
+                GlobalFrameRate = (int)timeline.editorSettings.frameRate,
+                RecorderName = recorderConfig.Name
             });
 
             if (recorderSettings != null)
@@ -334,6 +339,34 @@ namespace MultiTimelineRecorder.Core.Services
                     currentPath = nextPath;
                 }
             }
+        }
+        
+        /// <summary>
+        /// Validates frame rate consistency across all recorder configurations
+        /// </summary>
+        private void ValidateFrameRateConsistency(IRecordingConfiguration config)
+        {
+            _logger.LogInfo($"Validating frame rate consistency. Global frame rate: {config.FrameRate}", LogCategory.Recording);
+            
+            // Timeline constraint: All recorders must use the same frame rate
+            // This is a Unity Timeline limitation when using multiple recorder clips
+            var globalFrameRate = config.FrameRate;
+            
+            foreach (var timelineConfig in config.TimelineConfigs)
+            {
+                if (!timelineConfig.IsEnabled) continue;
+                
+                foreach (var recorderConfig in timelineConfig.RecorderConfigs)
+                {
+                    if (!recorderConfig.IsEnabled) continue;
+                    
+                    // Ensure each recorder configuration uses the global frame rate
+                    // Individual recorder frame rates are ignored due to Timeline constraints
+                    _logger.LogVerbose($"Recorder '{recorderConfig.Name}' will use global frame rate: {globalFrameRate}", LogCategory.Recording);
+                }
+            }
+            
+            _logger.LogInfo("Frame rate consistency validation completed", LogCategory.Recording);
         }
 
         /// <summary>

@@ -208,5 +208,8 @@ namespace MultiTimelineRecorder.Core.Interfaces
         public string RecorderType { get; set; }
         public System.DateTime RecordingDate { get; set; }
         public Dictionary<string, string> CustomWildcards { get; set; } = new Dictionary<string, string>();
+        public int GlobalFrameRate { get; set; }
+        public string RecorderName { get; set; }
+        public int? TimelineTakeNumber { get; set; }
     }
 }

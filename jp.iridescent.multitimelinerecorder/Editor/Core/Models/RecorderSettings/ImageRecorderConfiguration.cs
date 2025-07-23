@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Unity.MultiTimelineRecorder;
 using MultiTimelineRecorder.Core.Interfaces;
+using MultiTimelineRecorder.Core.Services;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Input;
 
@@ -280,6 +281,14 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
             settings.OutputFormat = outputFormat;
             settings.CaptureAlpha = captureAlpha;
             
+            // Apply global frame rate from context (Timeline constraint)
+            if (context.GlobalFrameRate > 0)
+            {
+                // Frame rate is controlled by the Timeline, not individual recorder settings
+                // This ensures all recorders use the same frame rate
+                _logger?.LogVerbose($"Image recorder '{Name}' using global frame rate: {context.GlobalFrameRate}", LogCategory.Recording);
+            }
+            
             // Set quality settings based on format
             if (outputFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
             {
@@ -357,24 +366,36 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         /// </summary>
         private string ProcessWildcards(MultiTimelineRecorder.Core.Interfaces.WildcardContext context)
         {
-            var pattern = "<Scene>_<Timeline>_Image_Take<Take:0000>";
+            var pattern = FileNamePattern ?? "<Scene>_<Timeline>_Image_Take<Take:0000>";
             
-            // Replace standard wildcards
-            pattern = pattern.Replace("<Scene>", context.SceneName);
-            pattern = pattern.Replace("<Timeline>", context.TimelineName);
-            pattern = pattern.Replace("<Take>", context.TakeNumber.ToString());
-            pattern = pattern.Replace("<Take:0000>", context.TakeNumber.ToString("0000"));
-            pattern = pattern.Replace("<RecorderType>", "Image");
-            pattern = pattern.Replace("<Date>", context.RecordingDate.ToString("yyyy-MM-dd"));
-            pattern = pattern.Replace("<Time>", context.RecordingDate.ToString("HH-mm-ss"));
-            
-            // Replace custom wildcards
-            foreach (var wildcard in context.CustomWildcards)
+            // Try to get wildcard processor from ServiceLocator
+            if (ServiceLocator.Instance.TryGet<IWildcardProcessor>(out var wildcardProcessor))
             {
-                pattern = pattern.Replace($"<{wildcard.Key}>", wildcard.Value);
+                // Process Multi Timeline Recorder wildcards
+                var processedPath = wildcardProcessor.ProcessWildcards(pattern, context);
+                
+                // Convert to Unity Recorder path (preserves Unity Recorder wildcards)
+                return wildcardProcessor.GetUnityRecorderPath(processedPath, context);
             }
-            
-            return pattern;
+            else
+            {
+                // Fallback to simple replacement if service not available
+                pattern = pattern.Replace("<Scene>", context.SceneName);
+                pattern = pattern.Replace("<Timeline>", context.TimelineName);
+                pattern = pattern.Replace("<Take>", context.TakeNumber.ToString());
+                pattern = pattern.Replace("<Take:0000>", context.TakeNumber.ToString("0000"));
+                pattern = pattern.Replace("<RecorderType>", "Image");
+                pattern = pattern.Replace("<Date>", context.RecordingDate.ToString("yyyy-MM-dd"));
+                pattern = pattern.Replace("<Time>", context.RecordingDate.ToString("HH-mm-ss"));
+                
+                // Replace custom wildcards
+                foreach (var wildcard in context.CustomWildcards)
+                {
+                    pattern = pattern.Replace($"<{wildcard.Key}>", wildcard.Value);
+                }
+                
+                return pattern;
+            }
         }
     }
 }

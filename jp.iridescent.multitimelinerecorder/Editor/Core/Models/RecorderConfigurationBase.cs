@@ -23,6 +23,10 @@ namespace MultiTimelineRecorder.Core.Models
         
         [SerializeField]
         private int takeNumber = 1;
+        
+        // Non-serialized logger field for subclasses
+        [NonSerialized]
+        protected ILogger _logger;
 
         /// <inheritdoc />
         public string Id
@@ -60,6 +64,17 @@ namespace MultiTimelineRecorder.Core.Models
 
         /// <inheritdoc />
         public abstract UnityEditor.Recorder.RecorderSettings CreateUnityRecorderSettings(MultiTimelineRecorder.Core.Interfaces.WildcardContext context);
+        
+        /// <summary>
+        /// Applies global frame rate to the recorder configuration
+        /// This is required due to Unity Timeline constraints - all recorders must use the same frame rate
+        /// </summary>
+        /// <param name="globalFrameRate">The global frame rate to apply</param>
+        public virtual void ApplyGlobalFrameRate(int globalFrameRate)
+        {
+            // Default implementation - can be overridden by specific recorder types if needed
+            // The frame rate is typically applied when creating Unity Recorder settings
+        }
 
         /// <summary>
         /// Creates a clone of this configuration
