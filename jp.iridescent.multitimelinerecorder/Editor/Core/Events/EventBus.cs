@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MultiTimelineRecorder.Core.Interfaces;
 
 namespace MultiTimelineRecorder.Core.Events
 {
+
     /// <summary>
     /// Simple event bus for decoupled communication between components
     /// </summary>

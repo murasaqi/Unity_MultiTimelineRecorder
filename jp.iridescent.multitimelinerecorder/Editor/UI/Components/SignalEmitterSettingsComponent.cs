@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.UI.Styles;
 
 namespace MultiTimelineRecorder.UI.Components
@@ -181,7 +182,7 @@ namespace MultiTimelineRecorder.UI.Components
     /// <summary>
     /// Event fired when SignalEmitter settings change
     /// </summary>
-    public class SignalEmitterSettingsChangedEvent : IEvent
+    public class SignalEmitterSettingsChangedEvent : EventArgs
     {
         public bool UseSignalEmitterTiming { get; set; }
         public string StartSignalName { get; set; }

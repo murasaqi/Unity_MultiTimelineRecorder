@@ -6,6 +6,7 @@ using UnityEngine.Timeline;
 using UnityEditor;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Events;
 using Unity.MultiTimelineRecorder.Utilities;
 
 namespace MultiTimelineRecorder.UI.Components
@@ -79,11 +80,11 @@ namespace MultiTimelineRecorder.UI.Components
                 EditorGUILayout.Space(5);
                 
                 // Signal list
-                var mtrSignals = signals.Where(s => s.trackName.Contains("[MTR]")).ToList();
-                var otherSignals = signals.Where(s => !s.trackName.Contains("[MTR]")).ToList();
+                var mtrSignals = signals.Where(s => s.parentTrack?.name.Contains("[MTR]") ?? false).ToList();
+                var otherSignals = signals.Where(s => !(s.parentTrack?.name.Contains("[MTR]") ?? false)).ToList();
                 
                 // Draw [MTR] priority signals first
-                if (mtrSignals.Count > 0)
+                if (mtrSignals.Count() > 0)
                 {
                     EditorGUILayout.LabelField("[MTR] Priority Signals:", EditorStyles.miniBoldLabel);
                     foreach (var signal in mtrSignals)
@@ -91,14 +92,14 @@ namespace MultiTimelineRecorder.UI.Components
                         DrawSignalInfo(signal, frameRate, startSignalName, endSignalName);
                     }
                     
-                    if (otherSignals.Count > 0)
+                    if (otherSignals.Count() > 0)
                     {
                         EditorGUILayout.Space(5);
                     }
                 }
                 
                 // Draw other signals
-                if (otherSignals.Count > 0)
+                if (otherSignals.Count() > 0)
                 {
                     EditorGUILayout.LabelField("Other Signals:", EditorStyles.miniBoldLabel);
                     foreach (var signal in otherSignals)
@@ -121,8 +122,8 @@ namespace MultiTimelineRecorder.UI.Components
             using (new EditorGUILayout.HorizontalScope())
             {
                 // Signal name with highlighting
-                bool isStart = signal.displayName == startSignalName;
-                bool isEnd = signal.displayName == endSignalName;
+                bool isStart = signal.signalName == startSignalName;
+                bool isEnd = signal.signalName == endSignalName;
                 
                 var style = EditorStyles.label;
                 if (isStart || isEnd)
@@ -132,7 +133,7 @@ namespace MultiTimelineRecorder.UI.Components
                     style.fontStyle = FontStyle.Bold;
                 }
                 
-                var label = signal.displayName;
+                var label = signal.signalName;
                 if (isStart) label += " [START]";
                 if (isEnd) label += " [END]";
                 
@@ -143,7 +144,7 @@ namespace MultiTimelineRecorder.UI.Components
                 EditorGUILayout.LabelField(timeStr, GUILayout.Width(100));
                 
                 // Track name
-                EditorGUILayout.LabelField($"Track: {signal.trackName}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"Track: {signal.parentTrack?.name ?? "Unknown"}", EditorStyles.miniLabel);
             }
         }
         

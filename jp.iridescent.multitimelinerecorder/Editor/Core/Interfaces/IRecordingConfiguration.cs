@@ -122,6 +122,12 @@ namespace MultiTimelineRecorder.Core.Interfaces
         /// <param name="context">Wildcard context for path resolution</param>
         /// <returns>Unity Recorder settings</returns>
         UnityEditor.Recorder.RecorderSettings CreateUnityRecorderSettings(WildcardContext context);
+        
+        /// <summary>
+        /// Creates a deep copy of this recorder configuration
+        /// </summary>
+        /// <returns>Cloned recorder configuration</returns>
+        IRecorderConfiguration Clone();
     }
 
     /// <summary>

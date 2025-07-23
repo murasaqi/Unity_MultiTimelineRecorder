@@ -69,6 +69,17 @@ namespace MultiTimelineRecorder.Core.Interfaces
         {
             Issues.Add(new ValidationIssue { Severity = ValidationSeverity.Warning, Message = message });
         }
+        
+        public void Merge(ValidationResult other)
+        {
+            if (other == null) return;
+            
+            Issues.AddRange(other.Issues);
+            if (!other.IsValid)
+            {
+                IsValid = false;
+            }
+        }
     }
 
     /// <summary>

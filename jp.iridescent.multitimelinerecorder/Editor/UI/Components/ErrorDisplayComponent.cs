@@ -37,10 +37,10 @@ namespace MultiTimelineRecorder.UI.Components
                 return;
             }
             
-            var errors = _currentValidation.Issues.Where(i => i.Severity == ValidationSeverity.Error).ToList();
-            var warnings = _currentValidation.Issues.Where(i => i.Severity == ValidationSeverity.Warning).ToList();
+            var errors = _currentValidation.Issues.Where(i => (int)i.Severity == (int)ValidationSeverity.Error).ToList();
+            var warnings = _currentValidation.Issues.Where(i => (int)i.Severity == (int)ValidationSeverity.Warning).ToList();
             
-            if (errors.Count == 0 && warnings.Count == 0)
+            if (errors.Count() == 0 && warnings.Count() == 0)
             {
                 return;
             }
@@ -51,7 +51,7 @@ namespace MultiTimelineRecorder.UI.Components
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     _isExpanded = EditorGUILayout.Foldout(_isExpanded, 
-                        $"Validation Issues ({errors.Count} errors, {warnings.Count} warnings)", 
+                        $"Validation Issues ({errors.Count()} errors, {warnings.Count()} warnings)", 
                         true);
                     
                     GUILayout.FlexibleSpace();
@@ -72,15 +72,15 @@ namespace MultiTimelineRecorder.UI.Components
                         _scrollPosition = scrollView.scrollPosition;
                         
                         // Display errors
-                        if (errors.Count > 0)
+                        if (errors.Count() > 0)
                         {
                             DrawIssueSection("Errors", errors, EditorGUIUtility.IconContent("console.erroricon"));
                         }
                         
                         // Display warnings
-                        if (warnings.Count > 0)
+                        if (warnings.Count() > 0)
                         {
-                            if (errors.Count > 0)
+                            if (errors.Count() > 0)
                             {
                                 EditorGUILayout.Space(10);
                             }
@@ -155,16 +155,7 @@ namespace MultiTimelineRecorder.UI.Components
                     }
                 }
                 
-                // Details (category, etc.)
-                if (!string.IsNullOrEmpty(issue.Category))
-                {
-                    EditorGUILayout.Space(2);
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        GUILayout.Space(25);
-                        GUILayout.Label($"Category: {issue.Category}", EditorStyles.miniLabel);
-                    }
-                }
+                // Details section removed - ValidationIssue doesn't have Category property
             }
             
             EditorGUILayout.Space(2);

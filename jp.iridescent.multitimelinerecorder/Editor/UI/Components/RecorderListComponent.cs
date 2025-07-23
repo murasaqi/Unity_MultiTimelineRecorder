@@ -7,6 +7,7 @@ using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
+using MultiTimelineRecorder.UI.Windows;
 
 namespace MultiTimelineRecorder.UI.Components
 {

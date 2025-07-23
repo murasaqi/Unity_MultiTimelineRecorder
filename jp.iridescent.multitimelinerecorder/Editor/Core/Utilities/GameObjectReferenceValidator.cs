@@ -198,7 +198,7 @@ namespace MultiTimelineRecorder.Core.Utilities
             IGameObjectReferenceService referenceService)
         {
             // Validate target GameObject
-            if (config.targetGameObject == null && config.scope == AlembicRecorderSettingsConfig.ExportScope.TargetGameObject)
+            if (config.targetGameObject == null && config.exportScope == AlembicExportScope.TargetGameObject)
             {
                 result.AddError("Target GameObject reference could not be restored for Alembic recording");
                 

@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEditor;
 using MultiTimelineRecorder.Core.Events;
+using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Models;
 using MultiTimelineRecorder.Core.Services;
 using MultiTimelineRecorder.UI.Controllers;

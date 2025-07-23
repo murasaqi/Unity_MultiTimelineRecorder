@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine.Playables;
 using MultiTimelineRecorder.Core.Interfaces;
@@ -7,7 +8,7 @@ namespace MultiTimelineRecorder.Core.Events
     /// <summary>
     /// Event raised when a recorder is applied to multiple timelines
     /// </summary>
-    public class RecorderAppliedToTimelinesEvent : IEvent
+    public class RecorderAppliedToTimelinesEvent : EventArgs
     {
         /// <summary>
         /// The source recorder configuration that was applied
