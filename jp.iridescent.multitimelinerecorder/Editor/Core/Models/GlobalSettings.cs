@@ -57,6 +57,15 @@ namespace MultiTimelineRecorder.Core.Models
         
         [SerializeField]
         private LogVerbosity logVerbosity = LogVerbosity.Info;
+        
+        [SerializeField]
+        private bool useSignalEmitterTiming = false;
+        
+        [SerializeField]
+        private string startSignalName = "";
+        
+        [SerializeField]
+        private string endSignalName = "";
 
         /// <inheritdoc />
         public int DefaultFrameRate
@@ -157,6 +166,33 @@ namespace MultiTimelineRecorder.Core.Models
             get => logVerbosity;
             set => logVerbosity = value;
         }
+        
+        /// <summary>
+        /// Whether to use SignalEmitter timing
+        /// </summary>
+        public bool UseSignalEmitterTiming
+        {
+            get => useSignalEmitterTiming;
+            set => useSignalEmitterTiming = value;
+        }
+        
+        /// <summary>
+        /// Start signal name for SignalEmitter timing
+        /// </summary>
+        public string StartSignalName
+        {
+            get => startSignalName;
+            set => startSignalName = value;
+        }
+        
+        /// <summary>
+        /// End signal name for SignalEmitter timing
+        /// </summary>
+        public string EndSignalName
+        {
+            get => endSignalName;
+            set => endSignalName = value;
+        }
 
         /// <summary>
         /// Validates the global settings
@@ -218,7 +254,10 @@ namespace MultiTimelineRecorder.Core.Models
                 maxConcurrentRecorders = this.maxConcurrentRecorders,
                 useAsyncRecording = this.useAsyncRecording,
                 captureAudio = this.captureAudio,
-                logVerbosity = this.logVerbosity
+                logVerbosity = this.logVerbosity,
+                useSignalEmitterTiming = this.useSignalEmitterTiming,
+                startSignalName = this.startSignalName,
+                endSignalName = this.endSignalName
             };
         }
 

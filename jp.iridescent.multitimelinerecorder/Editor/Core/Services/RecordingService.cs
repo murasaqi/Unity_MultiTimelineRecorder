@@ -23,11 +23,15 @@ namespace MultiTimelineRecorder.Core.Services
         private readonly IErrorHandlingService _errorHandler;
         private readonly Dictionary<string, RecordingJob> _activeJobs = new Dictionary<string, RecordingJob>();
         private EditorCoroutine _recordingCoroutine;
+        private ISignalEmitterService _signalEmitterService;
 
         public RecordingService(MultiTimelineRecorder.Core.Interfaces.ILogger logger, IErrorHandlingService errorHandler)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
+            
+            // Get SignalEmitterService from ServiceLocator if available
+            ServiceLocator.Instance.TryGet<ISignalEmitterService>(out _signalEmitterService);
         }
 
         /// <inheritdoc />
@@ -206,7 +210,35 @@ namespace MultiTimelineRecorder.Core.Services
                     var enabledRecorders = timelineConfig.RecorderConfigs.Where(r => r.IsEnabled).ToList();
                     foreach (var recorderConfig in enabledRecorders)
                     {
-                        CreateRecorderTrack(timeline, recorderConfig, 0, timeline.duration);
+                        // Calculate recording range based on SignalEmitter settings if enabled
+                        double recordStartTime = 0;
+                        double recordDuration = timeline.duration;
+                        
+                        if (config.GlobalSettings is GlobalSettings globalSettings && 
+                            globalSettings.UseSignalEmitterTiming && 
+                            _signalEmitterService != null &&
+                            timelineConfig is TimelineRecorderConfig trc &&
+                            trc.Director?.playableAsset is TimelineAsset sourceTimeline)
+                        {
+                            var range = _signalEmitterService.GetRecordingRangeFromSignals(
+                                sourceTimeline, 
+                                globalSettings.StartSignalName, 
+                                globalSettings.EndSignalName,
+                                true);
+                            
+                            if (range.isValid)
+                            {
+                                recordStartTime = range.startTime;
+                                recordDuration = range.duration;
+                                _logger.LogInfo($"Using SignalEmitter timing for {recorderConfig.Name}: Start={recordStartTime:F2}s, Duration={recordDuration:F2}s", LogCategory.Recording);
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"SignalEmitter timing not found for {recorderConfig.Name}, using full timeline duration", LogCategory.Recording);
+                            }
+                        }
+                        
+                        CreateRecorderTrack(timeline, recorderConfig, recordStartTime, recordDuration);
                     }
                 }
 

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Services;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
 
@@ -16,14 +17,20 @@ namespace MultiTimelineRecorder.UI.Components
         private readonly MainWindowController _controller;
         private readonly IEventBus _eventBus;
         private GlobalSettings _settings;
+        private SignalEmitterSettingsComponent _signalEmitterSettings;
         
         public GlobalSettingsComponent(MainWindowController controller, IEventBus eventBus)
         {
             _controller = controller ?? throw new ArgumentNullException(nameof(controller));
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             
+            // Get SignalEmitterService from ServiceLocator
+            var signalEmitterService = ServiceLocator.Instance.Get<ISignalEmitterService>();
+            _signalEmitterSettings = new SignalEmitterSettingsComponent(signalEmitterService, _eventBus);
+            
             _eventBus.Subscribe<ConfigurationLoadedEvent>(OnConfigurationLoaded);
             _eventBus.Subscribe<ConfigurationChangedEvent>(OnConfigurationChanged);
+            _eventBus.Subscribe<SignalEmitterSettingsChangedEvent>(OnSignalEmitterSettingsChanged);
             
             LoadSettings();
         }
@@ -128,6 +135,11 @@ namespace MultiTimelineRecorder.UI.Components
             
             UIStyles.DrawHorizontalLine();
             
+            // SignalEmitter Settings Section
+            _signalEmitterSettings.Draw();
+            
+            UIStyles.DrawHorizontalLine();
+            
             // Advanced Settings Section
             GUILayout.Label("Advanced Settings", UIStyles.SectionHeader);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
@@ -186,6 +198,8 @@ namespace MultiTimelineRecorder.UI.Components
             if (config != null)
             {
                 _settings = config.GlobalSettings as GlobalSettings ?? new GlobalSettings();
+                // Update SignalEmitter settings
+                _signalEmitterSettings.SetConfiguration(config);
             }
             else
             {
@@ -207,6 +221,17 @@ namespace MultiTimelineRecorder.UI.Components
             if (e.PropertyName == "GlobalSettings")
             {
                 LoadSettings();
+            }
+        }
+        
+        private void OnSignalEmitterSettingsChanged(SignalEmitterSettingsChangedEvent e)
+        {
+            // Apply SignalEmitter settings to current configuration
+            var config = _controller.CurrentConfiguration as RecordingConfiguration;
+            if (config != null)
+            {
+                _signalEmitterSettings.ApplyToConfiguration(config);
+                _controller.SaveConfiguration();
             }
         }
     }
