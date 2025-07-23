@@ -48,12 +48,19 @@ namespace MultiTimelineRecorder.UI.Components
             UIStyles.DrawAlternatingBackground(rect, index);
             UIStyles.DrawSelectionRect(rect, isSelected, isHovered);
             
-            // Handle selection
+            // Handle selection and context menu
             if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
             {
                 _selectedIndex = index;
                 _controller.SelectRecorder(recorder);
                 GUI.FocusControl(null);
+                
+                // Right-click context menu
+                if (Event.current.button == 1)
+                {
+                    ShowRecorderContextMenu(recorder);
+                }
+                
                 Event.current.Use();
             }
             
@@ -168,6 +175,83 @@ namespace MultiTimelineRecorder.UI.Components
             _eventBus.Publish(new UIRefreshRequestedEvent 
             { 
                 Scope = UIRefreshRequestedEvent.RefreshScope.RecorderList 
+            });
+        }
+        
+        private void ShowRecorderContextMenu(IRecorderConfiguration recorder)
+        {
+            var menu = new GenericMenu();
+            
+            // Duplicate
+            menu.AddItem(new GUIContent("Duplicate"), false, () => 
+            {
+                _controller.DuplicateRecorder(recorder.Id);
+            });
+            
+            // Delete
+            menu.AddItem(new GUIContent("Delete"), false, () => 
+            {
+                _controller.RemoveRecorder(recorder.Id);
+            });
+            
+            menu.AddSeparator("");
+            
+            // Apply to All Selected Timelines (only show if multiple timelines are selected)
+            var selectedTimelineCount = GetSelectedTimelineCount();
+            if (selectedTimelineCount > 1)
+            {
+                menu.AddItem(new GUIContent($"Apply to All Selected Timelines ({selectedTimelineCount})"), false, () => 
+                {
+                    ApplyRecorderToAllSelectedTimelines(recorder);
+                });
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("Apply to All Selected Timelines (Select multiple timelines)"));
+            }
+            
+            menu.ShowAsContext();
+        }
+        
+        private int GetSelectedTimelineCount()
+        {
+            // Get selected timeline count from MainController
+            var mainController = Core.Services.ServiceLocator.Instance.Get<MainWindowController>();
+            return mainController.SelectedTimelines.Count;
+        }
+        
+        private void ApplyRecorderToAllSelectedTimelines(IRecorderConfiguration sourceRecorder)
+        {
+            var mainController = Core.Services.ServiceLocator.Instance.Get<MainWindowController>();
+            var selectedTimelines = mainController.SelectedTimelines;
+            
+            if (selectedTimelines.Count <= 1)
+            {
+                Debug.LogWarning("Please select multiple timelines to apply recorder settings");
+                return;
+            }
+            
+            // Show confirmation dialog
+            bool overwriteExisting = EditorUtility.DisplayDialog(
+                "Apply Recorder to All Selected Timelines",
+                $"Apply '{sourceRecorder.Name}' to {selectedTimelines.Count} selected timelines?\n\n" +
+                "Choose whether to:\n" +
+                "• Overwrite: Replace existing recorders of the same type\n" +
+                "• Add New: Add as a new recorder to each timeline",
+                "Overwrite Existing",
+                "Add New");
+            
+            mainController.ApplyRecorderToSelectedTimelines(sourceRecorder, overwriteExisting);
+            
+            // Show notification
+            EditorWindow.GetWindow<MainWindowView>().ShowNotification(
+                new GUIContent($"Applied recorder to {selectedTimelines.Count} timelines"), 
+                3f);
+            
+            // Refresh UI
+            _eventBus.Publish(new UIRefreshRequestedEvent 
+            { 
+                Scope = UIRefreshRequestedEvent.RefreshScope.All 
             });
         }
     }

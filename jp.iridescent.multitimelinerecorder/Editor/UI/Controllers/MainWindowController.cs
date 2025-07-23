@@ -435,6 +435,79 @@ namespace MultiTimelineRecorder.UI.Controllers
         }
 
         /// <summary>
+        /// Applies a recorder configuration to all selected timelines
+        /// </summary>
+        /// <param name="sourceRecorder">The recorder configuration to apply</param>
+        /// <param name="overwriteExisting">Whether to overwrite existing recorders of the same type</param>
+        public void ApplyRecorderToSelectedTimelines(IRecorderConfiguration sourceRecorder, bool overwriteExisting)
+        {
+            if (sourceRecorder == null)
+            {
+                _logger.LogError("Cannot apply null recorder configuration", LogCategory.Configuration);
+                return;
+            }
+            
+            if (_selectedTimelines.Count <= 1)
+            {
+                _logger.LogWarning("Apply to All requires multiple selected timelines", LogCategory.Configuration);
+                return;
+            }
+            
+            _errorHandler.ExecuteWithErrorHandling(() =>
+            {
+                var config = _currentConfiguration as RecordingConfiguration;
+                if (config == null) return;
+                
+                var appliedCount = 0;
+                var overwrittenCount = 0;
+                
+                foreach (var timeline in _selectedTimelines)
+                {
+                    // Find the timeline configuration
+                    var timelineConfig = config.TimelineConfigs
+                        .FirstOrDefault(t => t is TimelineRecorderConfig trc && trc.Director == timeline) as TimelineRecorderConfig;
+                    
+                    if (timelineConfig == null) continue;
+                    
+                    if (overwriteExisting)
+                    {
+                        // Remove existing recorders of the same type
+                        var existingRecorders = timelineConfig.RecorderConfigs
+                            .Where(r => r.Type == sourceRecorder.Type)
+                            .ToList();
+                        
+                        foreach (var existing in existingRecorders)
+                        {
+                            timelineConfig.RecorderConfigs.Remove(existing);
+                            overwrittenCount++;
+                        }
+                    }
+                    
+                    // Clone the source recorder and add it
+                    var clonedRecorder = sourceRecorder.Clone();
+                    timelineConfig.RecorderConfigs.Add(clonedRecorder);
+                    appliedCount++;
+                }
+                
+                _logger.LogInfo($"Applied recorder to {appliedCount} timelines" + 
+                    (overwrittenCount > 0 ? $" (overwrote {overwrittenCount} existing)" : ""), 
+                    LogCategory.Configuration);
+                
+                // Update configuration
+                UpdateConfiguration(config);
+                
+                // Publish event
+                _eventBus.Publish(new RecorderAppliedToTimelinesEvent
+                {
+                    SourceRecorder = sourceRecorder,
+                    TargetTimelines = _selectedTimelines.ToList(),
+                    OverwriteExisting = overwriteExisting,
+                    AppliedCount = appliedCount
+                });
+            }, "ApplyRecorderToSelectedTimelines");
+        }
+        
+        /// <summary>
         /// Creates a new configuration
         /// </summary>
         public void CreateNewConfiguration()

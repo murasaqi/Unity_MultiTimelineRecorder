@@ -237,6 +237,23 @@ namespace MultiTimelineRecorder.UI.Styles
             }
         }
         
+        private static GUIStyle _validationBox;
+        public static GUIStyle ValidationBox
+        {
+            get
+            {
+                if (_validationBox == null)
+                {
+                    _validationBox = new GUIStyle(EditorStyles.helpBox)
+                    {
+                        padding = new RectOffset(10, 10, 10, 10),
+                        margin = new RectOffset(5, 5, 5, 5)
+                    };
+                }
+                return _validationBox;
+            }
+        }
+        
         // Helper methods
         private static Texture2D MakeColorTexture(Color color)
         {
