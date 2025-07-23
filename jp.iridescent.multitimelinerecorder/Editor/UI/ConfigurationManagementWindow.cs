@@ -56,9 +56,9 @@ namespace MultiTimelineRecorder.UI
 
         private void OnEnable()
         {
-            var logger = ServiceLocator.GetService<ILogger>() ?? new UnityConsoleLogger();
-            var referenceService = ServiceLocator.GetService<IGameObjectReferenceService>() ?? 
-                                 new GameObjectReferenceService(logger, ServiceLocator.GetService<IErrorHandlingService>());
+            var logger = ServiceLocator.Instance.Get<MultiTimelineRecorder.Core.Interfaces.ILogger>() ?? new UnityConsoleLogger();
+            var referenceService = ServiceLocator.Instance.Get<IGameObjectReferenceService>() ?? 
+                                 new GameObjectReferenceService(logger, ServiceLocator.Instance.Get<IErrorHandlingService>());
             
             _configManager = new SceneConfigurationManager(logger, referenceService);
             _validationService = new ConfigurationValidationService(logger, referenceService);
@@ -208,7 +208,7 @@ namespace MultiTimelineRecorder.UI
                     
                     var totalRecorders = recordingConfig.TimelineConfigs
                         .OfType<TimelineRecorderConfig>()
-                        .Sum(t => t.RecorderConfigurations?.Count ?? 0);
+                        .Sum(t => t.RecorderConfigs?.Count ?? 0);
                     EditorGUILayout.LabelField($"Total Recorders: {totalRecorders}");
                 }
                 

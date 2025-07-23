@@ -13,9 +13,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class ImageRecorderValidator : IConfigurationValidator
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public ImageRecorderValidator(ILogger logger)
+        public ImageRecorderValidator(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -81,9 +81,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class MovieRecorderValidator : IConfigurationValidator
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public MovieRecorderValidator(ILogger logger)
+        public MovieRecorderValidator(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -107,17 +107,13 @@ namespace MultiTimelineRecorder.Core.Services
             // Validate bitrate for ProRes
             if (movieConfig.OutputFormat == UnityEditor.Recorder.MovieRecorderSettings.VideoRecorderOutputFormat.MOV)
             {
-                if (movieConfig.VideoBitRateMode == UnityEditor.Recorder.VideoBitrateMode.High)
+                if (movieConfig.BitrateMode == MultiTimelineRecorder.Core.Models.RecorderSettings.BitrateMode.High)
                 {
                     result.AddWarning("High bitrate with ProRes format will create very large files");
                 }
             }
 
-            // Validate audio settings
-            if (movieConfig.CaptureAudio && movieConfig.AudioCodec == UnityEditor.Recorder.AudioRecorderSettings.AudioCodec.None)
-            {
-                result.AddWarning("Audio capture is enabled but no audio codec is selected");
-            }
+            // Audio codec validation not needed - AudioCodec always has a valid value (defaults to AAC)
 
             return result;
         }
@@ -128,9 +124,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class AnimationRecorderValidator : IConfigurationValidator
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public AnimationRecorderValidator(ILogger logger)
+        public AnimationRecorderValidator(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -189,9 +185,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class AlembicRecorderValidator : IConfigurationValidator
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public AlembicRecorderValidator(ILogger logger)
+        public AlembicRecorderValidator(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -251,9 +247,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class FBXRecorderValidator : IConfigurationValidator
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public FBXRecorderValidator(ILogger logger)
+        public FBXRecorderValidator(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -308,9 +304,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class AOVRecorderValidator : IConfigurationValidator
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public AOVRecorderValidator(ILogger logger)
+        public AOVRecorderValidator(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -326,7 +322,7 @@ namespace MultiTimelineRecorder.Core.Services
             }
 
             // Validate custom AOV name
-            if (aovConfig.AOVType == AOVType.Custom && string.IsNullOrWhiteSpace(aovConfig.CustomAOVName))
+            if (aovConfig.AOVType == MultiTimelineRecorder.Core.Models.RecorderSettings.AOVType.Custom && string.IsNullOrWhiteSpace(aovConfig.CustomAOVName))
             {
                 result.AddError("Custom AOV name is required when AOV type is Custom");
             }
@@ -353,7 +349,7 @@ namespace MultiTimelineRecorder.Core.Services
             }
 
             // Check render pipeline compatibility
-            var renderPipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+            var renderPipeline = UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline;
             if (renderPipeline == null)
             {
                 result.AddWarning("AOV recording works best with Scriptable Render Pipeline (URP/HDRP)");

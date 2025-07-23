@@ -15,12 +15,12 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class ConfigurationValidationService : IConfigurationValidationService
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly IGameObjectReferenceService _referenceService;
         private readonly Dictionary<Type, IConfigurationValidator> _validators;
         private readonly List<IAutoRepairStrategy> _repairStrategies;
 
-        public ConfigurationValidationService(ILogger logger, IGameObjectReferenceService referenceService)
+        public ConfigurationValidationService(MultiTimelineRecorder.Core.Interfaces.ILogger logger, IGameObjectReferenceService referenceService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _referenceService = referenceService ?? throw new ArgumentNullException(nameof(referenceService));
@@ -245,9 +245,9 @@ namespace MultiTimelineRecorder.Core.Services
             {
                 // Check if all recorders use consistent frame rate
                 var timelineRecorderConfig = timelineConfig as TimelineRecorderConfig;
-                if (timelineRecorderConfig?.RecorderConfigurations != null)
+                if (timelineRecorderConfig?.RecorderConfigs != null)
                 {
-                    foreach (var recorderConfig in timelineRecorderConfig.RecorderConfigurations)
+                    foreach (var recorderConfig in timelineRecorderConfig.RecorderConfigs)
                     {
                         if (recorderConfig is AnimationRecorderConfiguration animConfig)
                         {
@@ -290,9 +290,9 @@ namespace MultiTimelineRecorder.Core.Services
             foreach (var timelineConfig in configuration.TimelineConfigs)
             {
                 var recorderConfig = timelineConfig as TimelineRecorderConfig;
-                if (recorderConfig?.RecorderConfigurations != null)
+                if (recorderConfig?.RecorderConfigs != null)
                 {
-                    foreach (var recorder in recorderConfig.RecorderConfigurations)
+                    foreach (var recorder in recorderConfig.RecorderConfigs)
                     {
                         if (recorder.Type == RecorderSettingsType.Alembic)
                             hasAlembic = true;
@@ -397,7 +397,7 @@ namespace MultiTimelineRecorder.Core.Services
             return "2.0.0";
         }
 
-        private int CalculateMemoryUsage(Resolution resolution, int frameRate, int timelineCount)
+        private int CalculateMemoryUsage(MultiTimelineRecorder.Core.Interfaces.Resolution resolution, int frameRate, int timelineCount)
         {
             // Basic calculation: resolution * bytes per pixel * frame buffer count * timeline count
             var bytesPerPixel = 4; // RGBA
@@ -415,9 +415,9 @@ namespace MultiTimelineRecorder.Core.Services
             foreach (var timelineConfig in configuration.TimelineConfigs)
             {
                 var recorderConfig = timelineConfig as TimelineRecorderConfig;
-                if (recorderConfig?.RecorderConfigurations != null)
+                if (recorderConfig?.RecorderConfigs != null)
                 {
-                    foreach (var recorder in recorderConfig.RecorderConfigurations)
+                    foreach (var recorder in recorderConfig.RecorderConfigs)
                     {
                         totalUsage += EstimateRecorderDiskUsage(recorder, configuration);
                     }
@@ -456,7 +456,7 @@ namespace MultiTimelineRecorder.Core.Services
             }
         }
 
-        private float CalculateCPUUsage(Resolution resolution, int frameRate, int timelineCount)
+        private float CalculateCPUUsage(MultiTimelineRecorder.Core.Interfaces.Resolution resolution, int frameRate, int timelineCount)
         {
             // Basic estimation based on resolution and frame rate
             var pixelCount = resolution.Width * resolution.Height;

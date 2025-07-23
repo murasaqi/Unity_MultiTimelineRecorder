@@ -14,9 +14,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class FrameRateRepairStrategy : IAutoRepairStrategy
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public FrameRateRepairStrategy(ILogger logger)
+        public FrameRateRepairStrategy(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -36,9 +36,9 @@ namespace MultiTimelineRecorder.Core.Services
                 foreach (var timelineConfig in configuration.TimelineConfigs)
                 {
                     var recorderConfig = timelineConfig as TimelineRecorderConfig;
-                    if (recorderConfig?.RecorderConfigurations != null)
+                    if (recorderConfig?.RecorderConfigs != null)
                     {
-                        foreach (var recorder in recorderConfig.RecorderConfigurations)
+                        foreach (var recorder in recorderConfig.RecorderConfigs)
                         {
                             if (recorder is AnimationRecorderConfiguration animConfig)
                             {
@@ -65,16 +65,16 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class ResolutionRepairStrategy : IAutoRepairStrategy
     {
-        private readonly ILogger _logger;
-        private readonly Resolution[] _standardResolutions = new[]
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.Resolution[] _standardResolutions = new[]
         {
-            new Resolution(1920, 1080), // 1080p
-            new Resolution(1280, 720),  // 720p
-            new Resolution(3840, 2160), // 4K
-            new Resolution(2560, 1440), // 1440p
+            new MultiTimelineRecorder.Core.Interfaces.Resolution(1920, 1080), // 1080p
+            new MultiTimelineRecorder.Core.Interfaces.Resolution(1280, 720),  // 720p
+            new MultiTimelineRecorder.Core.Interfaces.Resolution(3840, 2160), // 4K
+            new MultiTimelineRecorder.Core.Interfaces.Resolution(2560, 1440), // 1440p
         };
 
-        public ResolutionRepairStrategy(ILogger logger)
+        public ResolutionRepairStrategy(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -118,7 +118,7 @@ namespace MultiTimelineRecorder.Core.Services
             }
         }
 
-        private Resolution FindClosestStandardResolution(Resolution current)
+        private MultiTimelineRecorder.Core.Interfaces.Resolution FindClosestStandardResolution(MultiTimelineRecorder.Core.Interfaces.Resolution current)
         {
             var currentPixels = current.Width * current.Height;
             return _standardResolutions
@@ -132,9 +132,9 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class OutputPathRepairStrategy : IAutoRepairStrategy
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
-        public OutputPathRepairStrategy(ILogger logger)
+        public OutputPathRepairStrategy(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -207,10 +207,10 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class GameObjectReferenceRepairStrategy : IAutoRepairStrategy
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly IGameObjectReferenceService _referenceService;
 
-        public GameObjectReferenceRepairStrategy(ILogger logger, IGameObjectReferenceService referenceService)
+        public GameObjectReferenceRepairStrategy(MultiTimelineRecorder.Core.Interfaces.ILogger logger, IGameObjectReferenceService referenceService)
         {
             _logger = logger;
             _referenceService = referenceService;
@@ -232,9 +232,9 @@ namespace MultiTimelineRecorder.Core.Services
                 foreach (var timelineConfig in configuration.TimelineConfigs)
                 {
                     var recorderConfig = timelineConfig as TimelineRecorderConfig;
-                    if (recorderConfig?.RecorderConfigurations != null)
+                    if (recorderConfig?.RecorderConfigs != null)
                     {
-                        foreach (var recorder in recorderConfig.RecorderConfigurations)
+                        foreach (var recorder in recorderConfig.RecorderConfigs)
                         {
                             if (RepairRecorderReferences(recorder))
                             {
@@ -359,7 +359,7 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class FilenamePatternRepairStrategy : IAutoRepairStrategy
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly string[] _defaultPatterns = new[]
         {
             "<Scene>_<Timeline>_<RecorderType>_<Take>",
@@ -367,7 +367,7 @@ namespace MultiTimelineRecorder.Core.Services
             "<Timeline>_<RecorderType>_<Take>"
         };
 
-        public FilenamePatternRepairStrategy(ILogger logger)
+        public FilenamePatternRepairStrategy(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger;
         }
@@ -387,9 +387,9 @@ namespace MultiTimelineRecorder.Core.Services
                 foreach (var timelineConfig in configuration.TimelineConfigs)
                 {
                     var recorderConfig = timelineConfig as TimelineRecorderConfig;
-                    if (recorderConfig?.RecorderConfigurations != null)
+                    if (recorderConfig?.RecorderConfigs != null)
                     {
-                        foreach (var recorder in recorderConfig.RecorderConfigurations)
+                        foreach (var recorder in recorderConfig.RecorderConfigs)
                         {
                             if (RepairFilenamePattern(recorder))
                             {

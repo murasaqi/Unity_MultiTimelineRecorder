@@ -19,7 +19,7 @@ namespace MultiTimelineRecorder.Core.Models
         private const string ConfigurationExtension = ".mtr-config";
         private const string GlobalConfigName = "GlobalConfiguration";
         
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly IGameObjectReferenceService _referenceService;
         private readonly Dictionary<string, SceneConfiguration> _sceneConfigs = new Dictionary<string, SceneConfiguration>();
         private SceneConfiguration _currentSceneConfig;
@@ -30,7 +30,7 @@ namespace MultiTimelineRecorder.Core.Models
         public event Action<SceneConfiguration> ConfigurationSaved;
         public event Action<string> ConfigurationError;
 
-        public SceneConfigurationManager(ILogger logger, IGameObjectReferenceService referenceService)
+        public SceneConfigurationManager(MultiTimelineRecorder.Core.Interfaces.ILogger logger, IGameObjectReferenceService referenceService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _referenceService = referenceService ?? throw new ArgumentNullException(nameof(referenceService));
@@ -206,7 +206,7 @@ namespace MultiTimelineRecorder.Core.Models
             var exportData = new ConfigurationExportData
             {
                 Configuration = config,
-                ExportDate = DateTime.Now,
+                ExportDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 Version = "1.0",
                 UnityVersion = Application.unityVersion
             };
@@ -343,7 +343,7 @@ namespace MultiTimelineRecorder.Core.Models
 
         private void OnSceneOpened(Scene scene, OpenSceneMode mode)
         {
-            if (mode == OpenSceneMode.Single || mode == OpenSceneMode.AdditiveLoad)
+            if (mode == OpenSceneMode.Single || mode == OpenSceneMode.Additive)
             {
                 // Save previous scene configuration if dirty
                 if (_isDirty && _currentSceneConfig != null)
