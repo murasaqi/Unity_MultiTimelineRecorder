@@ -20,7 +20,7 @@ namespace MultiTimelineRecorder.Core.Services
         public EnhancedWildcardProcessor(MultiTimelineRecorder.Core.Interfaces.ILogger logger, WildcardRegistry wildcardRegistry)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _wildcardRegistry = wildcardRegistry ?? throw new ArgumentNullException(nameof(wildcardRegistry));
+            _wildcardRegistry = wildcardRegistry ?? WildcardManagementSettings.Instance.WildcardRegistry;
             
             // Initialize processor map for Multi Timeline Recorder wildcards
             _processorMap = new Dictionary<string, Func<WildcardContext, string>>
@@ -30,6 +30,11 @@ namespace MultiTimelineRecorder.Core.Services
                 { "<RecorderTake>", ctx => ctx.TakeNumber.ToString("0000") },
                 { "<RecorderName>", ctx => SanitizeFileName(ctx.RecorderName ?? "Recorder") }
             };
+        }
+
+        public EnhancedWildcardProcessor(MultiTimelineRecorder.Core.Interfaces.ILogger logger) 
+            : this(logger, null)
+        {
         }
 
         /// <inheritdoc />
