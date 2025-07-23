@@ -12,12 +12,12 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class EnhancedWildcardProcessor : IWildcardProcessor
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly WildcardRegistry _wildcardRegistry;
         private readonly Dictionary<string, Func<WildcardContext, string>> _processorMap;
         private static readonly Regex WildcardPattern = new Regex(@"<([^>]+)>", RegexOptions.Compiled);
 
-        public EnhancedWildcardProcessor(ILogger logger, WildcardRegistry wildcardRegistry)
+        public EnhancedWildcardProcessor(MultiTimelineRecorder.Core.Interfaces.ILogger logger, WildcardRegistry wildcardRegistry)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _wildcardRegistry = wildcardRegistry ?? throw new ArgumentNullException(nameof(wildcardRegistry));
@@ -38,7 +38,7 @@ namespace MultiTimelineRecorder.Core.Services
             if (string.IsNullOrEmpty(input))
                 return input;
 
-            _logger.LogVerbose($"Processing wildcards in: {input}", LogCategory.Wildcard);
+            _logger.LogVerbose($"Processing wildcards in: {input}", LogCategory.Configuration);
 
             // Process wildcards in multiple passes to handle nested wildcards
             string result = input;
@@ -54,7 +54,7 @@ namespace MultiTimelineRecorder.Core.Services
                     break;
             }
 
-            _logger.LogVerbose($"Wildcard processing result: {result}", LogCategory.Wildcard);
+            _logger.LogVerbose($"Wildcard processing result: {result}", LogCategory.Configuration);
             return result;
         }
 
@@ -99,7 +99,7 @@ namespace MultiTimelineRecorder.Core.Services
             result = result.Replace("<RecorderTake>", "<Take>"); // Map to Unity Recorder's take wildcard
             result = result.Replace("<RecorderName>", "<Recorder>"); // Map to Unity Recorder's recorder wildcard
             
-            _logger.LogVerbose($"Unity Recorder path: {result}", LogCategory.Wildcard);
+            _logger.LogVerbose($"Unity Recorder path: {result}", LogCategory.Configuration);
             return result;
         }
 
@@ -107,7 +107,7 @@ namespace MultiTimelineRecorder.Core.Services
         public void RegisterCustomWildcard(string wildcard, string value)
         {
             _wildcardRegistry.AddCustomWildcard(wildcard, wildcard, value);
-            _logger.LogInfo($"Registered custom wildcard: {wildcard} = {value}", LogCategory.Wildcard);
+            _logger.LogInfo($"Registered custom wildcard: {wildcard} = {value}", LogCategory.Configuration);
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace MultiTimelineRecorder.Core.Services
                 // Check if it's a Unity Recorder wildcard (pass-through)
                 if (_wildcardRegistry.IsUnityRecorderWildcard(wildcard))
                 {
-                    _logger.LogVerbose($"Unity Recorder wildcard (pass-through): {wildcard}", LogCategory.Wildcard);
+                    _logger.LogVerbose($"Unity Recorder wildcard (pass-through): {wildcard}", LogCategory.Configuration);
                     return wildcard; // Pass through unchanged
                 }
                 
@@ -131,7 +131,7 @@ namespace MultiTimelineRecorder.Core.Services
                 if (_processorMap.ContainsKey(wildcard))
                 {
                     string value = _processorMap[wildcard](context);
-                    _logger.LogVerbose($"Multi Timeline Recorder wildcard: {wildcard} = {value}", LogCategory.Wildcard);
+                    _logger.LogVerbose($"Multi Timeline Recorder wildcard: {wildcard} = {value}", LogCategory.Configuration);
                     return value;
                 }
                 
@@ -139,7 +139,7 @@ namespace MultiTimelineRecorder.Core.Services
                 if (_wildcardRegistry.IsCustomWildcard(wildcard))
                 {
                     var customDef = _wildcardRegistry.CustomWildcards[wildcard];
-                    _logger.LogVerbose($"Custom wildcard: {wildcard} = {customDef.CustomValue}", LogCategory.Wildcard);
+                    _logger.LogVerbose($"Custom wildcard: {wildcard} = {customDef.CustomValue}", LogCategory.Configuration);
                     return customDef.CustomValue;
                 }
                 
@@ -153,12 +153,12 @@ namespace MultiTimelineRecorder.Core.Services
                 if (context.CustomWildcards != null && context.CustomWildcards.ContainsKey(wildcardContent))
                 {
                     string value = context.CustomWildcards[wildcardContent];
-                    _logger.LogVerbose($"Context custom wildcard: {wildcard} = {value}", LogCategory.Wildcard);
+                    _logger.LogVerbose($"Context custom wildcard: {wildcard} = {value}", LogCategory.Configuration);
                     return value;
                 }
                 
                 // Unknown wildcard - return as is
-                _logger.LogWarning($"Unknown wildcard: {wildcard}", LogCategory.Wildcard);
+                _logger.LogWarning($"Unknown wildcard: {wildcard}", LogCategory.Configuration);
                 return wildcard;
             });
         }
@@ -197,7 +197,7 @@ namespace MultiTimelineRecorder.Core.Services
                     return $"<{wildcardContent}>";
                     
                 default:
-                    _logger.LogWarning($"Unknown parameterized wildcard: {wildcardName}", LogCategory.Wildcard);
+                    _logger.LogWarning($"Unknown parameterized wildcard: {wildcardName}", LogCategory.Configuration);
                     return $"<{wildcardContent}>";
             }
         }

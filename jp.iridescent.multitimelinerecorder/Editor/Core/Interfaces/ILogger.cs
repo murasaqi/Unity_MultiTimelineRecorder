@@ -24,7 +24,8 @@ namespace MultiTimelineRecorder.Core.Interfaces
         FileSystem,
         Timeline,
         Validation,
-        Performance
+        Performance,
+        Reference
     }
 
     /// <summary>

@@ -26,7 +26,7 @@ namespace MultiTimelineRecorder.Core.Models
         
         // Non-serialized logger field for subclasses
         [NonSerialized]
-        protected ILogger _logger;
+        protected MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
         /// <inheritdoc />
         public string Id

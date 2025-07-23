@@ -69,12 +69,16 @@ namespace MultiTimelineRecorder.Core.Services
             var wildcardRegistry = new WildcardRegistry();
             var wildcardProcessor = new EnhancedWildcardProcessor(logger, wildcardRegistry);
             
+            // Create reference services
+            var gameObjectReferenceService = new GameObjectReferenceService(logger, errorHandler);
+            
             // Register business services
             Register<ITimelineService>(timelineService);
             Register<IConfigurationService>(configurationService);
             Register<IRecordingService>(recordingService);
             Register<WildcardRegistry>(wildcardRegistry);
             Register<IWildcardProcessor>(wildcardProcessor);
+            Register<IGameObjectReferenceService>(gameObjectReferenceService);
             
             // Create UI controllers
             var mainController = new MainWindowController(
@@ -174,6 +178,7 @@ namespace MultiTimelineRecorder.Core.Services
             DisposeService<MainWindowController>();
             
             // Then dispose services
+            DisposeService<IGameObjectReferenceService>();
             DisposeService<IWildcardProcessor>();
             DisposeService<WildcardRegistry>();
             DisposeService<IRecordingService>();
