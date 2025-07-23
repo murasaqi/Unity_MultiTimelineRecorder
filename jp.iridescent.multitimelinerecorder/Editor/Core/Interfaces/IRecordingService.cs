@@ -54,6 +54,8 @@ namespace MultiTimelineRecorder.Core.Interfaces
         public string JobId { get; set; }
         public string ErrorMessage { get; set; }
         public List<string> OutputFiles { get; set; } = new List<string>();
+        public string OutputPath { get; set; }
+        public float Duration { get; set; }
     }
 
     /// <summary>

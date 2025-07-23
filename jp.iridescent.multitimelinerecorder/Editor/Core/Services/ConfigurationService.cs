@@ -14,7 +14,7 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class ConfigurationService : IConfigurationService
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly string _defaultConfigPath;
         private readonly string _sceneSettingsPath;
 
@@ -23,7 +23,7 @@ namespace MultiTimelineRecorder.Core.Services
         private const string DEFAULT_CONFIG_FILE = "DefaultRecordingConfig.asset";
         private const string SCENE_SETTINGS_FOLDER = "SceneSettings";
 
-        public ConfigurationService(ILogger logger)
+        public ConfigurationService(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _defaultConfigPath = Path.Combine(DEFAULT_CONFIG_FOLDER, DEFAULT_CONFIG_FILE);

@@ -8,7 +8,7 @@ namespace MultiTimelineRecorder.Core.Services
     /// <summary>
     /// Logger implementation that outputs to Unity console
     /// </summary>
-    public class UnityConsoleLogger : ILogger
+    public class UnityConsoleLogger : MultiTimelineRecorder.Core.Interfaces.ILogger
     {
         private LogLevel _minimumLevel = LogLevel.Info;
         private readonly Dictionary<LogCategory, bool> _categoryEnabled = new Dictionary<LogCategory, bool>();

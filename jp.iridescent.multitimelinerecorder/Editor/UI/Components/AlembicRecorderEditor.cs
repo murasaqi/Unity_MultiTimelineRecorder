@@ -4,6 +4,7 @@ using UnityEditor;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Models.RecorderSettings;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
 
@@ -240,49 +241,5 @@ namespace MultiTimelineRecorder.UI.Components
             
             OnSettingsChanged();
         }
-    }
-    
-    /// <summary>
-    /// Alembic recorder configuration
-    /// </summary>
-    public class AlembicRecorderConfiguration : RecorderConfigurationBase
-    {
-        public GameObject TargetGameObject { get; set; }
-        public bool RecordHierarchy { get; set; } = true;
-        public bool CaptureTransform { get; set; } = true;
-        public bool CaptureMeshRenderer { get; set; } = true;
-        public bool CaptureSkinnedMeshRenderer { get; set; } = true;
-        public bool CaptureCamera { get; set; } = true;
-        public bool CaptureVertexColor { get; set; } = true;
-        public bool CaptureFaceSets { get; set; } = true;
-        public float ScaleFactor { get; set; } = 1.0f;
-        public Handedness Handedness { get; set; } = Handedness.Right;
-        public TransformType XformType { get; set; } = TransformType.TRS;
-        public bool AssumeNonUniformScale { get; set; } = false;
-        public bool SwapFaces { get; set; } = false;
-        public string FileName { get; set; } = "<Scene>_<Take>";
-        
-        public AlembicRecorderConfiguration()
-        {
-            Type = Unity.MultiTimelineRecorder.RecorderSettingsType.Alembic;
-        }
-    }
-    
-    /// <summary>
-    /// Handedness options for Alembic export
-    /// </summary>
-    public enum Handedness
-    {
-        Left,
-        Right
-    }
-    
-    /// <summary>
-    /// Transform type options for Alembic export
-    /// </summary>
-    public enum TransformType
-    {
-        TRS,
-        Matrix
     }
 }

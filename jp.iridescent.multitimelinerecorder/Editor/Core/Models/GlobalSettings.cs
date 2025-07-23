@@ -5,6 +5,18 @@ using MultiTimelineRecorder.Core.Interfaces;
 namespace MultiTimelineRecorder.Core.Models
 {
     /// <summary>
+    /// Log verbosity levels
+    /// </summary>
+    public enum LogVerbosity
+    {
+        None,
+        Error,
+        Warning,
+        Info,
+        Debug
+    }
+
+    /// <summary>
     /// Global settings that apply to all recordings
     /// </summary>
     [Serializable]
@@ -14,13 +26,37 @@ namespace MultiTimelineRecorder.Core.Models
         private int defaultFrameRate = 24;
         
         [SerializeField]
-        private Resolution defaultResolution = new Resolution(1920, 1080);
+        private MultiTimelineRecorder.Core.Interfaces.Resolution defaultResolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(1920, 1080);
         
         [SerializeField]
         private OutputPathConfiguration defaultOutputPath = new OutputPathConfiguration();
         
         [SerializeField]
         private bool debugMode = false;
+        
+        [SerializeField]
+        private bool autoSaveBeforeRecording = true;
+        
+        [SerializeField]
+        private bool showPreviewWindow = true;
+        
+        [SerializeField]
+        private bool validateBeforeRecording = true;
+        
+        [SerializeField]
+        private bool openOutputFolderAfterRecording = false;
+        
+        [SerializeField]
+        private int maxConcurrentRecorders = 1;
+        
+        [SerializeField]
+        private bool useAsyncRecording = false;
+        
+        [SerializeField]
+        private bool captureAudio = true;
+        
+        [SerializeField]
+        private LogVerbosity logVerbosity = LogVerbosity.Info;
 
         /// <inheritdoc />
         public int DefaultFrameRate
@@ -30,7 +66,7 @@ namespace MultiTimelineRecorder.Core.Models
         }
 
         /// <inheritdoc />
-        public Resolution DefaultResolution
+        public MultiTimelineRecorder.Core.Interfaces.Resolution DefaultResolution
         {
             get => defaultResolution;
             set => defaultResolution = value;
@@ -48,6 +84,78 @@ namespace MultiTimelineRecorder.Core.Models
         {
             get => debugMode;
             set => debugMode = value;
+        }
+
+        /// <summary>
+        /// Whether to auto-save before recording
+        /// </summary>
+        public bool AutoSaveBeforeRecording
+        {
+            get => autoSaveBeforeRecording;
+            set => autoSaveBeforeRecording = value;
+        }
+
+        /// <summary>
+        /// Whether to show preview window
+        /// </summary>
+        public bool ShowPreviewWindow
+        {
+            get => showPreviewWindow;
+            set => showPreviewWindow = value;
+        }
+
+        /// <summary>
+        /// Whether to validate before recording
+        /// </summary>
+        public bool ValidateBeforeRecording
+        {
+            get => validateBeforeRecording;
+            set => validateBeforeRecording = value;
+        }
+
+        /// <summary>
+        /// Whether to open output folder after recording
+        /// </summary>
+        public bool OpenOutputFolderAfterRecording
+        {
+            get => openOutputFolderAfterRecording;
+            set => openOutputFolderAfterRecording = value;
+        }
+
+        /// <summary>
+        /// Maximum concurrent recorders
+        /// </summary>
+        public int MaxConcurrentRecorders
+        {
+            get => maxConcurrentRecorders;
+            set => maxConcurrentRecorders = Mathf.Clamp(value, 1, 4);
+        }
+
+        /// <summary>
+        /// Whether to use async recording
+        /// </summary>
+        public bool UseAsyncRecording
+        {
+            get => useAsyncRecording;
+            set => useAsyncRecording = value;
+        }
+
+        /// <summary>
+        /// Whether to capture audio
+        /// </summary>
+        public bool CaptureAudio
+        {
+            get => captureAudio;
+            set => captureAudio = value;
+        }
+
+        /// <summary>
+        /// Log verbosity level
+        /// </summary>
+        public LogVerbosity LogVerbosity
+        {
+            get => logVerbosity;
+            set => logVerbosity = value;
         }
 
         /// <summary>
@@ -102,7 +210,15 @@ namespace MultiTimelineRecorder.Core.Models
                 defaultFrameRate = this.defaultFrameRate,
                 defaultResolution = this.defaultResolution,
                 defaultOutputPath = this.defaultOutputPath?.Clone() as OutputPathConfiguration ?? new OutputPathConfiguration(),
-                debugMode = this.debugMode
+                debugMode = this.debugMode,
+                autoSaveBeforeRecording = this.autoSaveBeforeRecording,
+                showPreviewWindow = this.showPreviewWindow,
+                validateBeforeRecording = this.validateBeforeRecording,
+                openOutputFolderAfterRecording = this.openOutputFolderAfterRecording,
+                maxConcurrentRecorders = this.maxConcurrentRecorders,
+                useAsyncRecording = this.useAsyncRecording,
+                captureAudio = this.captureAudio,
+                logVerbosity = this.logVerbosity
             };
         }
 
@@ -114,9 +230,17 @@ namespace MultiTimelineRecorder.Core.Models
             return new GlobalSettings
             {
                 defaultFrameRate = 24,
-                defaultResolution = new Resolution(1920, 1080),
+                defaultResolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(1920, 1080),
                 defaultOutputPath = OutputPathConfiguration.CreateDefault(),
-                debugMode = false
+                debugMode = false,
+                autoSaveBeforeRecording = true,
+                showPreviewWindow = true,
+                validateBeforeRecording = true,
+                openOutputFolderAfterRecording = false,
+                maxConcurrentRecorders = 1,
+                useAsyncRecording = false,
+                captureAudio = true,
+                logVerbosity = LogVerbosity.Info
             };
         }
     }

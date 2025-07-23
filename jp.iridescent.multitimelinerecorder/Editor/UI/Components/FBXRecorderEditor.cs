@@ -4,6 +4,7 @@ using UnityEditor;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Models.RecorderSettings;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
 
@@ -281,64 +282,5 @@ namespace MultiTimelineRecorder.UI.Components
             
             OnSettingsChanged();
         }
-    }
-    
-    /// <summary>
-    /// FBX recorder configuration
-    /// </summary>
-    public class FBXRecorderConfiguration : RecorderConfigurationBase
-    {
-        public GameObject TargetGameObject { get; set; }
-        public bool RecordHierarchy { get; set; } = true;
-        public FBXFormat ExportFormat { get; set; } = FBXFormat.Binary;
-        public bool ExportMeshes { get; set; } = true;
-        public bool ExportSkinnedMesh { get; set; } = true;
-        public bool ExportAnimation { get; set; } = true;
-        public bool BakeAnimation { get; set; } = true;
-        public bool ResampleCurves { get; set; } = true;
-        public bool ApplyConstantKeyReducer { get; set; } = true;
-        public LODLevel LODLevel { get; set; } = LODLevel.LOD0;
-        public bool PreserveQuads { get; set; } = false;
-        public bool ExportVertexColors { get; set; } = true;
-        public bool ExportCameras { get; set; } = true;
-        public bool ExportLights { get; set; } = true;
-        public UpAxis UpAxis { get; set; } = UpAxis.Y;
-        public float UnitScale { get; set; } = 1.0f;
-        public bool IncludeInvisible { get; set; } = false;
-        public string FileName { get; set; } = "<Scene>_<Take>";
-        
-        public FBXRecorderConfiguration()
-        {
-            Type = Unity.MultiTimelineRecorder.RecorderSettingsType.FBX;
-        }
-    }
-    
-    /// <summary>
-    /// FBX format options
-    /// </summary>
-    public enum FBXFormat
-    {
-        Binary,
-        ASCII
-    }
-    
-    /// <summary>
-    /// LOD level options
-    /// </summary>
-    public enum LODLevel
-    {
-        LOD0,
-        LOD1,
-        LOD2,
-        LOD3
-    }
-    
-    /// <summary>
-    /// Up axis options
-    /// </summary>
-    public enum UpAxis
-    {
-        Y,
-        Z
     }
 }

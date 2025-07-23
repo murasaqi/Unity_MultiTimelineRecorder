@@ -18,7 +18,7 @@ namespace MultiTimelineRecorder.Core.Models
         private int frameRate = 24;
         
         [SerializeField]
-        private Resolution resolution = new Resolution(1920, 1080);
+        private MultiTimelineRecorder.Core.Interfaces.Resolution resolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(1920, 1080);
         
         [SerializeField]
         private string outputPath = "Recordings";
@@ -37,7 +37,7 @@ namespace MultiTimelineRecorder.Core.Models
         }
 
         /// <inheritdoc />
-        public Resolution Resolution
+        public MultiTimelineRecorder.Core.Interfaces.Resolution Resolution
         {
             get => resolution;
             set => resolution = value;
@@ -179,9 +179,9 @@ namespace MultiTimelineRecorder.Core.Models
             var config = new RecordingConfiguration
             {
                 frameRate = 24,
-                resolution = new Resolution(1920, 1080),
+                resolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(1920, 1080),
                 outputPath = "Recordings",
-                globalSettings = GlobalSettings.CreateDefault()
+                globalSettings = Core.Models.GlobalSettings.CreateDefault()
             };
 
             return config;

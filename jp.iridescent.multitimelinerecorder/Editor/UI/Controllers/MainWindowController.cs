@@ -18,7 +18,7 @@ namespace MultiTimelineRecorder.UI.Controllers
         private readonly IRecordingService _recordingService;
         private readonly ITimelineService _timelineService;
         private readonly IConfigurationService _configurationService;
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly IErrorHandlingService _errorHandler;
         private readonly IEventBus _eventBus;
 
@@ -52,7 +52,7 @@ namespace MultiTimelineRecorder.UI.Controllers
             IRecordingService recordingService,
             ITimelineService timelineService,
             IConfigurationService configurationService,
-            ILogger logger,
+            MultiTimelineRecorder.Core.Interfaces.ILogger logger,
             IErrorHandlingService errorHandler,
             IEventBus eventBus)
         {
@@ -373,6 +373,101 @@ namespace MultiTimelineRecorder.UI.Controllers
         {
             _isRecording = false;
             _currentJobId = null;
+        }
+
+        /// <summary>
+        /// Saves the current configuration
+        /// </summary>
+        public void SaveConfiguration()
+        {
+            _errorHandler.ExecuteWithErrorHandling(() =>
+            {
+                if (_currentConfiguration == null) return;
+                
+                _configurationService.SaveConfiguration(_currentConfiguration);
+                _logger.LogInfo("Configuration saved", LogCategory.Configuration);
+                
+                _eventBus.Publish(new ConfigurationSavedEvent
+                {
+                    Configuration = _currentConfiguration
+                });
+            }, "SaveConfiguration");
+        }
+
+        /// <summary>
+        /// Loads a configuration
+        /// </summary>
+        public void LoadConfiguration()
+        {
+            _errorHandler.ExecuteWithErrorHandling(() =>
+            {
+                var config = _configurationService.LoadConfiguration();
+                UpdateConfiguration(config);
+                
+                _logger.LogInfo("Configuration loaded", LogCategory.Configuration);
+                
+                _eventBus.Publish(new ConfigurationLoadedEvent
+                {
+                    Configuration = config,
+                    IsNewConfiguration = false,
+                    LoadedFrom = "default"
+                });
+            }, "LoadConfiguration");
+        }
+
+        /// <summary>
+        /// Updates global settings
+        /// </summary>
+        public void UpdateGlobalSettings(GlobalSettings settings)
+        {
+            if (settings == null) return;
+            
+            _errorHandler.ExecuteWithErrorHandling(() =>
+            {
+                if (_currentConfiguration is RecordingConfiguration config)
+                {
+                    config.GlobalSettings = settings;
+                    UpdateConfiguration(config);
+                    
+                    _logger.LogInfo("Global settings updated", LogCategory.Configuration);
+                }
+            }, "UpdateGlobalSettings");
+        }
+
+        /// <summary>
+        /// Creates a new configuration
+        /// </summary>
+        public void CreateNewConfiguration()
+        {
+            _errorHandler.ExecuteWithErrorHandling(() =>
+            {
+                var config = _configurationService.GetDefaultConfiguration();
+                UpdateConfiguration(config);
+                
+                _logger.LogInfo("New configuration created", LogCategory.Configuration);
+                
+                _eventBus.Publish(new ConfigurationLoadedEvent
+                {
+                    Configuration = config,
+                    IsNewConfiguration = true,
+                    LoadedFrom = "new"
+                });
+            }, "CreateNewConfiguration");
+        }
+
+        /// <summary>
+        /// Validates the current configuration
+        /// </summary>
+        public ValidationResult ValidateConfiguration()
+        {
+            if (_currentConfiguration == null)
+            {
+                var result = new ValidationResult();
+                result.AddError("No configuration loaded");
+                return result;
+            }
+            
+            return _currentConfiguration.Validate();
         }
 
         /// <summary>

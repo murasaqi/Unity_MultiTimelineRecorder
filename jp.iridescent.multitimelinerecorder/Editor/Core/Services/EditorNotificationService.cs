@@ -11,11 +11,11 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class EditorNotificationService : INotificationService
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private bool _isShowingProgress;
         private float _currentProgress;
 
-        public EditorNotificationService(ILogger logger)
+        public EditorNotificationService(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

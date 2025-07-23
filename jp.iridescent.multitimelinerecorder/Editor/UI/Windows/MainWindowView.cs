@@ -44,7 +44,7 @@ namespace MultiTimelineRecorder.UI.Windows
         
         // Services
         private IEventBus _eventBus;
-        private ILogger _logger;
+        private MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
 
         [MenuItem("Window/Multi Timeline Recorder (New)")]
         public static void ShowWindow()

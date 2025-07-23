@@ -142,4 +142,43 @@ namespace MultiTimelineRecorder.Core.Events
         public RefreshScope Scope { get; set; }
         public string TargetId { get; set; }
     }
+
+    /// <summary>
+    /// Event raised when a recording error occurs
+    /// </summary>
+    public class RecordingErrorEvent : RecordingEvent
+    {
+        public string ErrorMessage { get; set; }
+        public Exception Exception { get; set; }
+        public LogCategory Category { get; set; }
+    }
+
+    /// <summary>
+    /// Event raised when configuration is loaded
+    /// </summary>
+    public class ConfigurationLoadedEvent : RecordingEvent
+    {
+        public IRecordingConfiguration Configuration { get; set; }
+        public bool IsNewConfiguration { get; set; }
+        public string LoadedFrom { get; set; }
+    }
+
+    /// <summary>
+    /// Event raised when configuration is saved
+    /// </summary>
+    public class ConfigurationSavedEvent : RecordingEvent
+    {
+        public IRecordingConfiguration Configuration { get; set; }
+    }
+
+    /// <summary>
+    /// Event raised when recorder configuration changes
+    /// </summary>
+    public class RecorderConfigurationChangedEvent : RecordingEvent
+    {
+        public IRecorderConfiguration RecorderConfig { get; set; }
+        public string PropertyName { get; set; }
+        public object OldValue { get; set; }
+        public object NewValue { get; set; }
+    }
 }

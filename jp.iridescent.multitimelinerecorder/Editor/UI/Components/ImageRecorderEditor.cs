@@ -4,6 +4,7 @@ using UnityEditor;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Models.RecorderSettings;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
 
@@ -38,12 +39,13 @@ namespace MultiTimelineRecorder.UI.Components
             });
             
             // Quality (for JPEG)
-            if (_imageConfig.Format == ImageFormat.JPEG)
+            if (_imageConfig.Format == MultiTimelineRecorder.Core.Models.RecorderSettings.ImageFormat.JPEG)
             {
-                DrawIntSlider("Quality", _imageConfig.Quality, 1, 100, (value) => 
+                DrawIntSlider("Quality", (int)(_imageConfig.Quality * 100), 1, 100, (value) => 
                 {
-                    _controller.UpdateRecorderConfig(_config, nameof(_imageConfig.Quality), _imageConfig.Quality, value);
-                    _imageConfig.Quality = value;
+                    var newQuality = value / 100f;
+                    _controller.UpdateRecorderConfig(_config, nameof(_imageConfig.Quality), _imageConfig.Quality, newQuality);
+                    _imageConfig.Quality = newQuality;
                 });
             }
             
@@ -203,7 +205,7 @@ namespace MultiTimelineRecorder.UI.Components
         
         public override void ResetToDefaults()
         {
-            _imageConfig.Format = ImageFormat.PNG;
+            _imageConfig.Format = MultiTimelineRecorder.Core.Models.RecorderSettings.ImageFormat.PNG;
             _imageConfig.Quality = 95;
             _imageConfig.Width = 1920;
             _imageConfig.Height = 1080;
@@ -212,30 +214,17 @@ namespace MultiTimelineRecorder.UI.Components
             _imageConfig.FramePadding = 4;
             _imageConfig.IncludeUI = false;
             _imageConfig.CaptureAlpha = false;
-            _imageConfig.ColorSpace = ColorSpace.sRGB;
+            _imageConfig.ColorSpace = UnityEngine.ColorSpace.Gamma;
             _imageConfig.MaintainAspectRatio = true;
             
             OnSettingsChanged();
         }
     }
     
-    /// <summary>
-    /// Image format options
-    /// </summary>
-    public enum ImageFormat
-    {
-        PNG,
-        JPEG,
-        EXR,
-        TGA
-    }
+    // Removed local ImageFormat enum - using MultiTimelineRecorder.Core.Models.RecorderSettings.ImageFormat instead
     
     /// <summary>
     /// Color space options
     /// </summary>
-    public enum ColorSpace
-    {
-        sRGB,
-        Linear
-    }
+    // Removed local ColorSpace enum - using UnityEngine.ColorSpace instead
 }

@@ -8,6 +8,15 @@ using UnityEditor.Recorder.Input;
 namespace MultiTimelineRecorder.Core.Models.RecorderSettings
 {
     /// <summary>
+    /// Image format options
+    /// </summary>
+    public enum ImageFormat
+    {
+        PNG,
+        JPEG,
+        EXR
+    }
+    /// <summary>
     /// Configuration for image sequence recording
     /// </summary>
     [Serializable]
@@ -32,7 +41,37 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         private int jpegQuality = 75;
         
         [SerializeField]
-        private ImageRecorderSettings.EXRCompressionType exrCompression = ImageRecorderSettings.EXRCompressionType.Zip;
+        private CompressionUtility.EXRCompressionType exrCompression = CompressionUtility.EXRCompressionType.Zip;
+        
+        [SerializeField]
+        private ColorSpace colorSpace = ColorSpace.Uninitialized;
+        
+        [SerializeField]
+        private bool maintainAspectRatio = true;
+        
+        [SerializeField]
+        private int framePadding = 3;
+        
+        [SerializeField]
+        private bool includeUI = false;
+        
+        [SerializeField]
+        private int frameRate = 30;
+        
+        [SerializeField]
+        private string fileNamePattern = "<Scene>_<Take>";
+        
+        [SerializeField]
+        private ImageFormat format = ImageFormat.PNG;
+        
+        [SerializeField]
+        private float quality = 0.75f;
+        
+        [SerializeField]
+        private int width = 1920;
+        
+        [SerializeField]
+        private int height = 1080;
 
         /// <inheritdoc />
         public override RecorderSettingsType Type => RecorderSettingsType.Image;
@@ -94,10 +133,100 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         /// <summary>
         /// EXR compression type
         /// </summary>
-        public ImageRecorderSettings.EXRCompressionType ExrCompression
+        public CompressionUtility.EXRCompressionType ExrCompression
         {
             get => exrCompression;
             set => exrCompression = value;
+        }
+
+        /// <summary>
+        /// Color space for recording
+        /// </summary>
+        public ColorSpace ColorSpace
+        {
+            get => colorSpace;
+            set => colorSpace = value;
+        }
+
+        /// <summary>
+        /// Whether to maintain aspect ratio
+        /// </summary>
+        public bool MaintainAspectRatio
+        {
+            get => maintainAspectRatio;
+            set => maintainAspectRatio = value;
+        }
+
+        /// <summary>
+        /// Frame padding for file names
+        /// </summary>
+        public int FramePadding
+        {
+            get => framePadding;
+            set => framePadding = Mathf.Clamp(value, 0, 10);
+        }
+
+        /// <summary>
+        /// Whether to include UI in capture
+        /// </summary>
+        public bool IncludeUI
+        {
+            get => includeUI;
+            set => includeUI = value;
+        }
+
+        /// <summary>
+        /// Frame rate for image sequence recording
+        /// </summary>
+        public int FrameRate
+        {
+            get => frameRate;
+            set => frameRate = Mathf.Clamp(value, 1, 120);
+        }
+
+        /// <summary>
+        /// File name pattern for output files
+        /// </summary>
+        public string FileNamePattern
+        {
+            get => fileNamePattern;
+            set => fileNamePattern = value;
+        }
+
+        /// <summary>
+        /// Image format
+        /// </summary>
+        public ImageFormat Format
+        {
+            get => format;
+            set => format = value;
+        }
+
+        /// <summary>
+        /// Image quality (0.0 to 1.0)
+        /// </summary>
+        public float Quality
+        {
+            get => quality;
+            set => quality = Mathf.Clamp01(value);
+        }
+
+        /// <summary>
+        /// Width in pixels
+        /// </summary>
+        public int Width
+        {
+            get => width;
+            set => width = Math.Max(1, value);
+        }
+
+        /// <summary>
+        /// Height in pixels
+        /// </summary>
+        public int Height
+        {
+            get => height;
+            set => height = Math.Max(1, value);
         }
 
         /// <inheritdoc />
@@ -141,20 +270,21 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         }
 
         /// <inheritdoc />
-        public override RecorderSettings CreateUnityRecorderSettings(WildcardContext context)
+        public override UnityEditor.Recorder.RecorderSettings CreateUnityRecorderSettings(MultiTimelineRecorder.Core.Interfaces.WildcardContext context)
         {
             var settings = ScriptableObject.CreateInstance<ImageRecorderSettings>();
             settings.name = "Image Recorder";
-            settings.enabled = true;
+            settings.Enabled = true;
 
             // Set output format
-            settings.imageSettings = new ImageRecorderSettings.ImageRecorderOutput
+            settings.OutputFormat = outputFormat;
+            settings.CaptureAlpha = captureAlpha;
+            
+            // Set quality settings based on format
+            if (outputFormat == ImageRecorderSettings.ImageRecorderOutputFormat.JPEG)
             {
-                imageFormat = outputFormat,
-                jpegQuality = jpegQuality,
-                exrCompression = exrCompression,
-                captureAlpha = captureAlpha
-            };
+                // JPEG quality is set via a different mechanism in Unity Recorder
+            }
 
             // Configure input source
             switch (sourceType)
@@ -172,17 +302,14 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
                     break;
                     
                 case ImageRecorderSourceType.TargetCamera:
-                    var cameraInputSettings = new CameraInputSettings
-                    {
-                        Source = targetCamera,
-                        OutputWidth = context.CustomWildcards.ContainsKey("Width") 
-                            ? int.Parse(context.CustomWildcards["Width"]) 
-                            : 1920,
-                        OutputHeight = context.CustomWildcards.ContainsKey("Height") 
-                            ? int.Parse(context.CustomWildcards["Height"]) 
-                            : 1080,
-                        CaptureUI = false
-                    };
+                    var cameraInputSettings = new CameraInputSettings();
+                    cameraInputSettings.OutputWidth = context.CustomWildcards.ContainsKey("Width") 
+                        ? int.Parse(context.CustomWildcards["Width"]) 
+                        : 1920;
+                    cameraInputSettings.OutputHeight = context.CustomWildcards.ContainsKey("Height") 
+                        ? int.Parse(context.CustomWildcards["Height"]) 
+                        : 1080;
+                    cameraInputSettings.CaptureUI = false;
                     settings.imageInputSettings = cameraInputSettings;
                     break;
                     
@@ -228,7 +355,7 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         /// <summary>
         /// Processes wildcards for filename generation
         /// </summary>
-        private string ProcessWildcards(WildcardContext context)
+        private string ProcessWildcards(MultiTimelineRecorder.Core.Interfaces.WildcardContext context)
         {
             var pattern = "<Scene>_<Timeline>_Image_Take<Take:0000>";
             

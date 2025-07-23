@@ -19,12 +19,12 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class RecordingService : IRecordingService
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly IErrorHandlingService _errorHandler;
         private readonly Dictionary<string, RecordingJob> _activeJobs = new Dictionary<string, RecordingJob>();
         private EditorCoroutine _recordingCoroutine;
 
-        public RecordingService(ILogger logger, IErrorHandlingService errorHandler)
+        public RecordingService(MultiTimelineRecorder.Core.Interfaces.ILogger logger, IErrorHandlingService errorHandler)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
@@ -188,11 +188,12 @@ namespace MultiTimelineRecorder.Core.Services
                     var controlAsset = controlClip.asset as ControlPlayableAsset;
                     if (controlAsset != null)
                     {
-                        controlAsset.sourceGameObject = new UnityEditor.PropertyName(director.gameObject.name);
-                        controlAsset.prefabGameObject = director.gameObject;
+                        // Set the source game object directly
+                        controlAsset.sourceGameObject = new UnityEngine.ExposedReference<GameObject>();
+                        controlAsset.sourceGameObject.defaultValue = director.gameObject;
                     }
 
-                    currentStartTime += duration + (1.0f / config.FrameRate); // Add one frame margin
+                    currentStartTime += (float)(duration + (1.0f / config.FrameRate)); // Add one frame margin
                 }
 
                 // Create recorder tracks for enabled recorder configs

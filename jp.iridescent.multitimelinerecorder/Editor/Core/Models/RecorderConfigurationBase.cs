@@ -59,7 +59,7 @@ namespace MultiTimelineRecorder.Core.Models
         public abstract ValidationResult Validate();
 
         /// <inheritdoc />
-        public abstract RecorderSettings CreateUnityRecorderSettings(WildcardContext context);
+        public abstract UnityEditor.Recorder.RecorderSettings CreateUnityRecorderSettings(MultiTimelineRecorder.Core.Interfaces.WildcardContext context);
 
         /// <summary>
         /// Creates a clone of this configuration

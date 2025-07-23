@@ -47,28 +47,32 @@ namespace MultiTimelineRecorder.UI.Components
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 // Base output path
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Base Output Path", GUILayout.Width(UIStyles.FieldLabelWidth));
-                _settings.BaseOutputPath = EditorGUILayout.TextField(_settings.BaseOutputPath);
-                if (GUILayout.Button("Browse", GUILayout.Width(60)))
+                var outputPath = _settings.DefaultOutputPath as OutputPathConfiguration;
+                if (outputPath != null)
                 {
-                    var newPath = EditorUtility.OpenFolderPanel("Select Output Directory", _settings.BaseOutputPath, "");
-                    if (!string.IsNullOrEmpty(newPath))
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField("Base Output Path", GUILayout.Width(UIStyles.FieldLabelWidth));
+                    outputPath.BaseDirectory = EditorGUILayout.TextField(outputPath.BaseDirectory);
+                    if (GUILayout.Button("Browse", GUILayout.Width(60)))
                     {
-                        _settings.BaseOutputPath = newPath;
+                        var newPath = EditorUtility.OpenFolderPanel("Select Output Directory", outputPath.BaseDirectory, "");
+                        if (!string.IsNullOrEmpty(newPath))
+                        {
+                            outputPath.BaseDirectory = newPath;
+                        }
                     }
+                    EditorGUILayout.EndHorizontal();
+                    
+                    // Output organization
+                    outputPath.CreateTimelineSubdirectories = EditorGUILayout.Toggle("Organize by Timeline", outputPath.CreateTimelineSubdirectories);
+                    outputPath.CreateRecorderTypeSubdirectories = EditorGUILayout.Toggle("Organize by Recorder Type", outputPath.CreateRecorderTypeSubdirectories);
+                    
+                    // Filename pattern
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField("Filename Pattern", GUILayout.Width(UIStyles.FieldLabelWidth));
+                    outputPath.FilenamePattern = EditorGUILayout.TextField(outputPath.FilenamePattern);
+                    EditorGUILayout.EndHorizontal();
                 }
-                EditorGUILayout.EndHorizontal();
-                
-                // Use scene directory
-                _settings.UseSceneDirectory = EditorGUILayout.Toggle("Use Scene Directory", _settings.UseSceneDirectory);
-                
-                // Output organization
-                _settings.OrganizeByTimeline = EditorGUILayout.Toggle("Organize by Timeline", _settings.OrganizeByTimeline);
-                _settings.OrganizeByRecorderType = EditorGUILayout.Toggle("Organize by Recorder Type", _settings.OrganizeByRecorderType);
-                
-                // Auto-create directories
-                _settings.AutoCreateDirectories = EditorGUILayout.Toggle("Auto-create Directories", _settings.AutoCreateDirectories);
             }
             
             UIStyles.DrawHorizontalLine();
@@ -85,32 +89,29 @@ namespace MultiTimelineRecorder.UI.Components
                 EditorGUILayout.LabelField("Resolution Preset", GUILayout.Width(UIStyles.FieldLabelWidth));
                 if (GUILayout.Button("HD (1920x1080)", EditorStyles.miniButtonLeft))
                 {
-                    _settings.DefaultWidth = 1920;
-                    _settings.DefaultHeight = 1080;
+                    _settings.DefaultResolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(1920, 1080);
                 }
                 if (GUILayout.Button("4K (3840x2160)", EditorStyles.miniButtonMid))
                 {
-                    _settings.DefaultWidth = 3840;
-                    _settings.DefaultHeight = 2160;
+                    _settings.DefaultResolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(3840, 2160);
                 }
                 if (GUILayout.Button("8K (7680x4320)", EditorStyles.miniButtonRight))
                 {
-                    _settings.DefaultWidth = 7680;
-                    _settings.DefaultHeight = 4320;
+                    _settings.DefaultResolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(7680, 4320);
                 }
                 EditorGUILayout.EndHorizontal();
                 
                 // Custom resolution
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("Resolution", GUILayout.Width(UIStyles.FieldLabelWidth));
-                _settings.DefaultWidth = EditorGUILayout.IntField(_settings.DefaultWidth, GUILayout.Width(60));
+                var width = EditorGUILayout.IntField(_settings.DefaultResolution.Width, GUILayout.Width(60));
                 EditorGUILayout.LabelField("x", GUILayout.Width(15));
-                _settings.DefaultHeight = EditorGUILayout.IntField(_settings.DefaultHeight, GUILayout.Width(60));
+                var height = EditorGUILayout.IntField(_settings.DefaultResolution.Height, GUILayout.Width(60));
+                if (width != _settings.DefaultResolution.Width || height != _settings.DefaultResolution.Height)
+                {
+                    _settings.DefaultResolution = new MultiTimelineRecorder.Core.Interfaces.Resolution(width, height);
+                }
                 EditorGUILayout.EndHorizontal();
-                
-                // Quality settings
-                _settings.DefaultQuality = EditorGUILayout.IntSlider("Default Quality", _settings.DefaultQuality, 0, 100);
-                _settings.UseMotionBlur = EditorGUILayout.Toggle("Use Motion Blur", _settings.UseMotionBlur);
             }
             
             UIStyles.DrawHorizontalLine();
@@ -134,7 +135,8 @@ namespace MultiTimelineRecorder.UI.Components
                 _settings.MaxConcurrentRecorders = EditorGUILayout.IntSlider("Max Concurrent Recorders", _settings.MaxConcurrentRecorders, 1, 4);
                 _settings.UseAsyncRecording = EditorGUILayout.Toggle("Use Async Recording", _settings.UseAsyncRecording);
                 _settings.CaptureAudio = EditorGUILayout.Toggle("Capture Audio", _settings.CaptureAudio);
-                _settings.LogVerbosity = (Unity.MultiTimelineRecorder.LogVerbosity)EditorGUILayout.EnumPopup("Log Verbosity", _settings.LogVerbosity);
+                _settings.LogVerbosity = (LogVerbosity)EditorGUILayout.EnumPopup("Log Verbosity", _settings.LogVerbosity);
+                _settings.DebugMode = EditorGUILayout.Toggle("Debug Mode", _settings.DebugMode);
             }
             
             if (EditorGUI.EndChangeCheck())
@@ -171,7 +173,7 @@ namespace MultiTimelineRecorder.UI.Components
                         "Are you sure you want to reset all settings to defaults?", 
                         "Reset", "Cancel"))
                     {
-                        _settings = new GlobalSettings();
+                        _settings = GlobalSettings.CreateDefault();
                         _controller.UpdateGlobalSettings(_settings);
                     }
                 }
@@ -183,7 +185,7 @@ namespace MultiTimelineRecorder.UI.Components
             var config = _controller.CurrentConfiguration as RecordingConfiguration;
             if (config != null)
             {
-                _settings = config.GlobalSettings ?? new GlobalSettings();
+                _settings = config.GlobalSettings as GlobalSettings ?? new GlobalSettings();
             }
             else
             {

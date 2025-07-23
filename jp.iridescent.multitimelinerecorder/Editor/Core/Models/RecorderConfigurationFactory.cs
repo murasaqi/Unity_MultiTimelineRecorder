@@ -68,7 +68,7 @@ namespace MultiTimelineRecorder.Core.Models
                 case RecorderSettingsType.Movie:
                     if (config is MovieRecorderConfiguration movieConfig)
                     {
-                        movieConfig.OutputFormat = UnityEditor.Recorder.MovieRecorderSettings.VideoRecorderFormat.MP4;
+                        movieConfig.OutputFormat = UnityEditor.Recorder.MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
                         movieConfig.Quality = 0.75f;
                         movieConfig.CaptureAudio = true;
                         movieConfig.SourceType = ImageRecorderSourceType.GameView;

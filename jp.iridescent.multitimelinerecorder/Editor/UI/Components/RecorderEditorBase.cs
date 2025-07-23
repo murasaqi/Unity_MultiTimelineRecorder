@@ -118,7 +118,7 @@ namespace MultiTimelineRecorder.UI.Components
             {
                 _eventBus.Publish(new ValidationEvent
                 {
-                    Severity = ValidationSeverity.Error,
+                    Severity = MultiTimelineRecorder.Core.Interfaces.ValidationSeverity.Error,
                     Message = $"Recorder '{_config.Name}': {errorMessage}"
                 });
             }
@@ -126,7 +126,7 @@ namespace MultiTimelineRecorder.UI.Components
             // Notify about changes
             _eventBus.Publish(new RecorderConfigurationChangedEvent
             {
-                RecorderConfigId = _config.Id
+                RecorderConfig = _config
             });
         }
         
@@ -185,6 +185,20 @@ namespace MultiTimelineRecorder.UI.Components
             
             EditorGUILayout.EndHorizontal();
         }
+        
+        protected void DrawFloatSlider(string label, float currentValue, float min, float max, Action<float> onValueChanged)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(label, GUILayout.Width(UIStyles.FieldLabelWidth));
+            
+            var newValue = EditorGUILayout.Slider(currentValue, min, max);
+            if (!Mathf.Approximately(newValue, currentValue))
+            {
+                onValueChanged(newValue);
+            }
+            
+            EditorGUILayout.EndHorizontal();
+        }
     }
     
     /// <summary>
@@ -200,9 +214,9 @@ namespace MultiTimelineRecorder.UI.Components
     /// <summary>
     /// Validation event
     /// </summary>
-    public class ValidationEvent : IEvent
+    public class ValidationEvent : EventArgs
     {
-        public ValidationSeverity Severity { get; set; }
+        public MultiTimelineRecorder.Core.Interfaces.ValidationSeverity Severity { get; set; }
         public string Message { get; set; }
         public string Context { get; set; }
     }

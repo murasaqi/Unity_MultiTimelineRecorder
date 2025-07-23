@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEditor;
@@ -13,13 +14,13 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class ErrorHandlingService : IErrorHandlingService
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly INotificationService _notificationService;
         private readonly Dictionary<Type, Delegate> _errorHandlers;
         private readonly Queue<RecordingError> _errorHistory;
         private readonly int _maxErrorHistory = 100;
 
-        public ErrorHandlingService(ILogger logger, INotificationService notificationService)
+        public ErrorHandlingService(MultiTimelineRecorder.Core.Interfaces.ILogger logger, INotificationService notificationService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -269,8 +270,8 @@ namespace MultiTimelineRecorder.Core.Services
         {
             if (ex.ValidationResult != null && ex.ValidationResult.Issues.Count > 0)
             {
-                var errorCount = ex.ValidationResult.Issues.Count(i => i.Severity == ValidationSeverity.Error);
-                var warningCount = ex.ValidationResult.Issues.Count(i => i.Severity == ValidationSeverity.Warning);
+                var errorCount = ex.ValidationResult.Issues.Where(i => i.Severity == ValidationSeverity.Error).Count();
+                var warningCount = ex.ValidationResult.Issues.Where(i => i.Severity == ValidationSeverity.Warning).Count();
                 
                 _notificationService.ShowInfo(
                     $"Validation failed with {errorCount} error(s) and {warningCount} warning(s). Check console for details.");

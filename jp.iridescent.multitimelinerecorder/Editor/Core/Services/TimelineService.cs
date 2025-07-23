@@ -7,6 +7,8 @@ using UnityEngine.Timeline;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
+using UnityEditor.Recorder;
+using UnityEditor.Recorder.Timeline;
 using MultiTimelineRecorder.Core.Interfaces;
 
 namespace MultiTimelineRecorder.Core.Services
@@ -16,10 +18,10 @@ namespace MultiTimelineRecorder.Core.Services
     /// </summary>
     public class TimelineService : ITimelineService
     {
-        private readonly ILogger _logger;
+        private readonly MultiTimelineRecorder.Core.Interfaces.ILogger _logger;
         private readonly Dictionary<PlayableDirector, TimelineState> _timelineStates;
 
-        public TimelineService(ILogger logger)
+        public TimelineService(MultiTimelineRecorder.Core.Interfaces.ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timelineStates = new Dictionary<PlayableDirector, TimelineState>();

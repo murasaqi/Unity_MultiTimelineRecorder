@@ -87,10 +87,12 @@ namespace MultiTimelineRecorder.UI.Components
             }
             
             // Draw content
+            // Calculate rects
+            var dragRect = new Rect(rect.x, rect.y, 20, rect.height);
+            
             using (new EditorGUILayout.HorizontalScope())
             {
                 // Drag handle
-                var dragRect = new Rect(rect.x, rect.y, 20, rect.height);
                 GUI.Label(dragRect, "≡", EditorStyles.centeredGreyMiniLabel);
                 
                 // Enable checkbox

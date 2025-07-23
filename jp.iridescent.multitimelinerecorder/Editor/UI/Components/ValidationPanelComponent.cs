@@ -186,9 +186,12 @@ namespace MultiTimelineRecorder.UI.Components
             }
             else
             {
-                foreach (var error in result.Errors)
+                foreach (var issue in result.Issues)
                 {
-                    AddMessage(ValidationSeverity.Error, error);
+                    var severity = issue.Severity == MultiTimelineRecorder.Core.Interfaces.ValidationSeverity.Error 
+                        ? ValidationSeverity.Error 
+                        : ValidationSeverity.Warning;
+                    AddMessage(severity, issue.Message);
                 }
             }
             
@@ -235,9 +238,12 @@ namespace MultiTimelineRecorder.UI.Components
                                 var recorderResult = recorder.Validate();
                                 if (!recorderResult.IsValid)
                                 {
-                                    foreach (var error in recorderResult.Errors)
+                                    foreach (var issue in recorderResult.Issues)
                                     {
-                                        AddMessage(ValidationSeverity.Error, $"Recorder '{recorder.Name}': {error}");
+                                        var severity = issue.Severity == MultiTimelineRecorder.Core.Interfaces.ValidationSeverity.Error 
+                                            ? ValidationSeverity.Error 
+                                            : ValidationSeverity.Warning;
+                                        AddMessage(severity, $"Recorder '{recorder.Name}': {issue.Message}");
                                     }
                                 }
                             }
@@ -258,17 +264,14 @@ namespace MultiTimelineRecorder.UI.Components
             // Check output paths
             if (config is RecordingConfiguration rc && rc.GlobalSettings != null)
             {
-                if (string.IsNullOrEmpty(rc.GlobalSettings.BaseOutputPath))
+                var outputPath = rc.GlobalSettings.DefaultOutputPath;
+                if (outputPath != null)
                 {
-                    AddMessage(ValidationSeverity.Warning, "No base output path specified");
-                }
-                else if (!System.IO.Directory.Exists(rc.GlobalSettings.BaseOutputPath))
-                {
-                    if (rc.GlobalSettings.AutoCreateDirectories)
+                    if (string.IsNullOrEmpty(outputPath.BaseDirectory))
                     {
-                        AddMessage(ValidationSeverity.Info, "Output directory will be created automatically");
+                        AddMessage(ValidationSeverity.Warning, "No base output path specified");
                     }
-                    else
+                    else if (!System.IO.Directory.Exists(outputPath.BaseDirectory))
                     {
                         AddMessage(ValidationSeverity.Warning, "Output directory does not exist");
                     }
@@ -337,7 +340,8 @@ namespace MultiTimelineRecorder.UI.Components
         // Event handlers
         private void OnValidationEvent(ValidationEvent e)
         {
-            AddMessage(e.Severity, e.Message, e.Context);
+            var severity = ConvertSeverity(e.Severity);
+            AddMessage(severity, e.Message, e.Context);
         }
         
         private void OnRecordingStarted(RecordingStartedEvent e)
@@ -360,7 +364,8 @@ namespace MultiTimelineRecorder.UI.Components
         
         private void OnRecordingError(RecordingErrorEvent e)
         {
-            AddMessage(ValidationSeverity.Error, $"Recording error: {e.Error}", e.StackTrace);
+            AddMessage(ValidationSeverity.Error, $"Recording error: {e.ErrorMessage}", 
+                e.Exception?.StackTrace ?? "No stack trace available");
         }
         
         private class ValidationMessage
@@ -376,6 +381,20 @@ namespace MultiTimelineRecorder.UI.Components
             Info,
             Warning,
             Error
+        }
+        
+        private ValidationSeverity ConvertSeverity(MultiTimelineRecorder.Core.Interfaces.ValidationSeverity severity)
+        {
+            switch (severity)
+            {
+                case MultiTimelineRecorder.Core.Interfaces.ValidationSeverity.Error:
+                    return ValidationSeverity.Error;
+                case MultiTimelineRecorder.Core.Interfaces.ValidationSeverity.Warning:
+                    return ValidationSeverity.Warning;
+                case MultiTimelineRecorder.Core.Interfaces.ValidationSeverity.Info:
+                default:
+                    return ValidationSeverity.Info;
+            }
         }
     }
 }

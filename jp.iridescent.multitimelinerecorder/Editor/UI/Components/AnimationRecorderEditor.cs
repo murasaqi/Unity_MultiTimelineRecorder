@@ -1,9 +1,11 @@
 using System;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Recorder.Input;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Models.RecorderSettings;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
 
@@ -245,44 +247,5 @@ namespace MultiTimelineRecorder.UI.Components
             
             OnSettingsChanged();
         }
-    }
-    
-    /// <summary>
-    /// Animation recorder configuration
-    /// </summary>
-    public class AnimationRecorderConfiguration : RecorderConfigurationBase
-    {
-        public GameObject TargetGameObject { get; set; }
-        public bool RecordHierarchy { get; set; } = true;
-        public bool RecordTransform { get; set; } = true;
-        public bool RecordPosition { get; set; } = true;
-        public bool RecordRotation { get; set; } = true;
-        public bool RecordScale { get; set; } = true;
-        public bool RecordComponents { get; set; } = false;
-        public bool RecordBlendShapes { get; set; } = false;
-        public bool RecordActiveState { get; set; } = false;
-        public bool RecordMaterialProperties { get; set; } = false;
-        public AnimationCompressionMode CompressionMode { get; set; } = AnimationCompressionMode.Optimal;
-        public float PositionError { get; set; } = 0.5f;
-        public float RotationError { get; set; } = 0.5f;
-        public float ScaleError { get; set; } = 0.00025f;
-        public bool KeyframeReduction { get; set; } = true;
-        public string ClipName { get; set; } = "RecordedAnimation";
-        public bool TakeNameInFile { get; set; } = true;
-        
-        public AnimationRecorderConfiguration()
-        {
-            Type = Unity.MultiTimelineRecorder.RecorderSettingsType.Animation;
-        }
-    }
-    
-    /// <summary>
-    /// Animation compression mode
-    /// </summary>
-    public enum AnimationCompressionMode
-    {
-        Off,
-        Optimal,
-        KeyframeReduction
     }
 }

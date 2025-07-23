@@ -8,16 +8,68 @@ using UnityEditor.Recorder.Input;
 namespace MultiTimelineRecorder.Core.Models.RecorderSettings
 {
     /// <summary>
+    /// Video format options
+    /// </summary>
+    public enum VideoFormat
+    {
+        MP4,
+        MOV,
+        WebM
+    }
+    
+    /// <summary>
+    /// Video codec options
+    /// </summary>
+    public enum VideoCodec
+    {
+        H264,
+        H265,
+        VP8,
+        VP9,
+        ProRes
+    }
+    
+    /// <summary>
+    /// Audio codec options
+    /// </summary>
+    public enum AudioCodec
+    {
+        AAC,
+        PCM,
+        Vorbis
+    }
+    
+    /// <summary>
+    /// Bitrate mode options
+    /// </summary>
+    public enum BitrateMode
+    {
+        Low,
+        Medium,
+        High
+    }
+    
+    /// <summary>
+    /// Aspect ratio mode options
+    /// </summary>
+    public enum AspectRatioMode
+    {
+        Custom,
+        AspectRatio_16_9,
+        AspectRatio_4_3,
+        AspectRatio_21_9
+    }
+
+    /// <summary>
     /// Configuration for movie recording
     /// </summary>
     [Serializable]
     public class MovieRecorderConfiguration : RecorderConfigurationBase
     {
         [SerializeField]
-        private MovieRecorderSettings.VideoRecorderFormat outputFormat = MovieRecorderSettings.VideoRecorderFormat.MP4;
+        private MovieRecorderSettings.VideoRecorderOutputFormat outputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
         
-        [SerializeField]
-        private MovieRecorderSettings.VideoRecorderOutputFormat encodingProfile = MovieRecorderSettings.VideoRecorderOutputFormat.High;
+        // Note: encodingProfile removed as it's not a separate property in Unity Recorder
         
         [SerializeField]
         private bool captureAlpha = false;
@@ -36,6 +88,45 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         
         [SerializeField]
         private bool captureAudio = true;
+        
+        [SerializeField]
+        private VideoFormat format = VideoFormat.MP4;
+        
+        [SerializeField]
+        private VideoCodec codec = VideoCodec.H264;
+        
+        [SerializeField]
+        private BitrateMode bitrateMode = BitrateMode.Medium;
+        
+        [SerializeField]
+        private int width = 1920;
+        
+        [SerializeField]
+        private int height = 1080;
+        
+        [SerializeField]
+        private AspectRatioMode aspectRatio = AspectRatioMode.AspectRatio_16_9;
+        
+        [SerializeField]
+        private int frameRate = 30;
+        
+        [SerializeField]
+        private string fileName = "<Scene>_<Take>";
+        
+        [SerializeField]
+        private bool includeUI = false;
+        
+        [SerializeField]
+        private AudioCodec audioCodec = AudioCodec.AAC;
+        
+        [SerializeField]
+        private int audioBitrate = 192;
+        
+        [SerializeField]
+        private bool useMotionBlur = false;
+        
+        [SerializeField]
+        private float shutterAngle = 180;
 
         /// <inheritdoc />
         public override RecorderSettingsType Type => RecorderSettingsType.Movie;
@@ -43,20 +134,13 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         /// <summary>
         /// Output format for movie
         /// </summary>
-        public MovieRecorderSettings.VideoRecorderFormat OutputFormat
+        public MovieRecorderSettings.VideoRecorderOutputFormat OutputFormat
         {
             get => outputFormat;
             set => outputFormat = value;
         }
 
-        /// <summary>
-        /// Encoding profile
-        /// </summary>
-        public MovieRecorderSettings.VideoRecorderOutputFormat EncodingProfile
-        {
-            get => encodingProfile;
-            set => encodingProfile = value;
-        }
+        // EncodingProfile property removed - not used in Unity Recorder API
 
         /// <summary>
         /// Whether to capture alpha channel
@@ -112,6 +196,123 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
             set => captureAudio = value;
         }
 
+        /// <summary>
+        /// Video format
+        /// </summary>
+        public VideoFormat Format
+        {
+            get => format;
+            set => format = value;
+        }
+
+        /// <summary>
+        /// Video codec
+        /// </summary>
+        public VideoCodec Codec
+        {
+            get => codec;
+            set => codec = value;
+        }
+
+        /// <summary>
+        /// Bitrate mode
+        /// </summary>
+        public BitrateMode BitrateMode
+        {
+            get => bitrateMode;
+            set => bitrateMode = value;
+        }
+
+        /// <summary>
+        /// Width in pixels
+        /// </summary>
+        public int Width
+        {
+            get => width;
+            set => width = Math.Max(1, value);
+        }
+
+        /// <summary>
+        /// Height in pixels
+        /// </summary>
+        public int Height
+        {
+            get => height;
+            set => height = Math.Max(1, value);
+        }
+
+        /// <summary>
+        /// Aspect ratio mode
+        /// </summary>
+        public AspectRatioMode AspectRatio
+        {
+            get => aspectRatio;
+            set => aspectRatio = value;
+        }
+
+        /// <summary>
+        /// Frame rate
+        /// </summary>
+        public int FrameRate
+        {
+            get => frameRate;
+            set => frameRate = Mathf.Clamp(value, 1, 120);
+        }
+
+        /// <summary>
+        /// Output filename pattern
+        /// </summary>
+        public string FileName
+        {
+            get => fileName;
+            set => fileName = value;
+        }
+
+        /// <summary>
+        /// Whether to include UI
+        /// </summary>
+        public bool IncludeUI
+        {
+            get => includeUI;
+            set => includeUI = value;
+        }
+
+        /// <summary>
+        /// Audio codec
+        /// </summary>
+        public AudioCodec AudioCodec
+        {
+            get => audioCodec;
+            set => audioCodec = value;
+        }
+
+        /// <summary>
+        /// Audio bitrate in kbps
+        /// </summary>
+        public int AudioBitrate
+        {
+            get => audioBitrate;
+            set => audioBitrate = Math.Max(32, value);
+        }
+
+        /// <summary>
+        /// Whether to use motion blur
+        /// </summary>
+        public bool UseMotionBlur
+        {
+            get => useMotionBlur;
+            set => useMotionBlur = value;
+        }
+
+        /// <summary>
+        /// Shutter angle in degrees
+        /// </summary>
+        public float ShutterAngle
+        {
+            get => shutterAngle;
+            set => shutterAngle = Mathf.Clamp(value, 0f, 360f);
+        }
+
         /// <inheritdoc />
         public override ValidationResult Validate()
         {
@@ -136,7 +337,7 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
             }
 
             // Validate format-specific settings
-            if (outputFormat == MovieRecorderSettings.VideoRecorderFormat.MP4 && captureAlpha)
+            if (outputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.MP4 && captureAlpha)
             {
                 result.AddWarning("MP4 format does not support alpha channel. Consider using WebM format.");
             }
@@ -151,35 +352,25 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         }
 
         /// <inheritdoc />
-        public override RecorderSettings CreateUnityRecorderSettings(WildcardContext context)
+        public override UnityEditor.Recorder.RecorderSettings CreateUnityRecorderSettings(MultiTimelineRecorder.Core.Interfaces.WildcardContext context)
         {
             var settings = ScriptableObject.CreateInstance<MovieRecorderSettings>();
             settings.name = "Movie Recorder";
-            settings.enabled = true;
+            settings.Enabled = true;
 
             // Set output format
             settings.OutputFormat = outputFormat;
             settings.VideoBitRateMode = UnityEditor.VideoBitrateMode.High;
             
             // Configure video settings
-            var videoSettings = new MovieRecorderSettings.VideoRecorderSettings
-            {
-                Format = outputFormat,
-                OutputFormat = encodingProfile,
-                CaptureAlpha = captureAlpha
-            };
+            // Note: MovieRecorderSettings properties are set directly on the settings object
             
             // Apply quality setting based on format
-            if (outputFormat == MovieRecorderSettings.VideoRecorderFormat.MP4)
+            if (outputFormat == MovieRecorderSettings.VideoRecorderOutputFormat.MP4)
             {
                 // MP4 uses bitrate
                 var bitrate = Mathf.Lerp(1, 50, quality); // 1-50 Mbps range
-                settings.VideoBitRateMode = UnityEditor.VideoBitrateMode.Custom;
-            }
-            else
-            {
-                // WebM uses quality directly
-                settings.VideoQuality = quality;
+                settings.VideoBitRateMode = UnityEditor.VideoBitrateMode.High;
             }
 
             // Configure audio settings
@@ -201,17 +392,14 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
                     break;
                     
                 case ImageRecorderSourceType.TargetCamera:
-                    var cameraInputSettings = new CameraInputSettings
-                    {
-                        Source = targetCamera,
-                        OutputWidth = context.CustomWildcards.ContainsKey("Width") 
-                            ? int.Parse(context.CustomWildcards["Width"]) 
-                            : 1920,
-                        OutputHeight = context.CustomWildcards.ContainsKey("Height") 
-                            ? int.Parse(context.CustomWildcards["Height"]) 
-                            : 1080,
-                        CaptureUI = false
-                    };
+                    var cameraInputSettings = new CameraInputSettings();
+                    cameraInputSettings.OutputWidth = context.CustomWildcards.ContainsKey("Width") 
+                        ? int.Parse(context.CustomWildcards["Width"]) 
+                        : 1920;
+                    cameraInputSettings.OutputHeight = context.CustomWildcards.ContainsKey("Height") 
+                        ? int.Parse(context.CustomWildcards["Height"]) 
+                        : 1080;
+                    cameraInputSettings.CaptureUI = false;
                     settings.ImageInputSettings = cameraInputSettings;
                     break;
                     
@@ -236,13 +424,25 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
             var clone = new MovieRecorderConfiguration
             {
                 outputFormat = this.outputFormat,
-                encodingProfile = this.encodingProfile,
                 captureAlpha = this.captureAlpha,
                 quality = this.quality,
                 sourceType = this.sourceType,
                 targetCamera = this.targetCamera,
                 renderTexture = this.renderTexture,
-                captureAudio = this.captureAudio
+                captureAudio = this.captureAudio,
+                format = this.format,
+                codec = this.codec,
+                bitrateMode = this.bitrateMode,
+                width = this.width,
+                height = this.height,
+                aspectRatio = this.aspectRatio,
+                frameRate = this.frameRate,
+                fileName = this.fileName,
+                includeUI = this.includeUI,
+                audioCodec = this.audioCodec,
+                audioBitrate = this.audioBitrate,
+                useMotionBlur = this.useMotionBlur,
+                shutterAngle = this.shutterAngle
             };
             
             CopyBaseTo(clone);
@@ -258,7 +458,7 @@ namespace MultiTimelineRecorder.Core.Models.RecorderSettings
         /// <summary>
         /// Processes wildcards for filename generation
         /// </summary>
-        private string ProcessWildcards(WildcardContext context)
+        private string ProcessWildcards(MultiTimelineRecorder.Core.Interfaces.WildcardContext context)
         {
             var pattern = "<Scene>_<Timeline>_Movie_Take<Take:0000>";
             

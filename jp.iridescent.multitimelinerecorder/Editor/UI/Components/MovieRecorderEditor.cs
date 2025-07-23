@@ -4,6 +4,7 @@ using UnityEditor;
 using MultiTimelineRecorder.Core.Interfaces;
 using MultiTimelineRecorder.Core.Events;
 using MultiTimelineRecorder.Core.Models;
+using MultiTimelineRecorder.Core.Models.RecorderSettings;
 using MultiTimelineRecorder.UI.Controllers;
 using MultiTimelineRecorder.UI.Styles;
 
@@ -173,7 +174,7 @@ namespace MultiTimelineRecorder.UI.Components
             
             if (_movieConfig.UseMotionBlur)
             {
-                DrawIntSlider("Shutter Angle", _movieConfig.ShutterAngle, 0, 360, (value) => 
+                DrawFloatSlider("Shutter Angle", _movieConfig.ShutterAngle, 0f, 360f, (value) => 
                 {
                     _controller.UpdateRecorderConfig(_config, nameof(_movieConfig.ShutterAngle), _movieConfig.ShutterAngle, value);
                     _movieConfig.ShutterAngle = value;
@@ -259,7 +260,7 @@ namespace MultiTimelineRecorder.UI.Components
             }
             
             // Check codec compatibility
-            if (_movieConfig.Format == VideoFormat.MP4 && _movieConfig.Codec == VideoCodec.ProRes)
+            if (_movieConfig.Format == VideoFormat.MP4 && _movieConfig.Codec == MultiTimelineRecorder.Core.Models.RecorderSettings.VideoCodec.ProRes)
             {
                 errorMessage = "ProRes codec is not compatible with MP4 format. Use MOV format instead.";
                 return false;
@@ -272,7 +273,7 @@ namespace MultiTimelineRecorder.UI.Components
         public override void ResetToDefaults()
         {
             _movieConfig.Format = VideoFormat.MP4;
-            _movieConfig.Codec = VideoCodec.H264;
+            _movieConfig.Codec = MultiTimelineRecorder.Core.Models.RecorderSettings.VideoCodec.H264;
             _movieConfig.BitrateMode = BitrateMode.Medium;
             _movieConfig.Width = 1920;
             _movieConfig.Height = 1080;
@@ -288,58 +289,5 @@ namespace MultiTimelineRecorder.UI.Components
             
             OnSettingsChanged();
         }
-    }
-    
-    /// <summary>
-    /// Video format options
-    /// </summary>
-    public enum VideoFormat
-    {
-        MP4,
-        MOV,
-        WebM
-    }
-    
-    /// <summary>
-    /// Video codec options
-    /// </summary>
-    public enum VideoCodec
-    {
-        H264,
-        H265,
-        VP8,
-        VP9,
-        ProRes
-    }
-    
-    /// <summary>
-    /// Audio codec options
-    /// </summary>
-    public enum AudioCodec
-    {
-        AAC,
-        PCM,
-        Vorbis
-    }
-    
-    /// <summary>
-    /// Bitrate mode options
-    /// </summary>
-    public enum BitrateMode
-    {
-        Low,
-        Medium,
-        High
-    }
-    
-    /// <summary>
-    /// Aspect ratio mode options
-    /// </summary>
-    public enum AspectRatioMode
-    {
-        Custom,
-        AspectRatio_16_9,
-        AspectRatio_4_3,
-        AspectRatio_21_9
     }
 }
