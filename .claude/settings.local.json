@@ -1,4 +1,28 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__linear__list_issues",
+      "mcp__linear__update_issue",
+      "mcp__linear__create_comment",
+      "mcp__unity-natural-mcp_56790__get_compile_logs",
+      "mcp__unity-natural-mcp_56790__refresh_assets",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit:*)",
+      "mcp__linear__get_issue_status",
+      "mcp__linear__list_issue_statuses",
+      "mcp__linear__get_issue",
+      "mcp__unity-natural-mcp_56790__run_edit_mode_tests",
+      "mcp__unity-natural-mcp_56790__get_current_console_logs",
+      "mcp__linear__create_issue",
+      "mcp__linear__list_teams",
+      "mcp__unity-natural-mcp_56790__clear_console_logs",
+      "Bash(git reset:*)",
+      "Bash(git mv:*)",
+      "Bash(mv:*)",
+      "mcp__linear__list_projects"
+    ]
+  },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "unity-natural-mcp_56790"

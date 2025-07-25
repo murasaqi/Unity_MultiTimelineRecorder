@@ -51,7 +51,7 @@ namespace MultiTimelineRecorder.UI.Components
             EditorGUI.BeginChangeCheck();
             
             // Output Settings Section
-            GUILayout.Label("Output Settings", UIStyles.SectionHeader);
+            DrawSectionHeader("Output Settings", "Configure default output paths and file naming");
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 // Base output path
@@ -83,10 +83,10 @@ namespace MultiTimelineRecorder.UI.Components
                 }
             }
             
-            UIStyles.DrawHorizontalLine();
+            GUILayout.Space(10);
             
             // Recording Settings Section
-            GUILayout.Label("Recording Settings", UIStyles.SectionHeader);
+            DrawSectionHeader("Recording Settings", "Default recording parameters for all timelines");
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 // Frame rate
@@ -125,7 +125,7 @@ namespace MultiTimelineRecorder.UI.Components
             UIStyles.DrawHorizontalLine();
             
             // Workflow Settings Section
-            GUILayout.Label("Workflow Settings", UIStyles.SectionHeader);
+            DrawSectionHeader("Workflow Settings", "Automation and workflow preferences");
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 _settings.AutoSaveBeforeRecording = EditorGUILayout.Toggle("Auto-save Before Recording", _settings.AutoSaveBeforeRecording);
@@ -139,10 +139,10 @@ namespace MultiTimelineRecorder.UI.Components
             // SignalEmitter Settings Section
             _signalEmitterSettings.Draw();
             
-            UIStyles.DrawHorizontalLine();
+            GUILayout.Space(10);
             
             // Advanced Settings Section
-            GUILayout.Label("Advanced Settings", UIStyles.SectionHeader);
+            DrawSectionHeader("Advanced Settings", "Performance and debugging options");
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 _settings.MaxConcurrentRecorders = EditorGUILayout.IntSlider("Max Concurrent Recorders", _settings.MaxConcurrentRecorders, 1, 4);
@@ -233,6 +233,40 @@ namespace MultiTimelineRecorder.UI.Components
             {
                 _signalEmitterSettings.ApplyToConfiguration(config);
                 _controller.SaveConfiguration();
+            }
+        }
+        
+        private void DrawSectionHeader(string title, string description = null)
+        {
+            GUILayout.Space(5);
+            
+            using (new EditorGUILayout.VerticalScope())
+            {
+                // Title with larger, bold font
+                var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    fontSize = 13,
+                    normal = { textColor = EditorGUIUtility.isProSkin ? new Color(0.9f, 0.9f, 0.9f) : new Color(0.1f, 0.1f, 0.1f) }
+                };
+                
+                GUILayout.Label(title, headerStyle);
+                
+                // Optional description
+                if (!string.IsNullOrEmpty(description))
+                {
+                    var descStyle = new GUIStyle(EditorStyles.miniLabel)
+                    {
+                        wordWrap = true,
+                        normal = { textColor = EditorGUIUtility.isProSkin ? new Color(0.7f, 0.7f, 0.7f) : new Color(0.4f, 0.4f, 0.4f) }
+                    };
+                    GUILayout.Label(description, descStyle);
+                }
+                
+                // Separator line
+                GUILayout.Space(2);
+                var rect = GUILayoutUtility.GetRect(0, 1, GUILayout.ExpandWidth(true));
+                EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 0.3f));
+                GUILayout.Space(5);
             }
         }
     }

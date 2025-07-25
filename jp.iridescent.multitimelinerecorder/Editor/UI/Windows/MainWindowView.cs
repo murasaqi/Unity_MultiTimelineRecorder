@@ -29,6 +29,7 @@ namespace MultiTimelineRecorder.UI.Windows
         private Vector2 _settingsScrollPos;
         private int _selectedTimelineIndex = -1;
         private bool _showGlobalSettings = false;
+        private int _selectedSettingsTab = 0;
         
         // UI Components
         private TimelineListComponent _timelineList;
@@ -159,10 +160,7 @@ namespace MultiTimelineRecorder.UI.Windows
                     _mainController.RefreshTimelines(true);
                 }
                 
-                // Settings button
-                _showGlobalSettings = GUILayout.Toggle(_showGlobalSettings, 
-                    new GUIContent("Settings", "Show global settings"), 
-                    EditorStyles.toolbarButton, GUILayout.Width(60));
+                // Removed old Settings toggle button
                 
                 GUILayout.FlexibleSpace();
             }
@@ -331,26 +329,83 @@ namespace MultiTimelineRecorder.UI.Windows
         {
             using (new EditorGUILayout.VerticalScope(UIStyles.ColumnBackground, GUILayout.ExpandWidth(true)))
             {
-                if (_showGlobalSettings)
+                // Draw tab selector
+                DrawSettingsTabs();
+                
+                // Draw content based on selected tab
+                if (_selectedSettingsTab == 0) // Global Settings
                 {
                     DrawColumnHeader("Global Settings");
                     _settingsScrollPos = EditorGUILayout.BeginScrollView(_settingsScrollPos);
                     _globalSettings.Draw();
                     EditorGUILayout.EndScrollView();
                 }
-                else if (_recorderController.SelectedRecorder != null)
+                else if (_selectedSettingsTab == 1) // Recorder Settings
                 {
-                    DrawColumnHeader("Recorder Settings");
-                    _settingsScrollPos = EditorGUILayout.BeginScrollView(_settingsScrollPos);
-                    DrawRecorderSettings();
-                    EditorGUILayout.EndScrollView();
+                    if (_recorderController.SelectedRecorder != null)
+                    {
+                        DrawColumnHeader("Recorder Settings");
+                        _settingsScrollPos = EditorGUILayout.BeginScrollView(_settingsScrollPos);
+                        DrawRecorderSettings();
+                        EditorGUILayout.EndScrollView();
+                    }
+                    else
+                    {
+                        DrawColumnHeader("Recorder Settings");
+                        EditorGUILayout.HelpBox("Select a recorder to configure its settings", MessageType.Info);
+                    }
                 }
-                else
+                else if (_selectedSettingsTab == 2) // Validation
                 {
                     DrawColumnHeader("Validation");
                     _validationPanel.Draw();
                 }
             }
+        }
+        
+        private void DrawSettingsTabs()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var tabStyle = new GUIStyle(EditorStyles.toolbarButton)
+                {
+                    fontSize = 12,
+                    fixedHeight = 25
+                };
+                
+                var selectedTabStyle = new GUIStyle(tabStyle)
+                {
+                    normal = EditorStyles.toolbarButton.active,
+                    fontStyle = FontStyle.Bold
+                };
+                
+                // Global Settings tab
+                if (GUILayout.Button("Global Settings", _selectedSettingsTab == 0 ? selectedTabStyle : tabStyle))
+                {
+                    _selectedSettingsTab = 0;
+                }
+                
+                // Recorder Settings tab
+                using (new EditorGUI.DisabledScope(_recorderController.SelectedRecorder == null))
+                {
+                    if (GUILayout.Button("Recorder Settings", _selectedSettingsTab == 1 ? selectedTabStyle : tabStyle))
+                    {
+                        _selectedSettingsTab = 1;
+                    }
+                }
+                
+                // Validation tab
+                if (GUILayout.Button("Validation", _selectedSettingsTab == 2 ? selectedTabStyle : tabStyle))
+                {
+                    _selectedSettingsTab = 2;
+                }
+            }
+            
+            // Add separator line
+            var separatorRect = GUILayoutUtility.GetRect(0, 1, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(separatorRect, new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            
+            GUILayout.Space(5);
         }
 
         private void DrawColumnHeader(string title)
