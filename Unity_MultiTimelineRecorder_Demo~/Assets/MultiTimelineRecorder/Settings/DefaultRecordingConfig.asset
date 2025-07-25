@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: DefaultRecordingConfig
+  m_EditorClassIdentifier: Unity.MultiTimelineRecorder.Editor:MultiTimelineRecorder.Core.Services:RecordingConfigurationAsset
+  configuration:
+    frameRate: 24
+    outputPath: Recordings
+    timelineConfigs:
+    - id: 8f88840d-dfb7-45cc-8232-547086c81004
+      timelineName: Cinematic Timeline (for High Quality Level)
+      isEnabled: 1
+    - id: 4ef0c98e-90ff-4470-bbf5-3bd3a5a24c2a
+      timelineName: Cinematic Timeline (for High Quality Level)
+      isEnabled: 1
+    globalSettings:
+      defaultFrameRate: 24
+      defaultOutputPath:
+        baseDirectory: D:/Works/Unity_MultiTimelineRecorder/Unity_MultiTimelineRecorder_Demo~/Recordings
+        createTimelineSubdirectories: 1
+        createRecorderTypeSubdirectories: 1
+        filenamePattern: <Scene>_<Timeline>_<RecorderType>_Take<Take>
+      debugMode: 0
+      autoSaveBeforeRecording: 1
+      showPreviewWindow: 1
+      validateBeforeRecording: 1
+      openOutputFolderAfterRecording: 0
+      maxConcurrentRecorders: 1
+      useAsyncRecording: 0
+      captureAudio: 1
+      logVerbosity: 3
+      useSignalEmitterTiming: 0
+      startSignalName: 
+      endSignalName: 
