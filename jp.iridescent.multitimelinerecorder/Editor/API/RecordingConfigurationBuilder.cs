@@ -139,6 +139,23 @@ namespace MultiTimelineRecorder.API
             return this;
         }
         
+        /// <summary>
+        /// Adds a timeline configuration created by a timeline builder
+        /// </summary>
+        /// <param name="timelineConfig">Timeline configuration</param>
+        /// <returns>Builder instance for chaining</returns>
+        internal RecordingConfigurationBuilder AddTimelineConfig(TimelineRecorderConfig timelineConfig)
+        {
+            if (timelineConfig == null)
+            {
+                throw new ArgumentNullException(nameof(timelineConfig));
+            }
+            
+            _configuration.AddTimelineConfig(timelineConfig);
+            _currentTimeline = timelineConfig;
+            return this;
+        }
+        
         #endregion
         
         #region Recorder Management
