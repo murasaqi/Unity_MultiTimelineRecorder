@@ -119,6 +119,36 @@
   - [x] SignalTimingInfoのプロパティ名修正 ✅
   - [x] AlembicRecorderSettingsConfigのプロパティ名修正 ✅
 
+## � 緊急修正タスクク (Critical Fixes)
+
+- [ ] 17. UI/UX問題の修正
+  - [x] 17.1 Timeline個別Recorder設定の修正
+
+
+
+
+
+
+
+
+
+    - [ ] Timeline選択時の設定分離機能の実装
+    - [ ] 設定の誤った全Timeline反映問題の修正
+    - [ ] Timeline固有設定の保存・復元機能の修正
+    - _Requirements: 4.1, 4.3, 11.1_
+
+  - [ ] 17.2 Global SettingsのUI配置修正
+    - [ ] ToggleUIから適切なUI形式への変更
+    - [ ] 右側配置からより適切な位置への移動
+    - [ ] Recorder SettingsのUIとの重複解消
+    - _Requirements: 12.1, 12.2, 12.3_
+
+  - [ ] 17.3 Start/Stop Recordingボタンの改善
+    - [ ] メニューバー右側から目立つ位置への移動
+    - [ ] Toggleのような見た目から明確なボタンUIへの変更
+    - [ ] 重要な機能としての適切なレイアウト実装
+    - _Requirements: 12.1, 12.2, 12.3_
+
 ## 📋 次の優先タスク (Next Priority)
 
 - [ ] 13. 基本機能テスト

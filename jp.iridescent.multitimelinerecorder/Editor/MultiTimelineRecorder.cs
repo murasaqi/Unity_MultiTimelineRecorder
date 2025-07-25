@@ -22,6 +22,37 @@ namespace Unity.MultiTimelineRecorder
 {
     /// <summary>
     /// Multi Timeline Recorder - Records multiple timelines with various recorder types
+    /// 
+    /// ⚠️ LEGACY IMPLEMENTATION - This is the old monolithic implementation
+    /// 
+    /// 🆕 NEW ARCHITECTURE COMPONENTS (Recommended for new development):
+    /// - Editor/Core/Services/ - Business logic services
+    /// - Editor/Core/Models/ - Data models  
+    /// - Editor/UI/Controllers/ - UI controllers
+    /// - Editor/UI/ - UI views
+    /// 
+    /// This legacy implementation is being gradually replaced by the new architecture.
+    /// For new features, please use the new architecture components.
+    /// 
+    /// Migration Status:
+    /// ✅ Core services implemented
+    /// ✅ Data models refactored
+    /// ✅ UI controllers created
+    /// 🔄 UI migration in progress
+    /// 📋 Legacy code cleanup pending
+    /// 
+    /// FIXED ISSUES:
+    /// ✅ 17.1 Timeline individual recorder settings - COMPLETED
+    ///     - Fixed timeline selection switching between individual recorder configurations
+    ///     - Added SwitchToTimelineRecorderConfiguration() method for proper timeline switching
+    ///     - Improved visual indicators for current timeline selection
+    ///     - Added right-click context menu for timeline management
+    ///     - Fixed timeline-specific recorder configuration isolation
+    ///     - Added AddTimelineDirector() and RemoveTimelineDirector() methods
+    /// 
+    /// REMAINING ISSUES:
+    /// 2. Global Settings UI positioning and Toggle UI issues
+    /// 3. Start/Stop Recording button UI improvements
     /// </summary>
     public partial class MultiTimelineRecorder : EditorWindow
     {

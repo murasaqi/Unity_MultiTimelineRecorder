@@ -4,7 +4,22 @@
 
 Unity Multi Timeline Recorderの完全リファクタリング設計では、現在のモノリシックな構造を完全に廃止し、保守性、拡張性、テスト可能性を重視した新しいモジュラーアーキテクチャに置き換えます。この設計は、UIでの複雑なRecordジョブとタスクの作成・管理機能を根本的に改善し、API化を実現することを目標としています。
 
-現在のコードベース分析により、以下の根本的な問題点が特定されました：
+### 🆕 新アーキテクチャ vs 🔄 旧実装
+
+**新アーキテクチャ (NEW) - 推奨**:
+- `Editor/Core/Services/` - ビジネスロジックサービス
+- `Editor/Core/Models/` - データモデル
+- `Editor/UI/Controllers/` - UIコントローラー
+- `Editor/UI/` - UIビュー
+
+**旧実装 (LEGACY) - 移行中**:
+- `Editor/MultiTimelineRecorder.cs` - モノリシックな実装（4000行超）
+
+⚠️ **重要**: 新機能開発は新アーキテクチャを使用してください。旧実装は段階的に新アーキテクチャに移行中です。
+
+### 現在のコードベース分析
+
+以下の根本的な問題点が特定されました：
 - `MultiTimelineRecorder.cs`が4000行を超える巨大なクラス
 - UIロジックとビジネスロジックの密結合
 - 設定管理の分散
@@ -46,6 +61,98 @@ Unity Multi Timeline Recorderの完全リファクタリング設計では、現
 - **テスト可能性**: 主要なビジネスロジックをテスト可能にする最小限の分離
 - **拡張性**: 新機能追加時の影響範囲を限定
 - **API優先**: UIに依存しないコアAPIを中心とした設計
+
+## Data Management Structure
+
+### Column-Based Data Management
+
+Unity Multi Timeline Recorderは3カラムレイアウトで構成されており、各カラムが異なるデータ階層を管理しています：
+
+#### Timelineカラムで管理されるもの
+**データ構造**: `List<PlayableDirector> recordingQueueDirectors` + `List<int> selectedDirectorIndices`
+
+- **Timeline選択状態**: どのTimelineが録画対象として選択されているか
+- **Timeline識別情報**: `TimelineDirectorInfo`クラスによる永続化
+  - `gameObjectName`: TimelineのGameObject名
+  - `gameObjectPath`: Hierarchy内のパス
+  - `assetName`: TimelineAssetの名前
+- **Timeline有効/無効状態**: チェックボックスによる個別制御
+- **現在のTimeline指定**: `currentTimelineIndexForRecorder`による設定対象Timeline
+- **SignalEmitter情報**: 各Timelineの録画開始/終了マーカー
+- **Timeline期間情報**: 秒数/フレーム数での表示切り替え
+
+#### Recorderカラムで管理されるもの
+**データ構造**: `Dictionary<int, MultiRecorderConfig> timelineRecorderConfigs`
+
+- **Timeline固有のRecorder一覧**: 各TimelineごとのRecorder設定リスト
+- **Recorder基本情報**:
+  - `name`: Recorder表示名
+  - `enabled`: Recorder有効/無効状態
+  - `recorderType`: RecorderSettingsType（Movie, Image, AOV, Animation, Alembic, FBX）
+- **Timeline固有の共通設定**（全Recorderに反映）:
+  - `timelineTakeNumber`: Timeline固有のTake番号（`timelineTakeNumbers`による管理）
+  - `timelinePreRollFrames`: Timeline固有のPre-rollフレーム数（将来実装予定）
+- **Recorder選択状態**: `selectedRecorderIndex`による現在の編集対象
+- **Recorderアイコン表示**: タイプ別の視覚的識別
+
+#### RecorderSettingsで管理されるもの
+**データ構造**: `MultiRecorderConfig.RecorderConfigItem`
+
+- **出力設定**:
+  - `fileName`: ファイル名テンプレート（ワイルドカード対応）
+  - `outputPath`: 出力パス設定（OutputPathSettings）
+  - `takeNumber`: Recorder固有のTake番号
+  - `takeMode`: Take番号管理モード（RecordersTake/ClipTake）
+
+- **品質・形式設定**:
+  - `width`, `height`: 解像度設定
+  - `frameRate`: フレームレート（グローバル制約あり）
+  - `imageFormat`: 画像形式（PNG, JPG, EXR等）
+  - `imageQuality`, `jpegQuality`: 品質設定
+  - `captureAlpha`: アルファチャンネル取得
+  - `exrCompression`: EXR圧縮設定
+
+- **入力ソース設定**:
+  - `imageSourceType`: 入力ソースタイプ（GameView, TargetCamera, RenderTexture）
+  - `imageTargetCamera`: 対象カメラ（GameObjectReference経由）
+  - `imageRenderTexture`: RenderTexture参照
+
+- **レコーダータイプ別専用設定**:
+  - `movieConfig`: MovieRecorderSettingsConfig
+  - `aovConfig`: AOVRecorderSettingsConfig  
+  - `alembicConfig`: AlembicRecorderSettingsConfig
+  - `animationConfig`: AnimationRecorderSettingsConfig
+  - `fbxConfig`: FBXRecorderSettingsConfig
+
+### データ階層の関係性
+
+```
+Scene
+├── Timeline 1 (PlayableDirector)
+│   ├── Timeline固有設定（全Recorderに反映）
+│   │   ├── timelineTakeNumber: Timeline固有Take番号
+│   │   └── timelinePreRollFrames: Timeline固有Pre-rollフレーム数（将来実装）
+│   ├── Recorder A (RecorderConfigItem)
+│   │   ├── 出力設定 (fileName, outputPath, takeNumber)
+│   │   ├── 品質設定 (resolution, format, quality)
+│   │   └── 入力設定 (sourceType, camera, renderTexture)
+│   └── Recorder B (RecorderConfigItem)
+│       └── [同様の設定構造]
+├── Timeline 2 (PlayableDirector)
+│   ├── Timeline固有設定（全Recorderに反映）
+│   └── [Timeline固有のRecorder設定群]
+└── Global Settings
+    ├── frameRate (全Recorderで統一)
+    ├── globalOutputPath (共通出力パス)
+    └── wildcardSettings (テンプレート管理)
+```
+
+### 設定の永続化と復元
+
+- **シーン固有設定**: `SceneSpecificSettings`クラスによるシーンごとの設定保存
+- **GameObject参照管理**: `GameObjectReference`クラスによる安全な参照保持
+- **設定の自動復元**: シーン変更時の自動的な設定復元
+- **設定の検証**: 参照切れや設定不整合の自動検出
 
 ## Components and Interfaces
 
