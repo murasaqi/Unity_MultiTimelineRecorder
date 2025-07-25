@@ -240,5 +240,147 @@ namespace MultiTimelineRecorder.Tests.Services
             // Check that backup was mentioned in logs
             AssertLogContains("backup", LogLevel.Info);
         }
+        
+        [Test]
+        public void ValidateConfiguration_WithMismatchedFrameRates_ReturnsFalse()
+        {
+            // Arrange
+            var config = TestDataBuilder.CreateTestConfiguration();
+            config.FrameRate = 30;
+            
+            // Add timeline configs with different frame rates
+            var timeline1 = TestDataBuilder.CreateTestTimelineConfig();
+            var timeline2 = TestDataBuilder.CreateTestTimelineConfig();
+            
+            // Add recorders with mismatched frame rates
+            var recorder1 = TestDataBuilder.CreateTestMovieRecorderConfig();
+            recorder1.FrameRate = 30;
+            timeline1.RecorderConfigs.Add(recorder1);
+            
+            var recorder2 = TestDataBuilder.CreateTestMovieRecorderConfig();
+            recorder2.FrameRate = 60; // Different from global
+            timeline2.RecorderConfigs.Add(recorder2);
+            
+            config.TimelineConfigs.Add(timeline1);
+            config.TimelineConfigs.Add(timeline2);
+            
+            // Act
+            var result = _configService.ValidateConfiguration(config);
+            
+            // Assert
+            Assert.IsFalse(result.IsValid);
+            Assert.IsTrue(result.Errors.Exists(e => e.Contains("Frame rate")));
+        }
+        
+        [Test]
+        public void ValidateConfiguration_WithUnifiedFrameRates_ReturnsTrue()
+        {
+            // Arrange
+            var config = TestDataBuilder.CreateTestConfiguration();
+            config.FrameRate = 30;
+            
+            // Add timeline configs with matching frame rates
+            var timeline1 = TestDataBuilder.CreateTestTimelineConfig();
+            var timeline2 = TestDataBuilder.CreateTestTimelineConfig();
+            
+            // Add recorders with matching frame rates
+            var recorder1 = TestDataBuilder.CreateTestMovieRecorderConfig();
+            recorder1.FrameRate = 30;
+            timeline1.RecorderConfigs.Add(recorder1);
+            
+            var recorder2 = TestDataBuilder.CreateTestImageRecorderConfig();
+            recorder2.FrameRate = 30;
+            timeline2.RecorderConfigs.Add(recorder2);
+            
+            config.TimelineConfigs.Add(timeline1);
+            config.TimelineConfigs.Add(timeline2);
+            
+            // Act
+            var result = _configService.ValidateConfiguration(config);
+            
+            // Assert
+            Assert.IsTrue(result.IsValid);
+            AssertLogContains("Frame rate consistency check passed", LogLevel.Info);
+        }
+        
+        [Test]
+        public void ApplyGlobalFrameRate_UpdatesAllRecorderFrameRates()
+        {
+            // Arrange
+            var config = TestDataBuilder.CreateTestConfiguration();
+            config.FrameRate = 60;
+            
+            // Add timeline configs with recorders
+            var timeline1 = TestDataBuilder.CreateTestTimelineConfig();
+            var recorder1 = TestDataBuilder.CreateTestMovieRecorderConfig();
+            recorder1.FrameRate = 30; // Different from global
+            timeline1.RecorderConfigs.Add(recorder1);
+            
+            var timeline2 = TestDataBuilder.CreateTestTimelineConfig();
+            var recorder2 = TestDataBuilder.CreateTestImageRecorderConfig();
+            recorder2.FrameRate = 24; // Different from global
+            timeline2.RecorderConfigs.Add(recorder2);
+            
+            config.TimelineConfigs.Add(timeline1);
+            config.TimelineConfigs.Add(timeline2);
+            
+            // Act
+            _configService.ApplyGlobalFrameRate(config);
+            
+            // Assert
+            Assert.AreEqual(60, recorder1.FrameRate);
+            Assert.AreEqual(60, recorder2.FrameRate);
+            AssertLogContains("Applied global frame rate", LogLevel.Info);
+        }
+        
+        [Test]
+        public void ValidateConfiguration_WithTimelineFrameRateConstraints_ChecksCompatibility()
+        {
+            // Arrange
+            var config = TestDataBuilder.CreateTestConfiguration();
+            config.FrameRate = 30;
+            
+            // Add timeline with specific frame rate constraint
+            var timeline = TestDataBuilder.CreateTestTimelineConfig();
+            timeline.TimelineFrameRate = 24; // Timeline has different frame rate
+            
+            var recorder = TestDataBuilder.CreateTestMovieRecorderConfig();
+            recorder.FrameRate = 30;
+            timeline.RecorderConfigs.Add(recorder);
+            
+            config.TimelineConfigs.Add(timeline);
+            
+            // Act
+            var result = _configService.ValidateConfiguration(config);
+            
+            // Assert
+            // Should warn about timeline frame rate mismatch
+            Assert.IsTrue(result.Warnings.Count > 0);
+            Assert.IsTrue(result.Warnings.Exists(w => w.Contains("Timeline frame rate")));
+        }
+        
+        [Test]
+        public void ExportConfiguration_IncludesFrameRateSettings()
+        {
+            // Arrange
+            var config = TestDataBuilder.CreateTestConfiguration();
+            config.FrameRate = 60;
+            config.EnforceFrameRateConsistency = true;
+            
+            var exportPath = "Assets/Tests/export_test.json";
+            
+            // Act
+            var result = _configService.ExportConfiguration(config, exportPath);
+            
+            // Assert
+            Assert.IsTrue(result);
+            AssertLogContains("Exported configuration", LogLevel.Info);
+            
+            // Clean up
+            if (File.Exists(exportPath))
+            {
+                File.Delete(exportPath);
+            }
+        }
     }
 }

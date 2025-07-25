@@ -66,7 +66,7 @@ namespace MultiTimelineRecorder.Tests.Helpers
         /// <summary>
         /// Creates a test TimelineRecorderConfig
         /// </summary>
-        public static TimelineRecorderConfig CreateTestTimelineConfig(PlayableDirector director)
+        public static TimelineRecorderConfig CreateTestTimelineConfig(PlayableDirector director = null)
         {
             var config = new TimelineRecorderConfig
             {
