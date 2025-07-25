@@ -469,12 +469,12 @@ namespace Unity.MultiTimelineRecorder
             }
             else // Timeline Recording Tab
             {
-                // 3-column layout
-                DrawMultiRecorderLayout();
+                // Recording controls at the top as a prominent header
+                DrawRecordingHeader();
                 EditorGUILayout.Space(Styles.SectionSpacing);
                 
-                // Render controls after the main content
-                DrawRecordControls();
+                // 3-column layout
+                DrawMultiRecorderLayout();
                 EditorGUILayout.Space(Styles.SectionSpacing);
                 
                 // Status section
@@ -2291,12 +2291,103 @@ namespace Unity.MultiTimelineRecorder
             EditorApplication.update += OnRecordingProgressUpdate;
         }
         
-        private void DrawRecordControls()
+        private void DrawRecordingHeader()
         {
-            // Center the buttons
+            // Create a prominent header section for recording controls
+            Rect headerRect = EditorGUILayout.BeginVertical();
+            
+            // Draw background
+            if (Event.current.type == EventType.Repaint)
+            {
+                Color bgColor = currentState == RecordState.Recording
+                    ? new Color(0.8f, 0.2f, 0.2f, 0.1f) // Red tint when recording
+                    : EditorGUIUtility.isProSkin
+                        ? new Color(0.2f, 0.2f, 0.2f, 0.5f)
+                        : new Color(0.9f, 0.9f, 0.9f, 0.5f);
+                EditorGUI.DrawRect(headerRect, bgColor);
+            }
+            
+            EditorGUILayout.Space(10);
+            
+            // Main recording controls
             EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(20);
+            
+            // Left section - Status indicator
+            DrawRecordingStatus();
+            
             GUILayout.FlexibleSpace();
             
+            // Center section - Primary recording buttons
+            DrawPrimaryRecordingButtons();
+            
+            GUILayout.FlexibleSpace();
+            
+            // Right section - Timeline count
+            DrawTimelineCount();
+            
+            EditorGUILayout.Space(20);
+            EditorGUILayout.EndHorizontal();
+            
+            // Progress bar when recording
+            if (currentState == RecordState.Recording && totalTimelinesToRecord > 0)
+            {
+                EditorGUILayout.Space(5);
+                DrawRecordingProgress();
+            }
+            
+            EditorGUILayout.Space(10);
+            EditorGUILayout.EndVertical();
+            
+            // Reset button if needed
+            DrawResetButton();
+        }
+        
+        private void DrawRecordingStatus()
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(200));
+            
+            // Status icon and text
+            GUIContent statusIcon = currentState switch
+            {
+                RecordState.Recording => EditorGUIUtility.IconContent("d_Record On"),
+                RecordState.Complete => EditorGUIUtility.IconContent("d_Valid"),
+                RecordState.Error => EditorGUIUtility.IconContent("d_Error"),
+                _ => EditorGUIUtility.IconContent("d_Record Off")
+            };
+            
+            EditorGUILayout.BeginHorizontal();
+            
+            if (statusIcon != null && statusIcon.image != null)
+            {
+                GUILayout.Label(statusIcon, GUILayout.Width(20), GUILayout.Height(20));
+            }
+            
+            GUIStyle statusStyle = new GUIStyle(EditorStyles.boldLabel);
+            statusStyle.fontSize = 14;
+            
+            Color originalColor = GUI.color;
+            GUI.color = currentState switch
+            {
+                RecordState.Recording => new Color(1f, 0.3f, 0.3f),
+                RecordState.Complete => Color.green,
+                RecordState.Error => Color.red,
+                _ => originalColor
+            };
+            
+            EditorGUILayout.LabelField(currentState.ToString(), statusStyle);
+            GUI.color = originalColor;
+            
+            EditorGUILayout.EndHorizontal();
+            
+            // Status message
+            EditorGUILayout.LabelField(statusMessage, EditorStyles.miniLabel, GUILayout.Height(16));
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        private void DrawPrimaryRecordingButtons()
+        {
             bool canRecord = currentState == RecordState.Idle && recordingQueueDirectors.Count > 0 && !EditorApplication.isPlaying;
             
             // Validate timeline selection
@@ -2317,41 +2408,108 @@ namespace Unity.MultiTimelineRecorder
                 canRecord = validTimelineCount > 0;
             }
             
-            // Record button with icon and color
-            GUI.enabled = canRecord;
+            // Button styling
+            GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+            buttonStyle.fontSize = 14;
+            buttonStyle.fontStyle = FontStyle.Bold;
+            buttonStyle.fixedHeight = 40;
+            
             Color originalColor = GUI.backgroundColor;
-            GUI.backgroundColor = new Color(0.8f, 0.2f, 0.2f); // Red for recording
             
-            GUIContent recordContent = new GUIContent(" Start Recording", EditorGUIUtility.IconContent("d_PlayButton").image);
-            if (GUILayout.Button(recordContent, GUILayout.Height(30), GUILayout.Width(150)))
+            if (currentState == RecordState.Recording || EditorApplication.isPlaying)
             {
-                StartRecording();
+                // Show Stop button
+                GUI.backgroundColor = new Color(0.8f, 0.2f, 0.2f); // Red
+                GUIContent stopContent = new GUIContent("  STOP RECORDING", EditorGUIUtility.IconContent("d_PauseButton On").image);
+                if (GUILayout.Button(stopContent, buttonStyle, GUILayout.Width(200)))
+                {
+                    StopRecording();
+                }
             }
-            
-            // Stop button with icon
-            GUI.enabled = currentState == RecordState.Recording || EditorApplication.isPlaying;
-            GUI.backgroundColor = new Color(0.5f, 0.5f, 0.5f); // Gray for stop
-            
-            GUIContent stopContent = new GUIContent(" Stop Recording", EditorGUIUtility.IconContent("d_Pause").image);
-            if (GUILayout.Button(stopContent, GUILayout.Height(30), GUILayout.Width(150)))
+            else
             {
-                StopRecording();
+                // Show Start button
+                GUI.enabled = canRecord;
+                GUI.backgroundColor = canRecord ? new Color(0.2f, 0.8f, 0.2f) : Color.gray; // Green when enabled
+                GUIContent recordContent = new GUIContent("  START RECORDING", EditorGUIUtility.IconContent("d_PlayButton On").image);
+                if (GUILayout.Button(recordContent, buttonStyle, GUILayout.Width(200)))
+                {
+                    StartRecording();
+                }
+                GUI.enabled = true;
             }
             
             GUI.backgroundColor = originalColor;
-            GUI.enabled = true;
+        }
+        
+        private void DrawTimelineCount()
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(200));
             
-            GUILayout.FlexibleSpace();
+            GUIStyle countStyle = new GUIStyle(EditorStyles.boldLabel);
+            countStyle.fontSize = 14;
+            countStyle.alignment = TextAnchor.MiddleRight;
+            
+            int selectedCount = selectedDirectorIndices.Count;
+            string countText = selectedCount == 0 ? "No timelines selected" : $"{selectedCount} timeline{(selectedCount > 1 ? "s" : "")} selected";
+            
+            EditorGUILayout.LabelField(countText, countStyle);
+            
+            if (selectedCount > 0)
+            {
+                // Count enabled recorders
+                int totalRecorders = 0;
+                foreach (int idx in selectedDirectorIndices)
+                {
+                    var config = GetTimelineRecorderConfig(idx);
+                    totalRecorders += config.GetEnabledRecorders().Count;
+                }
+                
+                EditorGUILayout.LabelField($"{totalRecorders} recorder{(totalRecorders != 1 ? "s" : "")} enabled", EditorStyles.miniLabel);
+            }
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        private void DrawRecordingProgress()
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.Space(20);
+            
+            // Progress bar
+            float progress = totalTimelinesToRecord > 0 ? (float)currentRecordingTimelineIndex / totalTimelinesToRecord : 0f;
+            
+            // Timeline name
+            string timelineName = "";
+            if (currentRecordingTimelineIndex < selectedDirectorIndices.Count)
+            {
+                int directorIdx = selectedDirectorIndices[currentRecordingTimelineIndex];
+                if (directorIdx < recordingQueueDirectors.Count)
+                {
+                    timelineName = recordingQueueDirectors[directorIdx].gameObject.name;
+                }
+            }
+            
+            Rect progressRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.ExpandWidth(true), GUILayout.Height(20));
+            EditorGUI.ProgressBar(progressRect, progress, $"Recording: {timelineName} ({currentRecordingTimelineIndex + 1}/{totalTimelinesToRecord})");
+            
+            EditorGUILayout.Space(20);
             EditorGUILayout.EndHorizontal();
-            
+        }
+        
+        private void DrawResetButton()
+        {
             // Add Reset button if stuck in WaitingForPlayMode
             if (currentState == RecordState.WaitingForPlayMode && !EditorApplication.isPlaying)
             {
                 EditorGUILayout.Space(5);
-                EditorGUILayout.LabelField("Recorder is stuck in WaitingForPlayMode state.", EditorStyles.centeredGreyMiniLabel);
                 
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
+                
+                EditorGUILayout.BeginVertical("HelpBox");
+                EditorGUILayout.LabelField("Recorder is stuck in WaitingForPlayMode state.", EditorStyles.centeredGreyMiniLabel);
+                
                 if (GUILayout.Button("Reset State", GUILayout.Height(20), GUILayout.Width(100)))
                 {
                     currentState = RecordState.Idle;
@@ -2359,9 +2517,17 @@ namespace Unity.MultiTimelineRecorder
                     statusMessage = "State reset to Idle";
                     MultiTimelineRecorderLogger.LogVerbose("[MultiTimelineRecorder] State manually reset to Idle");
                 }
+                EditorGUILayout.EndVertical();
+                
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.EndHorizontal();
             }
+        }
+        
+        private void DrawRecordControls()
+        {
+            // This method is now deprecated, replaced by DrawRecordingHeader()
+            // Keeping empty for compatibility
         }
         
         private void DrawStatusSection()
