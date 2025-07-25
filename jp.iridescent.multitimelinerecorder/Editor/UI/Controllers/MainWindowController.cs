@@ -137,7 +137,8 @@ namespace MultiTimelineRecorder.UI.Controllers
                 _eventBus.Publish(new TimelineSelectionChangedEvent
                 {
                     SelectedTimelines = _selectedTimelines.ToList(),
-                    AddedTimelines = new List<PlayableDirector> { director }
+                    AddedTimelines = new List<PlayableDirector> { director },
+                    SelectedIndex = _selectedTimelines.Count - 1
                 });
 
                 _logger.LogInfo($"Added timeline: {director.name}", LogCategory.UI);
@@ -170,7 +171,8 @@ namespace MultiTimelineRecorder.UI.Controllers
                 _eventBus.Publish(new TimelineSelectionChangedEvent
                 {
                     SelectedTimelines = _selectedTimelines.ToList(),
-                    RemovedTimelines = new List<PlayableDirector> { director }
+                    RemovedTimelines = new List<PlayableDirector> { director },
+                    SelectedIndex = _selectedTimelines.Count > 0 ? 0 : -1
                 });
 
                 _logger.LogInfo($"Removed timeline: {director.name}", LogCategory.UI);

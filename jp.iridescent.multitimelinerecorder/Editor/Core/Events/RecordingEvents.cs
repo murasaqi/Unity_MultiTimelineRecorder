@@ -83,6 +83,7 @@ namespace MultiTimelineRecorder.Core.Events
         public List<PlayableDirector> SelectedTimelines { get; set; }
         public List<PlayableDirector> AddedTimelines { get; set; }
         public List<PlayableDirector> RemovedTimelines { get; set; }
+        public int SelectedIndex { get; set; } = -1;
     }
 
     /// <summary>

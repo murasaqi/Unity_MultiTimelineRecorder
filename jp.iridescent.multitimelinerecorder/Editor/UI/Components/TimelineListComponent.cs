@@ -79,7 +79,14 @@ namespace MultiTimelineRecorder.UI.Components
                 GUI.FocusControl(null);
                 Event.current.Use();
                 
-                // Notify selection change
+                // Notify selection change with selected index
+                _eventBus.Publish(new TimelineSelectionChangedEvent
+                {
+                    SelectedTimelines = _controller.SelectedTimelines.ToList(),
+                    SelectedIndex = index
+                });
+                
+                // Notify UI refresh
                 _eventBus.Publish(new UIRefreshRequestedEvent 
                 { 
                     Scope = UIRefreshRequestedEvent.RefreshScope.RecorderList 
@@ -148,7 +155,7 @@ namespace MultiTimelineRecorder.UI.Components
         
         private void OnTimelineSelectionChanged(TimelineSelectionChangedEvent e)
         {
-            _selectedIndex = -1;
+            _selectedIndex = e.SelectedIndex;
         }
         
         private class TimelineListItem

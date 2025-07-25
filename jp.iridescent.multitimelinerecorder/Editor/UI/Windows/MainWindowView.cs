@@ -209,6 +209,15 @@ namespace MultiTimelineRecorder.UI.Windows
                 
                 if (_selectedTimelineIndex >= 0 && _selectedTimelineIndex < _mainController.SelectedTimelines.Count)
                 {
+                    // Show selected timeline name
+                    var selectedTimeline = _mainController.SelectedTimelines[_selectedTimelineIndex];
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.Label("Timeline:", GUILayout.Width(60));
+                    GUI.enabled = false;
+                    GUILayout.Label(selectedTimeline.name, EditorStyles.miniLabel);
+                    GUI.enabled = true;
+                    EditorGUILayout.EndHorizontal();
+                    
                     _recorderScrollPos = EditorGUILayout.BeginScrollView(_recorderScrollPos);
                     _recorderList.Draw(_recorderScrollPos);
                     EditorGUILayout.EndScrollView();
@@ -422,17 +431,18 @@ namespace MultiTimelineRecorder.UI.Windows
 
         private void OnTimelineSelectionChanged(TimelineSelectionChangedEvent e)
         {
-            if (e.SelectedTimelines.Count > 0)
+            if (e.SelectedTimelines.Count > 0 && e.SelectedIndex >= 0)
             {
-                _selectedTimelineIndex = 0;
+                _selectedTimelineIndex = e.SelectedIndex;
                 
-                // Update recorder controller with the first timeline's config
+                // Update recorder controller with the selected timeline's config
                 var config = _mainController.CurrentConfiguration as RecordingConfiguration;
-                if (config != null)
+                if (config != null && e.SelectedIndex < e.SelectedTimelines.Count)
                 {
+                    var selectedTimeline = e.SelectedTimelines[e.SelectedIndex];
                     var timelineConfig = config.TimelineConfigs
                         .FirstOrDefault(t => t is TimelineRecorderConfig trc && 
-                                           trc.Director == e.SelectedTimelines[0]) as TimelineRecorderConfig;
+                                           trc.Director == selectedTimeline) as TimelineRecorderConfig;
                     
                     if (timelineConfig != null)
                     {
