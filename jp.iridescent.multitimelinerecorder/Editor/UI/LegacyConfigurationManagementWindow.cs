@@ -9,12 +9,23 @@ using MultiTimelineRecorder.Core.Models;
 using MultiTimelineRecorder.Core.Services;
 using MultiTimelineRecorder.Core.Interfaces;
 
-namespace MultiTimelineRecorder.UI
+namespace MultiTimelineRecorder.Legacy
 {
     /// <summary>
-    /// Editor window for managing scene configurations and settings
+    /// [LEGACY] Editor window for managing scene configurations and settings
+    /// 
+    /// ⚠️ DEPRECATED - この実装は旧アーキテクチャの一部です
+    /// 
+    /// 🆕 新しいアーキテクチャでは以下を使用してください:
+    /// - Core/Services/ConfigurationService - 設定管理サービス
+    /// - UI/Windows/MainWindowView - 新しいメインウィンドウ
+    /// - UI/Components/GlobalSettingsComponent - グローバル設定コンポーネント
+    /// 
+    /// この実装は新しいサービスベースのアーキテクチャに置き換えられています。
+    /// 新機能の開発には新しいアーキテクチャを使用してください。
     /// </summary>
-    public class ConfigurationManagementWindow : EditorWindow
+    [System.Obsolete("Use ConfigurationService and new UI components instead")]
+    public class LegacyConfigurationManagementWindow : EditorWindow
     {
         private SceneConfigurationManager _configManager;
         private ConfigurationValidationService _validationService;
@@ -46,10 +57,10 @@ namespace MultiTimelineRecorder.UI
         private GUIStyle _warningStyle;
         private GUIStyle _successStyle;
 
-        [MenuItem("Window/Multi Timeline Recorder/Configuration Management")]
+        [MenuItem("Window/Multi Timeline Recorder/Configuration Management (Legacy)")]
         public static void ShowWindow()
         {
-            var window = GetWindow<ConfigurationManagementWindow>("Configuration Management");
+            var window = GetWindow<LegacyConfigurationManagementWindow>("Configuration Management (Legacy)");
             window.minSize = new Vector2(700, 500);
             window.Show();
         }

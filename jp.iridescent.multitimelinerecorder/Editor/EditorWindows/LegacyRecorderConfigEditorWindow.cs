@@ -2,12 +2,23 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Recorder;
 
-namespace Unity.MultiTimelineRecorder.RecorderConfigEditors
+namespace Unity.MultiTimelineRecorder.Legacy
 {
     /// <summary>
-    /// レコーダー設定を編集するためのポップアップウィンドウ
+    /// [LEGACY] レコーダー設定を編集するためのポップアップウィンドウ
+    /// 
+    /// ⚠️ DEPRECATED - この実装は旧アーキテクチャの一部です
+    /// 
+    /// 🆕 新しいアーキテクチャでは以下を使用してください:
+    /// - UI/Components/IRecorderEditor インターフェース実装
+    /// - UI/Components/RecorderEditorBase 基底クラス
+    /// - UI/Components/RecorderEditorFactory ファクトリークラス
+    /// 
+    /// この実装は新しいUIシステムに置き換えられています。
+    /// 新機能の開発には新しいアーキテクチャを使用してください。
     /// </summary>
-    public class RecorderConfigEditorWindow : EditorWindow
+    [System.Obsolete("Use new architecture components in UI/Components/ instead")]
+    public class LegacyRecorderConfigEditorWindow : EditorWindow
     {
         private MultiRecorderConfig.RecorderConfigItem configItem;
         private System.Action onConfigChanged;
@@ -15,7 +26,7 @@ namespace Unity.MultiTimelineRecorder.RecorderConfigEditors
         
         public static void ShowWindow(MultiRecorderConfig.RecorderConfigItem item, System.Action onChanged)
         {
-            var window = CreateInstance<RecorderConfigEditorWindow>();
+            var window = CreateInstance<LegacyRecorderConfigEditorWindow>();
             window.configItem = item;
             window.onConfigChanged = onChanged;
             window.titleContent = new GUIContent($"Edit {item.name}");

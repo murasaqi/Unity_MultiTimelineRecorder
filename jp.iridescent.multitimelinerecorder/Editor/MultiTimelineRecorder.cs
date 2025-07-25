@@ -296,11 +296,11 @@ namespace Unity.MultiTimelineRecorder
             ? recordingQueueDirectors[selectedDirectorIndex] 
             : null;
         
-        [MenuItem("Window/Multi Timeline Recorder")]
+        [MenuItem("Window/Multi Timeline Recorder (Legacy)")]
         public static MultiTimelineRecorder ShowWindow()
         {
             var window = GetWindow<MultiTimelineRecorder>();
-            window.titleContent = new GUIContent("Multi Timeline Recorder");
+            window.titleContent = new GUIContent("Multi Timeline Recorder (Legacy)");
             window.minSize = new Vector2(200, 150);  // 自由にリサイズ可能な最小サイズ
             instance = window;
             return window;

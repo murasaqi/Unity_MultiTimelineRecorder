@@ -5,12 +5,23 @@ using UnityEngine;
 using UnityEditor;
 using MultiTimelineRecorder.Core.Models;
 
-namespace MultiTimelineRecorder.UI
+namespace MultiTimelineRecorder.Legacy
 {
     /// <summary>
-    /// Editor window for managing wildcards and templates
+    /// [LEGACY] Editor window for managing wildcards and templates
+    /// 
+    /// ⚠️ DEPRECATED - この実装は旧アーキテクチャの一部です
+    /// 
+    /// 🆕 新しいアーキテクチャでは以下を使用してください:
+    /// - Core/Services/EnhancedWildcardProcessor - ワイルドカード処理サービス
+    /// - Core/Models/WildcardRegistry - ワイルドカードレジストリ
+    /// - UI/Windows/MainWindowView - 新しいメインウィンドウ
+    /// 
+    /// この実装は新しいサービスベースのアーキテクチャに置き換えられています。
+    /// 新機能の開発には新しいアーキテクチャを使用してください。
     /// </summary>
-    public class WildcardManagementWindow : EditorWindow
+    [System.Obsolete("Use EnhancedWildcardProcessor and new UI components instead")]
+    public class LegacyWildcardManagementWindow : EditorWindow
     {
         private WildcardManagementSettings settings;
         private TemplateRegistry templateRegistry;
@@ -44,10 +55,10 @@ namespace MultiTimelineRecorder.UI
         private GUIStyle headerStyle;
         private GUIStyle boxStyle;
 
-        [MenuItem("Window/Multi Timeline Recorder/Wildcard Management")]
+        [MenuItem("Window/Multi Timeline Recorder/Wildcard Management (Legacy)")]
         public static void ShowWindow()
         {
-            var window = GetWindow<WildcardManagementWindow>("Wildcard Management");
+            var window = GetWindow<LegacyWildcardManagementWindow>("Wildcard Management (Legacy)");
             window.minSize = new Vector2(600, 400);
             window.Show();
         }
