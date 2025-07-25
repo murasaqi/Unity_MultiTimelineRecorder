@@ -111,7 +111,11 @@ namespace MultiTimelineRecorder.UI.Windows
 
         private void OnGUI()
         {
+            // Handle keyboard shortcuts
+            HandleKeyboardShortcuts();
+            
             DrawToolbar();
+            DrawRecordingHeader();
             DrawMainContent();
             DrawStatusBar();
             
@@ -121,6 +125,27 @@ namespace MultiTimelineRecorder.UI.Windows
             if (Event.current.type == EventType.Layout)
             {
                 ProcessDeferredActions();
+            }
+        }
+        
+        private void HandleKeyboardShortcuts()
+        {
+            var e = Event.current;
+            if (e.type == EventType.KeyDown)
+            {
+                // Ctrl+R or Cmd+R for recording toggle
+                if ((e.control || e.command) && e.keyCode == KeyCode.R)
+                {
+                    if (_mainController.IsRecording)
+                    {
+                        _mainController.StopRecording();
+                    }
+                    else
+                    {
+                        _mainController.StartRecording();
+                    }
+                    e.Use();
+                }
             }
         }
 
@@ -140,25 +165,92 @@ namespace MultiTimelineRecorder.UI.Windows
                     EditorStyles.toolbarButton, GUILayout.Width(60));
                 
                 GUILayout.FlexibleSpace();
+            }
+        }
+
+        private void DrawRecordingHeader()
+        {
+            // Create a prominent recording control area
+            using (new EditorGUILayout.VerticalScope(GUILayout.Height(80)))
+            {
+                GUILayout.Space(10);
                 
-                // Recording controls
-                using (new EditorGUI.DisabledScope(_mainController.IsRecording))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button(new GUIContent("Start Recording", "Start recording selected timelines"), 
-                        EditorStyles.toolbarButton, GUILayout.Width(100)))
+                    GUILayout.FlexibleSpace();
+                    
+                    // Recording controls with large, prominent buttons
+                    if (!_mainController.IsRecording)
                     {
-                        _mainController.StartRecording();
+                        // Start Recording Button
+                        var originalColor = GUI.backgroundColor;
+                        GUI.backgroundColor = new Color(0.8f, 0.2f, 0.2f); // Red color
+                        
+                        var recordButtonStyle = new GUIStyle(GUI.skin.button)
+                        {
+                            fontSize = 16,
+                            fontStyle = FontStyle.Bold,
+                            fixedHeight = 40,
+                            fixedWidth = 200
+                        };
+                        
+                        var recordContent = new GUIContent("● START RECORDING", "Start recording selected timelines (Ctrl+R)");
+                        if (GUILayout.Button(recordContent, recordButtonStyle))
+                        {
+                            _mainController.StartRecording();
+                        }
+                        
+                        GUI.backgroundColor = originalColor;
                     }
+                    else
+                    {
+                        // Recording in progress - show animated indicator
+                        var originalColor = GUI.backgroundColor;
+                        
+                        // Blinking effect
+                        var blinkColor = Mathf.PingPong((float)EditorApplication.timeSinceStartup * 2f, 1f);
+                        GUI.backgroundColor = Color.Lerp(Color.red, new Color(0.5f, 0f, 0f), blinkColor);
+                        
+                        var stopButtonStyle = new GUIStyle(GUI.skin.button)
+                        {
+                            fontSize = 16,
+                            fontStyle = FontStyle.Bold,
+                            fixedHeight = 40,
+                            fixedWidth = 200
+                        };
+                        
+                        var stopContent = new GUIContent("■ STOP RECORDING", "Stop recording (Ctrl+R)");
+                        if (GUILayout.Button(stopContent, stopButtonStyle))
+                        {
+                            _mainController.StopRecording();
+                        }
+                        
+                        GUI.backgroundColor = originalColor;
+                        
+                        // Show recording progress
+                        GUILayout.Space(20);
+                        var progress = _mainController.GetRecordingProgress();
+                        if (progress != null)
+                        {
+                            using (new EditorGUILayout.VerticalScope(GUILayout.Width(200)))
+                            {
+                                var progressText = $"Recording: {progress.CurrentFrame}/{progress.TotalFrames}";
+                                EditorGUILayout.LabelField(progressText, EditorStyles.boldLabel);
+                                
+                                var rect = GUILayoutUtility.GetRect(200, 20);
+                                EditorGUI.ProgressBar(rect, progress.Progress, $"{progress.Progress:P0}");
+                            }
+                        }
+                    }
+                    
+                    GUILayout.FlexibleSpace();
                 }
                 
-                using (new EditorGUI.DisabledScope(!_mainController.IsRecording))
-                {
-                    if (GUILayout.Button(new GUIContent("Stop", "Stop recording"), 
-                        EditorStyles.toolbarButton, GUILayout.Width(50)))
-                    {
-                        _mainController.StopRecording();
-                    }
-                }
+                GUILayout.Space(10);
+                
+                // Add separator line
+                var separatorRect = GUILayoutUtility.GetRect(0, 1, GUILayout.ExpandWidth(true));
+                EditorGUI.DrawRect(separatorRect, new Color(0.5f, 0.5f, 0.5f, 0.5f));
             }
         }
 
