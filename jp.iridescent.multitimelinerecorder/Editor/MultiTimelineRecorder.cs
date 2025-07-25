@@ -235,6 +235,9 @@ namespace Unity.MultiTimelineRecorder
         private int currentRecordingTimelineIndex = 0;
         private int totalTimelinesToRecord = 0;
         
+        // Tab selection for Global Settings
+        private int selectedTab = 1; // 0 = Global Settings, 1 = Timeline Recording
+        
         // Column width settings for multi-recorder mode
         private float leftColumnWidth = 250f;
         private float centerColumnWidth = 250f;
@@ -456,24 +459,31 @@ namespace Unity.MultiTimelineRecorder
             // Begin checking for changes
             EditorGUI.BeginChangeCheck();
             
-            // Global settings
-            DrawGlobalSettings();
+            // Tab selection for Global Settings and Timeline Recording
+            DrawTabSelection();
             EditorGUILayout.Space(Styles.SectionSpacing);
             
-            // 3-column layout
-            DrawMultiRecorderLayout();
-            EditorGUILayout.Space(Styles.SectionSpacing);
-            
-            // Render controls after the main content
-            DrawRecordControls();
-            EditorGUILayout.Space(Styles.SectionSpacing);
-            
-            // Status section
-            DrawStatusSection();
-            EditorGUILayout.Space(Styles.SectionSpacing);
-            
-            // Debug settings
-            DrawDebugSettings();
+            if (selectedTab == 0) // Global Settings Tab
+            {
+                DrawGlobalSettingsTab();
+            }
+            else // Timeline Recording Tab
+            {
+                // 3-column layout
+                DrawMultiRecorderLayout();
+                EditorGUILayout.Space(Styles.SectionSpacing);
+                
+                // Render controls after the main content
+                DrawRecordControls();
+                EditorGUILayout.Space(Styles.SectionSpacing);
+                
+                // Status section
+                DrawStatusSection();
+                EditorGUILayout.Space(Styles.SectionSpacing);
+                
+                // Debug settings
+                DrawDebugSettings();
+            }
             
             // Bottom spacing to prevent content from being too close to window edge
             EditorGUILayout.Space(15);
@@ -497,6 +507,131 @@ namespace Unity.MultiTimelineRecorder
             {
                 Repaint();
             }
+        }
+        
+        private void DrawTabSelection()
+        {
+            // Tab style similar to Unity's built-in toolbar
+            EditorGUILayout.BeginHorizontal();
+            
+            GUIStyle tabStyle = new GUIStyle(EditorStyles.toolbarButton);
+            tabStyle.fontSize = 12;
+            tabStyle.fixedHeight = 25;
+            
+            if (GUILayout.Toggle(selectedTab == 0, "Global Settings", tabStyle))
+            {
+                selectedTab = 0;
+            }
+            
+            if (GUILayout.Toggle(selectedTab == 1, "Timeline Recording", tabStyle))
+            {
+                selectedTab = 1;
+            }
+            
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        private void DrawGlobalSettingsTab()
+        {
+            // Create a more prominent and organized layout for Global Settings
+            EditorGUILayout.BeginVertical();
+            
+            // Section 1: Recording Settings
+            DrawSectionHeader("Recording Settings", "Settings");
+            EditorGUILayout.BeginVertical("Box");
+            
+            // Resolution settings
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Resolution", EditorStyles.boldLabel, GUILayout.Width(120));
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUI.indentLevel++;
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Width:", GUILayout.Width(60));
+            width = EditorGUILayout.IntField(width, GUILayout.Width(80));
+            EditorGUILayout.LabelField("Height:", GUILayout.Width(60));
+            height = EditorGUILayout.IntField(height, GUILayout.Width(80));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.indentLevel--;
+            
+            EditorGUILayout.Space(10);
+            
+            // Frame Rate
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Frame Rate", EditorStyles.boldLabel, GUILayout.Width(120));
+            frameRate = EditorGUILayout.IntField(frameRate, GUILayout.Width(80));
+            EditorGUILayout.LabelField("fps", GUILayout.Width(30));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.Space(10);
+            
+            // Output Path
+            EditorGUILayout.LabelField("Output Path", EditorStyles.boldLabel);
+            EditorGUI.indentLevel++;
+            OutputPathSettingsUI.DrawOutputPathUI(globalOutputPath);
+            EditorGUI.indentLevel--;
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(15);
+            
+            // Section 2: Timeline Settings
+            DrawSectionHeader("Timeline Settings", "UnityEditor.AnimationWindow");
+            EditorGUILayout.BeginVertical("Box");
+            
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Pre-roll Frames", GUILayout.Width(120));
+            preRollFrames = EditorGUILayout.IntField(preRollFrames, GUILayout.Width(80));
+            EditorGUILayout.LabelField("frames", GUILayout.Width(60));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.Space(5);
+            
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Timeline Margin", GUILayout.Width(120));
+            timelineMarginFrames = EditorGUILayout.IntField(timelineMarginFrames, GUILayout.Width(80));
+            EditorGUILayout.LabelField("frames", GUILayout.Width(60));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(15);
+            
+            // Section 3: SignalEmitter Settings
+            DrawSectionHeader("SignalEmitter Settings", "Animation.Record");
+            EditorGUILayout.BeginVertical("Box");
+            DrawSignalEmitterSettings();
+            EditorGUILayout.EndVertical();
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        private void DrawSectionHeader(string title, string iconName)
+        {
+            EditorGUILayout.BeginHorizontal();
+            
+            // Icon
+            var icon = EditorGUIUtility.IconContent(iconName);
+            if (icon != null && icon.image != null)
+            {
+                GUILayout.Label(icon, GUILayout.Width(20), GUILayout.Height(20));
+            }
+            
+            // Title
+            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel);
+            headerStyle.fontSize = 14;
+            EditorGUILayout.LabelField(title, headerStyle);
+            
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            
+            // Separator line
+            Rect separatorRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(1), GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(separatorRect, new Color(0.5f, 0.5f, 0.5f, 0.3f));
+            EditorGUILayout.Space(5);
         }
         
         private void DrawGlobalSettings()
